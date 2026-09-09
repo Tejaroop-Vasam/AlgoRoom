@@ -10,18 +10,18 @@ Build a platform that automatically collects government schemes, understands the
 
 Main Features
 
-•⁠  ⁠🕷️ Web Scraping — Scrape Central & State government portals.
-•⁠  ⁠🔍 Smart Search — Search schemes by keywords or natural language.
-•⁠  ⁠🎯 Eligibility Matching — Match schemes with user’s age, income, state, education, occupation, etc.
-•⁠  ⁠📊 Eligibility Score — Show how well the user matches each scheme.
-•⁠  ⁠📋 Document Checklist — Show required documents.
-•⁠  ⁠⏰ Deadline Alerts — Notify users before deadlines.
-•⁠  ⁠🔗 Application Links — Direct link to the official application portal.
-•⁠  ⁠📌 Application Tracker — Track applied/pending/approved/rejected schemes.
-•⁠  ⁠⚖️ Scheme Comparison — Compare benefits, eligibility and deadlines.
-•⁠  ⁠🔄 Change Detection — Detect changes in eligibility, deadlines and benefits.
-•⁠  ⁠🌐 Regional Languages — Support Indian languages.
-•⁠  ⁠🛡️ Official Source Verification — Highlight official government sources.
+•⁠  ⁠Web Scraping — Scrape Central & State government portals.
+•⁠  ⁠Smart Search — Search schemes by keywords or natural language.
+•⁠  ⁠Eligibility Matching — Match schemes with user’s age, income, state, education, occupation, etc.
+•⁠  ⁠Eligibility Score — Show how well the user matches each scheme.
+•⁠  ⁠Document Checklist — Show required documents.
+•⁠  ⁠Deadline Alerts — Notify users before deadlines.
+•⁠  ⁠Application Links — Direct link to the official application portal.
+•⁠  ⁠Application Tracker — Track applied/pending/approved/rejected schemes.
+•⁠  ⁠Scheme Comparison — Compare benefits, eligibility and deadlines.
+•⁠  ⁠Change Detection — Detect changes in eligibility, deadlines and benefits.
+•⁠  ⁠Regional Languages — Support Indian languages.
+•⁠  ⁠Official Source Verification — Highlight official government sources.
 
 Tech Stack
 
