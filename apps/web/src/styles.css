@@ -1,0 +1,25 @@
+@import '@angular/material/prebuilt-themes/azure-blue.css';
+@import './styles/utilities.css';
+
+.mat-mdc-form-field-subscript-wrapper {
+  font-size: 0.6875rem;
+}
+
+* {
+  margin: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.app-modal-panel .mat-mdc-dialog-container .mdc-dialog__surface {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  border-radius: 1rem !important;
+}
