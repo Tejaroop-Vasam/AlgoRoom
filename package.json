@@ -1,0 +1,10 @@
+{
+  "name": "Leet-Rooms",
+  "version": "1.0.0",
+  "description": "Collaborative & Competitive Real-Time DSA Practice Platform",
+  "private": true,
+  "scripts": {
+  },
+  "author": "Leet-Rooms",
+  "license": "MIT"
+}
