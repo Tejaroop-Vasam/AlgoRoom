@@ -151,3 +151,9 @@
 .hover-opacity-95:hover { opacity: 0.95; }
 .hover-underline:hover { text-decoration: underline; }
 
+
+.bg-overlay { background-color: color-mix(in srgb, var(--color-surface-dim) 40%, transparent); }
+.border-primary-soft { border-color: color-mix(in srgb, var(--color-primary) 20%, transparent); }
+.hover-bg-primary:hover { background-color: var(--color-primary); }
+.hover-bg-surface-container:hover { background-color: var(--color-surface-container); }
+.focus-border-primary:focus { border-color: var(--color-primary); outline: none; }
