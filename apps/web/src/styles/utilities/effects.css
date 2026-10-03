@@ -37,3 +37,24 @@
 .pointer-events-auto { pointer-events: auto; }
 
 .select-none { user-select: none; }
+
+.shadow-xs { box-shadow: 0 0.0625rem 0.125rem rgba(19, 27, 46, 0.05); }
+.shadow-sm { box-shadow: 0 0.0625rem 0.1875rem rgba(19, 27, 46, 0.08), 0 0.0625rem 0.125rem rgba(19, 27, 46, 0.04); }
+.shadow-md { box-shadow: 0 0.25rem 0.75rem rgba(19, 27, 46, 0.08); }
+.shadow-xl { box-shadow: 0 1.25rem 2.5rem rgba(19, 27, 46, 0.16); }
+.hover-shadow-md:hover { box-shadow: 0 0.25rem 0.75rem rgba(19, 27, 46, 0.08); }
+
+.transition { transition: all 150ms ease; }
+.press:active { transform: scale(0.97); }
+.backdrop-blur { backdrop-filter: blur(0.25rem); }
+
+.animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+.animate-spin { animation: spin 1s linear infinite; }
+
+@keyframes pulse {
+  50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

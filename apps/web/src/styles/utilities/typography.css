@@ -49,3 +49,15 @@
 .leading-normal { line-height: 1.5; }
 .leading-relaxed { line-height: 1.625; }
 
+
+.text-label { font-size: 0.6875rem; line-height: 0.875rem; letter-spacing: 0.04em; }
+.text-code { font-size: 0.8125rem; line-height: 1.25rem; letter-spacing: -0.01em; }
+.text-display { font-size: 2.5rem; line-height: 1.15; letter-spacing: -0.025em; }
+.text-balance { text-wrap: balance; }
+
+@media (min-width: 64rem) {
+  .text-display { font-size: 3.25rem; }
+}
+
+.list-none { list-style: none; }
+.no-underline { text-decoration: none; }

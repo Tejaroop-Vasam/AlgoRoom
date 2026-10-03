@@ -1,0 +1,253 @@
+<div class="theme-stitch-light bg-background text-on-surface font-sans text-sm min-h-screen flex flex-col">
+  <header class="fixed top-0 left-0 right-0 w-full z-40 bg-surface-container-lowest border-b border-surface-high shadow-xs">
+    <div class="h-14 w-full max-w-1440 mx-auto px-4 flex items-center gap-3">
+      <a class="flex items-center gap-1 font-mono text-base font-bold text-on-surface tracking-tight no-underline hover-opacity-95" href="/">
+        <span class="text-primary">[/]</span>
+        <span>AlgoRoom</span>
+      </a>
+      <span class="px-1 py-0 rounded-sm bg-surface-container text-on-surface-variant font-mono text-label uppercase tracking-wider font-semibold">
+        DSA Arena
+      </span>
+    </div>
+  </header>
+
+  <main class="w-full flex-1 relative overflow-hidden">
+    <div class="h-14"></div>
+    <div class="glow glow-top"></div>
+    <div class="glow glow-right"></div>
+    <div class="glow glow-left"></div>
+
+    <section class="relative max-w-1440 mx-auto px-4 pt-8 mt-8 pb-8 mb-4 flex flex-col items-center text-center">
+      <app-clash-emblem class="mb-2" />
+
+      <div class="inline-flex items-center gap-1 bg-surface-container-lowest border border-surface-high px-2 py-1 rounded-full shadow-xs mb-3 anim-rise delay-2">
+        <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+        <span class="font-mono text-label text-on-surface-variant uppercase tracking-wider font-semibold">
+          V1.0 Public Beta • Real-time DSA Multiplayer
+        </span>
+      </div>
+
+      <h1 class="anim-rise delay-3 text-display font-bold text-on-surface max-w-4xl text-balance">
+        Practice DSA Together in Real-Time.
+      </h1>
+
+      <p class="text-base leading-relaxed text-on-surface-variant max-w-2xl mt-2 mb-4 text-balance anim-rise delay-4">
+        Race your peers head-to-head or solve complex algorithmic challenges collaboratively in shared low-latency execution buffers.
+      </p>
+
+      <div class="flex flex-wrap items-center justify-center gap-3 w-full max-w-md anim-rise delay-5">
+        <button
+          type="button"
+          class="flex-1 inline-flex items-center justify-center gap-1 bg-primary-container hover-bg-primary text-on-primary text-sm font-bold px-4 py-3 rounded-md border-0 cursor-pointer btn-3d btn-3d-primary shine"
+          (click)="openCreate()">
+          <span class="material-symbols-outlined text-xl">swords</span>
+          <span>Create Room</span>
+        </button>
+        <button
+          type="button"
+          class="flex-1 inline-flex items-center justify-center gap-1 bg-surface-container-lowest hover-bg-surface-container text-on-surface text-sm font-bold px-4 py-3 rounded-md border border-surface-high cursor-pointer btn-3d btn-3d-light"
+          (click)="openJoin()">
+          <span class="material-symbols-outlined text-xl text-primary">key</span>
+          <span>Join with Code</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="relative max-w-1440 mx-auto px-4 py-4">
+      <div class="mb-3 anim-rise delay-5">
+        <span class="font-mono text-label text-primary font-bold uppercase tracking-wider">Arenas &amp; Collaboration</span>
+        <h2 class="text-2xl text-on-surface font-bold tracking-tight">Engineered for Competitive &amp; Team Problem Solving</h2>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <article class="anim-rise delay-6 bg-surface-container-lowest rounded-xl border border-surface-high shadow-sm hover-shadow-md transition overflow-hidden">
+          <h3 class="m-0">
+            <button
+              type="button"
+              id="mode-race-header"
+              class="w-full flex flex-wrap items-center justify-between gap-2 p-4 bg-surface-container-lowest border-0 text-left font-sans text-on-surface cursor-pointer mode-header"
+              [attr.aria-expanded]="openMode() === 'race'"
+              aria-controls="mode-race-panel"
+              (click)="toggleMode('race')">
+              <span class="flex items-center gap-2">
+                <span class="w-9 h-9 rounded-md bg-surface-container-high flex items-center justify-center text-primary shrink-0 mode-icon">
+                  <span class="material-symbols-outlined text-xl">swords</span>
+                </span>
+                <span class="flex flex-col">
+                  <span class="text-lg font-bold">Race Mode</span>
+                  <span class="text-xs font-mono font-normal text-on-surface-variant">Lockout Sprint Grid</span>
+                </span>
+              </span>
+              <span class="flex items-center gap-2 ml-auto">
+                <span class="bg-error-container text-on-error-container font-mono text-label px-2 py-0 rounded-full font-bold uppercase tracking-wider">Competitive Head-to-Head</span>
+                <span class="material-symbols-outlined text-xl text-on-surface-variant chevron" [class.chevron-open]="openMode() === 'race'">expand_more</span>
+              </span>
+            </button>
+          </h3>
+
+          <div
+            id="mode-race-panel"
+            role="region"
+            aria-labelledby="mode-race-header"
+            class="accordion-body"
+            [class.accordion-open]="openMode() === 'race'"
+            [attr.inert]="openMode() === 'race' ? null : ''">
+            <div class="accordion-inner">
+              <div class="grid grid-cols-1 lg-grid-cols-2 gap-6 items-start px-4 pb-4 pt-4 border-t border-surface-high">
+                <div>
+                  <p class="text-sm text-on-surface-variant mb-3 leading-relaxed">
+                    Zero-leak isolated test runtime. Compete against the clock while your solution buffer remains strictly private.
+                  </p>
+                  <ul class="flex flex-col gap-2 text-xs text-on-surface pl-0 list-none">
+                    @for (feature of raceFeatures; track feature) {
+                      <li class="flex items-center gap-1 stagger-item" [style.--i]="$index">
+                        <span class="material-symbols-outlined text-base text-secondary">verified</span>
+                        <span>{{ feature }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+
+                <div class="bg-surface-container-low border border-surface-high rounded-xl p-2">
+                  <div class="flex flex-wrap items-center justify-between gap-1 font-mono text-label pb-1 mb-1 border-b border-surface-high">
+                    <div class="flex items-center gap-1">
+                      <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+                      <span class="font-semibold text-on-surface uppercase">Live Grid • #743 Dijkstra</span>
+                    </div>
+                    <span class="text-tertiary font-bold bg-tertiary-fixed px-1 rounded-sm">⏱ 18:42 Remaining</span>
+                  </div>
+
+                  <div class="flex flex-col gap-1 font-mono text-label">
+                    @for (row of raceRows; track row.name) {
+                      <div
+                        class="p-1 rounded-sm bg-surface-container-lowest flex flex-col gap-1 border shadow-xs"
+                        [class.border-surface-high]="!row.isYou"
+                        [class.border-primary-soft]="row.isYou">
+                        <div class="flex items-center justify-between gap-2">
+                          <div class="flex flex-wrap items-center gap-1">
+                            <span class="font-bold" [class.text-secondary]="!row.isYou" [class.text-primary]="row.isYou">{{ row.rank }}</span>
+                            <span class="font-semibold text-on-surface">{{ row.name }}</span>
+                            <span
+                              class="px-1 rounded-sm text-2xs font-semibold"
+                              [class.bg-primary]="row.isYou"
+                              [class.text-on-primary]="row.isYou"
+                              [class.bg-surface-container]="!row.isYou"
+                              [class.text-on-surface-variant]="!row.isYou">{{ row.badge }}</span>
+                            <span class="text-2xs" [class.text-primary]="row.isYou" [class.text-on-surface-variant]="!row.isYou">{{ row.status }}</span>
+                          </div>
+                          <span class="font-semibold whitespace-nowrap" [class.text-primary]="row.isYou">{{ row.time }}</span>
+                        </div>
+                        <div class="w-full h-1-5 bg-surface-container-high rounded-full overflow-hidden">
+                          <div class="h-full bar-fill {{ row.progress }}" [class.bg-primary]="row.isYou" [class.bg-secondary]="!row.isYou"></div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="anim-rise delay-6 bg-surface-container-lowest rounded-xl border border-surface-high shadow-sm hover-shadow-md transition overflow-hidden">
+          <h3 class="m-0">
+            <button
+              type="button"
+              id="mode-coop-header"
+              class="w-full flex flex-wrap items-center justify-between gap-2 p-4 bg-surface-container-lowest border-0 text-left font-sans text-on-surface cursor-pointer mode-header"
+              [attr.aria-expanded]="openMode() === 'coop'"
+              aria-controls="mode-coop-panel"
+              (click)="toggleMode('coop')">
+              <span class="flex items-center gap-2">
+                <span class="w-9 h-9 rounded-md bg-surface-container-high flex items-center justify-center text-primary shrink-0 mode-icon">
+                  <span class="material-symbols-outlined text-xl">handshake</span>
+                </span>
+                <span class="flex flex-col">
+                  <span class="text-lg font-bold">Co-op Mode</span>
+                  <span class="text-xs font-mono font-normal text-on-surface-variant">Shared Deterministic Buffer</span>
+                </span>
+              </span>
+              <span class="flex items-center gap-2 ml-auto">
+                <span class="bg-secondary-container text-on-secondary-container font-mono text-label px-2 py-0 rounded-full font-bold uppercase tracking-wider">Collaborative Multiplayer</span>
+                <span class="material-symbols-outlined text-xl text-on-surface-variant chevron" [class.chevron-open]="openMode() === 'coop'">expand_more</span>
+              </span>
+            </button>
+          </h3>
+
+          <div
+            id="mode-coop-panel"
+            role="region"
+            aria-labelledby="mode-coop-header"
+            class="accordion-body"
+            [class.accordion-open]="openMode() === 'coop'"
+            [attr.inert]="openMode() === 'coop' ? null : ''">
+            <div class="accordion-inner">
+              <div class="grid grid-cols-1 lg-grid-cols-2 gap-6 items-start px-4 pb-4 pt-4 border-t border-surface-high">
+                <div>
+                  <p class="text-sm text-on-surface-variant mb-3 leading-relaxed">
+                    Distributed pair-programming engine powered by Conflict-free Replicated Data Types (CRDTs) with deterministic AST syncing.
+                  </p>
+                  <ul class="flex flex-col gap-2 text-xs text-on-surface pl-0 list-none">
+                    @for (feature of coopFeatures; track feature) {
+                      <li class="flex items-center gap-1 stagger-item" [style.--i]="$index">
+                        <span class="material-symbols-outlined text-base text-primary">check_circle</span>
+                        <span>{{ feature }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+
+                <div class="bg-surface-container-low border border-surface-high rounded-xl p-2 overflow-hidden">
+                  <div class="flex flex-wrap items-center justify-between gap-1 pb-1 mb-1 border-b border-surface-high font-mono text-label">
+                    <span class="font-semibold text-on-surface text-code">Dijkstra.java • CRDT v14.2</span>
+                    <div class="flex items-center gap-1">
+                      <span class="px-1 rounded-sm bg-primary-fixed text-primary font-bold text-2xs">Teja</span>
+                      <span class="px-1 rounded-sm bg-secondary-container text-on-secondary-container font-bold text-2xs">Kartheek</span>
+                      <span class="px-1 rounded-sm bg-tertiary-fixed text-tertiary font-bold text-2xs">Akhil</span>
+                    </div>
+                  </div>
+
+                  <div class="bg-surface-container-lowest p-2 pt-4 rounded-md border border-surface-high font-mono text-xs overflow-x-auto">
+                    <div class="whitespace-nowrap"><span class="text-primary font-bold">PriorityQueue</span>&lt;int[]&gt; pq = <span class="text-primary font-bold">new</span> PriorityQueue&lt;&gt;((a, b) -&gt; a[1] - b[1]);</div>
+                    <div class="whitespace-nowrap pt-3">
+                      <span class="text-primary font-bold">while</span> (!pq.isEmpty()) &#123;
+                      <span class="cursor-mark">
+                        <span class="w-0-5 h-3-5 bg-primary inline-block animate-pulse"></span>
+                        <span class="cursor-tag bg-primary text-on-primary">&#64;kartheek</span>
+                      </span>
+                    </div>
+                    <div class="whitespace-nowrap pl-4 pt-3">
+                      <span class="text-primary font-bold">int</span>[] curr = pq.poll();
+                      <span class="cursor-mark">
+                        <span class="w-0-5 h-3-5 bg-secondary inline-block animate-pulse"></span>
+                        <span class="cursor-tag bg-secondary text-on-secondary">&#64;Akhil typing...</span>
+                      </span>
+                    </div>
+                    <div class="whitespace-nowrap pl-4 pt-3">
+                      <span class="text-primary font-bold">if</span> (d &gt; dist[u]) <span class="text-primary font-bold">continue</span>;
+                      <span class="cursor-mark">
+                        <span class="w-0-5 h-3-5 bg-tertiary-container inline-block animate-pulse"></span>
+                        <span class="cursor-tag bg-tertiary-container text-on-tertiary">&#64;Teja</span>
+                      </span>
+                    </div>
+                    <div>&#125;</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="w-full bg-surface-container-lowest border-t border-surface-high py-3 mt-8">
+    <div class="w-full max-w-1440 mx-auto px-4 text-xs text-on-surface-variant">
+      © 2026 AlgoRoom
+    </div>
+  </footer>
+
+  @if (isJoinOpen()) {
+    <app-join-room-dialog [initialCode]="roomCode()" (closed)="closeJoin()" />
+  }
+</div>
