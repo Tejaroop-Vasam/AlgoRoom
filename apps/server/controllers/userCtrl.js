@@ -1,9 +1,10 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import { verifyGoogleToken } from "../utils/googleAuth.js";
 
 // Register a new user
-async function registerUser(req, res) {
+export async function registerUser(req, res) {
     try{
         const { username, email, password } = req.body;
         if(!username || !email || !password) {
@@ -38,7 +39,7 @@ async function registerUser(req, res) {
 }
 
 // Login a user
-async function loginUser(req, res) {
+export async function loginUser(req, res) {
     try{
         const { email, password } = req.body;
         if(!email || !password) {
@@ -71,7 +72,7 @@ async function loginUser(req, res) {
 }
 
 // Update user details
-async function updateUser(req, res){
+export async function updateUser(req, res){
     try{
         const userID = req.user.id;
         const body = req.body;
@@ -115,7 +116,7 @@ async function updateUser(req, res){
 }
 
 // Get user profile
-async function profileUser(req, res) {
+export async function profileUser(req, res) {
     try{
         const userID = req.user.id;
         const user = await User.findByEmail(req.user.email);
@@ -134,7 +135,7 @@ async function profileUser(req, res) {
 }
 
 // Change user password
-async function passwordChangeUser(req, res) {
+export async function passwordChangeUser(req, res) {
     try{
         const userID = req.user.id;
         const { oldPassword, newPassword } = req.body;
@@ -163,5 +164,45 @@ async function passwordChangeUser(req, res) {
     catch (err) {
         console.error("Error changing password:", err);
         res.status(500).json({ error: "Error changing password" });
+    }
+}
+
+// Google OAuth Handler
+export async function googleOAuthHandler(req, res) {
+    try{
+        const { token } = req.body;
+        if(!token) {
+            return res.status(400).json({ error: "Token is required" });
+        }
+        const googleUser = await verifyGoogleToken(token);
+        if (!googleUser) {
+            return res.status(400).json({ error: "Invalid Google token" });
+        }
+        const { google_ID, email, name } = googleUser;
+        const username = name.replace(/\s+/g, "_").toLowerCase() || `user_${google_ID.slice(0, 6)}`;
+        let user = await User.findByGoogleID(google_ID);
+        if(!user){
+            user = await User.findByEmail(email);
+            if(user){
+                user = await User.linkGoogleID(user.id, google_ID);
+            } else {
+                user = await User.insertOAuthUser({ username, email, google_ID });
+            }
+        }
+        const jtoken = jwt.sign(
+            { id: user.id, email: user.email, is_admin: user.is_admin },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" },
+        );
+        const { hpassword, ...userResponse } = user;
+        return res.status(200).json({
+            message: "User logged in successfully via Google OAuth!",
+            token: jtoken,
+            user: userResponse,
+        });
+    }
+    catch (err) {
+        console.error("Error in Google OAuth:", err);
+        res.status(500).json({ error: "Error in Google OAuth" });
     }
 }

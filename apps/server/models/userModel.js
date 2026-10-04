@@ -6,9 +6,10 @@ class User {
     static async createTables() {
         const query = `create table if not exists users(
             id uuid primary key default gen_random_uuid(),
-            username varchar(10) not null,
-            email varchar(15) unique not null,
-            hpassword varchar(50) not null,
+            username varchar(50) not null,
+            email varchar(300) unique not null,
+            hpassword varchar(300),
+            google_id varchar(300) unique,
             is_admin boolean default false,
             created_at timestamp with time zone default current_timestamp);`;
         await pool.query(query);
@@ -53,6 +54,29 @@ class User {
         const { rows } = await pool.query(query, [hpassword, id]);
         return rows[0] || null;
     }
+
+    // Insert OAuth user
+    static async insertOAuthUser({ username, email, google_ID }) {
+        const query = `insert into users(username, email, google_id)
+        values($1, $2, $3) returning *;`;
+        const { rows } = await pool.query(query, [username, email, google_ID]);
+        return rows[0];
+    }
+
+    // Link Google ID to existing user
+    static async linkGoogleID(id, google_ID) {
+        const query = `update users set google_id = $1 where id = $2 returning *;`;
+        const { rows } = await pool.query(query, [google_ID, id]);
+        return rows[0] || null;
+    }
+
+    // Find user by google_id
+    static async findByGoogleID(google_ID) {
+        const query = "select * from users where google_id = $1;";
+        const { rows } = await pool.query(query, [google_ID]);
+        return rows[0] || null;
+    }
+
 }
 
 export default User;

@@ -2,7 +2,7 @@ import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
-import { registerUser, loginUser, updateUser, profileUser, passwordChangeUser } from "../controllers/userCtrl.js";
+import { registerUser, loginUser, updateUser, profileUser, passwordChangeUser, googleOAuthHandler } from "../controllers/userCtrl.js";
 import { auth } from "../middleware/auth.js";
 
 const userRouter = express.Router();
@@ -25,5 +25,6 @@ userRouter.post("/login", loginUser);
 userRouter.put("/update", auth, updateUser);
 userRouter.get("/profile", auth, profileUser);
 userRouter.put("/change-password", auth, passwordChangeUser);
+userRouter.post("/google-oauth", googleOAuthHandler);
 
 export default userRouter;
