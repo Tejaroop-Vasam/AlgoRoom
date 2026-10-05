@@ -1,0 +1,46 @@
+<div class="theme-stitch-light w-full">
+  <div class="w-full bg-surface-container-lowest rounded-2xl border border-surface-high p-6 relative font-sans text-on-surface">
+    @if (showHeader) {
+      <div class="flex items-center justify-between pb-4 mb-4 border-b border-surface-high">
+        <div class="flex items-center gap-3">
+          @if (config?.icon) {
+            <div class="w-9 h-9 rounded-lg bg-primary-fixed flex items-center justify-center text-primary">
+              <app-icon [name]="config?.icon!" size="md"></app-icon>
+            </div>
+          }
+          <div>
+            @if (config?.title) {
+              <h3 class="font-sans text-lg text-on-surface font-bold m-0 leading-tight">
+                {{ config?.title }}
+              </h3>
+            }
+            @if (config?.description) {
+              <p class="font-sans text-xs text-on-surface-variant m-0 mt-0.5">
+                {{ config?.description }}
+              </p>
+            }
+          </div>
+        </div>
+
+        @if (config?.showCloseButton !== false) {
+          <button 
+            type="button" 
+            (click)="close()"
+            class="border-0 bg-transparent text-outline hover-text-on-surface cursor-pointer p-1 rounded-lg"
+            title="Dismiss">
+            <app-icon name="close" size="md"></app-icon>
+          </button>
+        }
+      </div>
+    }
+
+    <div class="w-full">
+      @if (data.template) {
+        <ng-container *ngTemplateOutlet="data.template; context: templateContext"></ng-container>
+      }
+      @if (data.component) {
+        <ng-container *ngComponentOutlet="data.component"></ng-container>
+      }
+    </div>
+  </div>
+</div>
