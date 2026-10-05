@@ -1,0 +1,99 @@
+<div class="bg-surface-container-low border border-surface-high rounded-xl p-4 flex flex-col gap-3 font-mono text-xs w-full">
+  @if (title() || remainingTime()) {
+    <div class="flex items-center justify-between pb-2 border-b border-surface-high">
+      @if (title()) {
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+          <span class="font-semibold text-on-surface uppercase">{{ title() }}</span>
+        </div>
+      }
+      @if (remainingTime()) {
+        <span class="font-bold text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded flex items-center gap-1">
+          <app-icon name="schedule" size="xs"></app-icon>
+          <span>{{ remainingTime() }}</span>
+        </span>
+      }
+    </div>
+  }
+
+  <div class="flex flex-col gap-2">
+    @for (competitor of sortedCompetitors(); track competitor.name) {
+      <div 
+        class="p-3 rounded-lg bg-surface-container-lowest flex flex-col gap-2 border shadow-xs"
+        [class.border-primary]="competitor.isCurrentUser"
+        [class.border-surface-high]="!competitor.isCurrentUser"
+        [class.opacity-75]="!competitor.isCurrentUser && competitor.rank > 2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span 
+              class="font-mono text-xs font-bold"
+              [class.text-secondary]="competitor.rank === 1"
+              [class.text-primary]="competitor.isCurrentUser"
+              [class.text-on-surface-variant]="!competitor.isCurrentUser && competitor.rank !== 1">
+              #{{ competitor.rank }}
+            </span>
+            <span class="font-semibold text-on-surface font-sans">{{ competitor.name }}</span>
+
+            @if (competitor.isCurrentUser) {
+              <span class="px-1.5 py-0.5 rounded bg-primary text-on-primary font-semibold text-xs">
+                YOU
+              </span>
+            }
+
+            <span 
+              class="flex items-center gap-1 font-medium"
+              [class.text-secondary]="competitor.hasPassedTests"
+              [class.text-primary]="competitor.isCurrentUser && !competitor.hasPassedTests"
+              [class.text-on-surface-variant]="!competitor.isCurrentUser && !competitor.hasPassedTests">
+              @if (competitor.hasPassedTests) {
+                <app-icon name="check_circle" size="xs" class="text-secondary"></app-icon>
+              }
+              <span>{{ competitor.status }}</span>
+            </span>
+          </div>
+
+          <span 
+            class="font-bold"
+            [class.text-on-surface]="competitor.rank === 1"
+            [class.text-primary]="competitor.isCurrentUser"
+            [class.text-on-surface-variant]="!competitor.isCurrentUser && competitor.rank !== 1">
+            {{ competitor.time }}
+          </span>
+        </div>
+
+        @if (competitor.runs !== undefined || competitor.submissions !== undefined || competitor.compileErrors !== undefined || competitor.runtimeErrors !== undefined) {
+          <div class="flex items-center gap-4 text-xs text-on-surface-variant flex-wrap">
+            <span class="flex items-center gap-1" title="Runs">
+              <app-icon name="play_arrow" size="xs"></app-icon>
+              <span>Runs: <strong class="text-on-surface">{{ competitor.runs ?? 0 }}</strong></span>
+            </span>
+            <span class="flex items-center gap-1" title="Submissions">
+              <app-icon name="send" size="xs"></app-icon>
+              <span>Submissions: <strong class="text-on-surface">{{ competitor.submissions ?? 0 }}</strong></span>
+            </span>
+            <span class="flex items-center gap-1" title="Compile Errors">
+              <app-icon name="error_outline" size="xs" [class.text-error]="(competitor.compileErrors ?? 0) > 0"></app-icon>
+              <span>Compile Errors: <strong [class.text-error]="(competitor.compileErrors ?? 0) > 0" class="text-on-surface">{{ competitor.compileErrors ?? 0 }}</strong></span>
+            </span>
+            <span class="flex items-center gap-1" title="Runtime Errors">
+              <app-icon name="warning" size="xs" [class.text-error]="(competitor.runtimeErrors ?? 0) > 0"></app-icon>
+              <span>Runtime Errors: <strong [class.text-error]="(competitor.runtimeErrors ?? 0) > 0" class="text-on-surface">{{ competitor.runtimeErrors ?? 0 }}</strong></span>
+            </span>
+          </div>
+        }
+
+        <div class="w-full pt-1">
+          <div class="w-full h-1-5 bg-surface-container-high rounded-full overflow-hidden">
+            <div 
+              class="h-full"
+              [class.bg-secondary]="competitor.rank === 1"
+              [class.bg-primary]="competitor.isCurrentUser"
+              [class.bg-surface-container-highest]="!competitor.isCurrentUser && competitor.rank !== 1"
+              [style.width.%]="competitor.progressPercent">
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
