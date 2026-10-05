@@ -14,6 +14,8 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
 }
 
 .app-modal-panel .mat-mdc-dialog-container .mdc-dialog__surface {

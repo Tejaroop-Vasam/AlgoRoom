@@ -19,8 +19,8 @@
     "@angular/material": "^22.1.7",
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
-    "@monaco-editor/loader": "^1.7.0",
-    "monaco-editor": "^0.57.0",
+    "monaco-editor": "^0.56.0",
+    "ngx-monaco-editor-v2": "^22.0.5",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
