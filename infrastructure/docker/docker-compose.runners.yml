@@ -1,0 +1,18 @@
+services:
+  runner-java:
+    build:
+      context: ./runners/java
+      dockerfile: Dockerfile
+    image: algo-room-runner-java:latest
+
+  runner-cpp:
+    build:
+      context: ./runners/cpp
+      dockerfile: Dockerfile
+    image: algo-room-runner-cpp:latest
+
+  runner-python:
+    build:
+      context: ./runners/python
+      dockerfile: Dockerfile
+    image: algo-room-runner-python:latest
