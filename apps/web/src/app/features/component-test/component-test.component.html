@@ -7,9 +7,10 @@
     <app-button [variant]="activeSection() === 'icons' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('icons')">Icons</app-button>
     <app-button [variant]="activeSection() === 'modals' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('modals')">Modals</app-button>
     <app-button [variant]="activeSection() === 'editor' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('editor')">Editor</app-button>
+    <app-button [variant]="activeSection() === 'live-grid' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('live-grid')">Live Grid</app-button>
   </div>
 
-  @if (activeSection() !== 'editor') {
+  @if (activeSection() !== 'editor' && activeSection() !== 'live-grid') {
     <div [class]="activeSection() === 'all' ? 'd-grid grid-cols-3 gap-8 items-start' : 'max-w-md flex flex-col gap-4'">
       @if (activeSection() === 'all' || activeSection() === 'inputs') {
         <div class="flex flex-col gap-4">
@@ -227,6 +228,62 @@
             [showStatusBar]="false"
             [minHeight]="'8rem'">
           </app-code-editor>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (activeSection() === 'all' || activeSection() === 'live-grid') {
+    <div class="flex flex-col gap-6 mt-6">
+      <div class="flex flex-col gap-1">
+        <h3 class="text-base font-medium text-white">Live Grid Variations</h3>
+        <p class="text-xs text-muted">Demonstrating multiplayer race telemetry, 1v1 duel sprint, and compact leaderboard configurations.</p>
+      </div>
+
+      <div class="flex flex-col gap-6">
+        <!-- Variation 1: Standard Race with Full Telemetry -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Standard Race Mode (Full Telemetry)</span>
+            <span class="text-xs text-muted">Title, timer, runs, submissions, compile & runtime errors, progress</span>
+          </div>
+          <div class="max-w-2xl">
+            <app-live-grid
+              title="Live Grid • #743 Dijkstra"
+              remainingTime="18:42 REMAINING"
+              [competitors]="testCompetitors">
+            </app-live-grid>
+          </div>
+        </div>
+
+        <!-- Variation 2: 1v1 Sprint Duel -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">1v1 Duel Sprint</span>
+            <span class="text-xs text-muted">2-player head-to-head match with custom problem title</span>
+          </div>
+          <div class="max-w-2xl">
+            <app-live-grid
+              title="1v1 Sprint • #128 Longest Consecutive Sequence"
+              remainingTime="04:15 REMAINING"
+              [competitors]="headToHeadCompetitors">
+            </app-live-grid>
+          </div>
+        </div>
+
+        <!-- Variation 3: Compact Mode -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Compact Leaderboard</span>
+            <span class="text-xs text-muted">Lightweight leaderboard without telemetry counters</span>
+          </div>
+          <div class="max-w-2xl">
+            <app-live-grid
+              title="Quick Match • #206 Reverse Linked List"
+              remainingTime="08:30 REMAINING"
+              [competitors]="compactCompetitors">
+            </app-live-grid>
+          </div>
         </div>
       </div>
     </div>

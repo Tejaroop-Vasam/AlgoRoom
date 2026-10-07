@@ -11,5 +11,6 @@ export * from './components/footer/footer.component';
 export * from './components/modal/modal.component';
 export * from './components/modal/modal.service';
 export * from './components/modal/modal.types';
+export * from './components/live-grid/live-grid.component';
 export * from '../services/theme.service';
 
