@@ -1,0 +1,21 @@
+<header class="w-full bg-surface-container-lowest border-b border-surface-high">
+  <div class="h-14 w-full max-w-1440 mx-auto px-4 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-4">
+      <a routerLink="/" class="flex items-center gap-1 font-mono text-sm font-bold text-on-surface tracking-tight" style="text-decoration: none;">
+        <span class="text-primary font-bold">[/]</span>
+        <span class="font-sans text-base">AlgoRoom</span>
+      </a>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button
+        type="button"
+        (click)="themeService.toggleTheme()"
+        class="flex items-center justify-center p-2 rounded-lg bg-surface-container border border-surface-high text-on-surface hover-bg-surface-bright cursor-pointer"
+        [title]="themeService.isDark() ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
+        [attr.aria-label]="themeService.isDark() ? 'Switch to Light Theme' : 'Switch to Dark Theme'">
+        <app-icon [name]="themeService.isDark() ? 'light_mode' : 'dark_mode'" size="sm"></app-icon>
+      </button>
+    </div>
+  </div>
+</header>

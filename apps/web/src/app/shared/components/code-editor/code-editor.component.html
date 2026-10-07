@@ -1,0 +1,82 @@
+<div class="w-full flex flex-col rounded-2xl bg-surface-container border border-surface-highest relative overflow-hidden group">
+  <!-- Window Header (Stitch aesthetic) -->
+  <div class="flex items-center justify-between px-4 py-3 border-b border-surface-highest bg-surface-container-lowest select-none relative z-10">
+    <div class="flex items-center gap-2">
+      @if (showDots()) {
+        <div class="rounded-full bg-error" style="width: 0.625rem; height: 0.625rem; opacity: 0.85;"></div>
+        <div class="rounded-full bg-tertiary" style="width: 0.625rem; height: 0.625rem; opacity: 0.85;"></div>
+        <div class="rounded-full bg-secondary" style="width: 0.625rem; height: 0.625rem; opacity: 0.85;"></div>
+      }
+      <span class="font-mono text-xs text-outline ml-2 font-medium">{{ fileName() }}</span>
+    </div>
+
+    <div class="flex items-center gap-3">
+      @if (isReadOnly()) {
+        <span class="font-mono text-xs text-outline px-2 py-0.5 rounded bg-surface-container-high">READ-ONLY</span>
+      }
+      <select
+        [value]="language()"
+        (change)="onLanguageChange($any($event.target).value)"
+        class="bg-surface-container border border-surface-highest text-on-surface font-mono text-xs rounded px-2 py-1 cursor-pointer outline-none capitalize">
+        @for (lang of availableLanguages(); track lang) {
+          <option [value]="lang" class="bg-surface-container text-on-surface capitalize">{{ lang }}</option>
+        }
+      </select>
+      @if (formattable() && !isReadOnly()) {
+        <button
+          type="button"
+          (click)="formatCode()"
+          class="flex items-center gap-1 font-mono text-xs text-outline hover-text-on-surface bg-transparent border-0 cursor-pointer px-2 py-1 rounded hover-bg-surface-bright"
+          [attr.aria-label]="isFormatted() ? 'Formatted' : 'Format code'"
+          title="Format code (Shift + Option + F)">
+          <app-icon [name]="isFormatted() ? 'check' : 'auto_fix_high'" size="xs" [color]="isFormatted() ? 'var(--color-secondary)' : undefined"></app-icon>
+          <span>{{ isFormatted() ? 'Formatted' : 'Format' }}</span>
+        </button>
+      }
+      @if (copyable()) {
+        <button
+          type="button"
+          (click)="copyCode()"
+          class="flex items-center gap-1 font-mono text-xs text-outline hover-text-on-surface bg-transparent border-0 cursor-pointer px-2 py-1 rounded hover-bg-surface-bright"
+          [attr.aria-label]="isCopied() ? 'Copied' : 'Copy code'">
+          <app-icon [name]="isCopied() ? 'check' : 'content_copy'" size="xs" [color]="isCopied() ? 'var(--color-secondary)' : undefined"></app-icon>
+          <span>{{ isCopied() ? 'Copied' : 'Copy' }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Monaco Host Area -->
+  <div class="monaco-wrapper relative w-full overflow-hidden z-10" [style.height]="minHeight()">
+    @if (isLoading()) {
+      <div class="absolute inset-0 flex items-center justify-center bg-surface-container/80 z-20">
+        <app-icon name="progress_activity" [spin]="true" size="md" color="var(--color-primary)"></app-icon>
+      </div>
+    }
+    <ngx-monaco-editor
+      class="w-full h-full block"
+      [style.height]="minHeight()"
+      [options]="editorOptions()"
+      [(ngModel)]="code"
+      (onInit)="onEditorInit($event)">
+    </ngx-monaco-editor>
+  </div>
+
+  <!-- Status Bar (Stitch aesthetic footer) -->
+  @if (showStatusBar()) {
+    <div class="flex items-center justify-between px-4 py-2 border-t border-surface-highest bg-surface-container-lowest font-mono text-xs text-outline select-none relative z-10">
+      <div class="flex items-center gap-4">
+        <span>Ln {{ currentLine() }}, Col {{ currentCol() }}</span>
+        <span>{{ totalLines() }} {{ totalLines() === 1 ? 'line' : 'lines' }}</span>
+        <span>{{ charCount() }} chars</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="flex items-center gap-1.5">
+          <span class="rounded-full bg-secondary" style="width: 0.375rem; height: 0.375rem;"></span>
+          UTF-8
+        </span>
+        <span class="font-medium tracking-wider">{{ statusMessage() }}</span>
+      </div>
+    </div>
+  }
+</div>
