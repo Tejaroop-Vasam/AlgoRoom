@@ -1,0 +1,45 @@
+<button
+  [type]="type()"
+  [disabled]="disabled() || loading()"
+  (click)="handleClick($event)"
+  class="flex items-center justify-center gap-2 rounded-xl font-sans font-semibold cursor-pointer border-0"
+  [class.w-full]="fullWidth()"
+  [class.py-2]="size() === 'sm'"
+  [class.px-3]="size() === 'sm'"
+  [class.text-xs]="size() === 'sm'"
+  [class.py-3]="size() === 'md'"
+  [class.px-4]="size() === 'md'"
+  [class.text-sm]="size() === 'md'"
+  [class.py-4]="size() === 'lg'"
+  [class.px-6]="size() === 'lg'"
+  [class.text-base]="size() === 'lg'"
+  [class.bg-primary-container]="variant() === 'primary'"
+  [class.text-on-primary-container]="variant() === 'primary'"
+  [class.hover-opacity-95]="variant() === 'primary'"
+  [class.bg-secondary]="variant() === 'secondary'"
+  [class.text-on-secondary]="variant() === 'secondary'"
+  [class.bg-surface-container-high]="variant() === 'surface'"
+  [class.text-on-surface]="variant() === 'surface'"
+  [class.hover-bg-surface-bright]="variant() === 'surface'"
+  [class.border]="variant() === 'outline'"
+  [class.border-outline-variant]="variant() === 'outline'"
+  [class.text-on-surface]="variant() === 'outline'"
+  [class.bg-surface]="variant() === 'ghost'"
+  [class.text-on-surface]="variant() === 'ghost'"
+  [class.opacity-50]="disabled() || loading()"
+  [class.cursor-not-allowed]="disabled() || loading()">
+  
+  @if (icon() && iconPosition() === 'start' && !loading()) {
+    <app-icon [name]="icon()!" [size]="size() === 'sm' ? 'sm' : 'base'"></app-icon>
+  }
+
+  <ng-content></ng-content>
+
+  @if (icon() && iconPosition() === 'end' && !loading()) {
+    <app-icon [name]="icon()!" [size]="size() === 'sm' ? 'sm' : 'base'"></app-icon>
+  }
+
+  @if (loading()) {
+    <app-icon name="progress_activity" [spin]="true" [size]="size() === 'sm' ? 'sm' : 'base'"></app-icon>
+  }
+</button>

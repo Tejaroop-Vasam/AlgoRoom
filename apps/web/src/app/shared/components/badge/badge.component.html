@@ -1,0 +1,25 @@
+<div 
+  class="d-inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-high border border-surface-highest">
+  @if (pulse()) {
+    <span 
+      class="d-inline-block rounded-full" 
+      style="width: 0.5rem; height: 0.5rem;"
+      [class.bg-secondary]="variant() === 'secondary'"
+      [class.bg-primary]="variant() === 'primary'"
+      [class.bg-tertiary]="variant() === 'tertiary'"
+      [class.bg-error]="variant() === 'error'">
+    </span>
+  }
+  @if (icon()) {
+    <app-icon [name]="icon()!" size="xs"></app-icon>
+  }
+  <span 
+    class="font-mono text-xs tracking-wider"
+    [class.text-secondary]="variant() === 'secondary'"
+    [class.text-primary]="variant() === 'primary'"
+    [class.text-tertiary]="variant() === 'tertiary'"
+    [class.text-error]="variant() === 'error'"
+    [class.text-on-surface]="variant() === 'surface'">
+    {{ label() }}
+  </span>
+</div>

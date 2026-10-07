@@ -1,0 +1,291 @@
+<div class="p-8 max-w-6xl mx-auto flex flex-col gap-6">
+  <div class="flex items-center gap-2">
+    <app-button [variant]="activeSection() === 'all' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('all')">All</app-button>
+    <app-button [variant]="activeSection() === 'inputs' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('inputs')">Inputs</app-button>
+    <app-button [variant]="activeSection() === 'buttons' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('buttons')">Buttons</app-button>
+    <app-button [variant]="activeSection() === 'badges' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('badges')">Badges</app-button>
+    <app-button [variant]="activeSection() === 'icons' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('icons')">Icons</app-button>
+    <app-button [variant]="activeSection() === 'modals' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('modals')">Modals</app-button>
+    <app-button [variant]="activeSection() === 'editor' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('editor')">Editor</app-button>
+    <app-button [variant]="activeSection() === 'live-grid' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('live-grid')">Live Grid</app-button>
+  </div>
+
+  @if (activeSection() !== 'editor' && activeSection() !== 'live-grid') {
+    <div [class]="activeSection() === 'all' ? 'd-grid grid-cols-3 gap-8 items-start' : 'max-w-md flex flex-col gap-4'">
+      @if (activeSection() === 'all' || activeSection() === 'inputs') {
+        <div class="flex flex-col gap-4">
+          <h3 class="text-lg font-medium text-white mb-2">Input Variations</h3>
+          <app-input label="Normal input"></app-input>
+          <app-input label="Password input" type="password"></app-input>
+          <app-input label="Email input" type="email" prefixIcon="email"></app-input>
+          <app-input label="Number input" type="number" [min]="0" [max]="100" [step]="5"></app-input>
+          <app-input label="Phone input" type="tel" prefixIcon="phone"></app-input>
+          <app-input label="URL input" type="url" prefixIcon="link"></app-input>
+          <app-input label="Date input" type="date"></app-input>
+          <app-input label="Input with hint" hint="Enter your full name"></app-input>
+          <app-input label="Required input" [required]="true"></app-input>
+          <app-input label="Input with error" errorMessage="Something went wrong" [value]="'bad input'"></app-input>
+          <app-input label="Clearable input" [clearable]="true" [(value)]="clearableValue"></app-input>
+          <app-input label="Search with icon" prefixIcon="search" [clearable]="true"></app-input>
+          <app-input label="Input with suffix icon" suffixIcon="info"></app-input>
+          <app-input label="Prefix and suffix icons" prefixIcon="person" suffixIcon="check_circle"></app-input>
+          <app-input label="Fill appearance" appearance="fill"></app-input>
+          <app-input placeholder="Placeholder only (no label)"></app-input>
+          <app-input label="Disabled input" [disabled]="true" [value]="'Disabled value'"></app-input>
+          <app-input label="Readonly input" [readonly]="true" [value]="'Readonly value'"></app-input>
+        </div>
+      }
+
+      @if (activeSection() === 'all' || activeSection() === 'buttons' || activeSection() === 'modals') {
+        <div class="flex flex-col gap-8">
+          @if (activeSection() === 'all' || activeSection() === 'buttons') {
+            <div class="flex flex-col gap-4">
+              <h3 class="text-lg font-medium text-white mb-2">Button Variations</h3>
+              <app-button variant="primary">Primary button</app-button>
+              <app-button variant="secondary">Secondary button</app-button>
+              <app-button variant="surface">Surface button</app-button>
+              <app-button variant="outline">Outline button</app-button>
+              <app-button variant="ghost">Ghost button</app-button>
+
+              <div class="flex items-center gap-3">
+                <app-button size="sm">Small</app-button>
+                <app-button size="md">Medium</app-button>
+                <app-button size="lg">Large</app-button>
+              </div>
+
+              <app-button icon="arrow_forward" iconPosition="end">Next step</app-button>
+              <app-button icon="add" iconPosition="start" variant="outline">Add item</app-button>
+
+              <app-button [loading]="true">Saving changes...</app-button>
+              <app-button [disabled]="true">Disabled button</app-button>
+              <app-button [fullWidth]="true">Full width button</app-button>
+            </div>
+          }
+
+          @if (activeSection() === 'all' || activeSection() === 'modals') {
+            <div class="flex flex-col gap-4">
+              <h3 class="text-lg font-medium text-white mb-2">Modal Variations</h3>
+
+              <app-button variant="outline" (clicked)="modalService.open(templateModal, { title: 'Template Modal', description: 'Opened by passing an ng-template' })">
+                Open with ng-template
+              </app-button>
+
+              <app-button variant="primary" (clicked)="modalService.open(testModalContent, { title: 'Component Modal', description: 'Opened by passing an Angular Component' })">
+                Open with Component
+              </app-button>
+
+              <!-- 1. By passing ng-template -->
+              <ng-template #templateModal let-close="close">
+                <div class="flex flex-col gap-4">
+                  <p class="text-sm text-muted">
+                    This modal content is rendered from an <strong>ng-template</strong> passed directly into modalService.open(templateModal).
+                  </p>
+                  <app-input label="Your Name" placeholder="Jane Doe"></app-input>
+                  <div class="flex justify-end gap-2">
+                    <app-button size="sm" variant="ghost" (clicked)="close()">Cancel</app-button>
+                    <app-button size="sm" variant="primary" (clicked)="close()">Submit</app-button>
+                  </div>
+                </div>
+              </ng-template>
+            </div>
+          }
+        </div>
+      }
+
+      @if (activeSection() === 'all' || activeSection() === 'badges' || activeSection() === 'icons') {
+        <div class="flex flex-col gap-8">
+          @if (activeSection() === 'all' || activeSection() === 'badges') {
+            <div class="flex flex-col items-start gap-4">
+              <h3 class="text-lg font-medium text-white mb-2">Badge Variations</h3>
+              <app-badge label="Secondary badge" variant="secondary"></app-badge>
+              <app-badge label="Primary badge" variant="primary"></app-badge>
+              <app-badge label="Tertiary badge" variant="tertiary"></app-badge>
+              <app-badge label="Error badge" variant="error"></app-badge>
+              <app-badge label="Surface badge" variant="surface"></app-badge>
+
+              <app-badge label="Live status" variant="secondary" [pulse]="true"></app-badge>
+              <app-badge label="Active process" variant="primary" [pulse]="true"></app-badge>
+              <app-badge label="System alert" variant="error" [pulse]="true"></app-badge>
+
+              <app-badge label="Verified account" variant="secondary" icon="check_circle"></app-badge>
+              <app-badge label="Fast track" variant="tertiary" icon="bolt"></app-badge>
+              <app-badge label="Locked profile" variant="surface" icon="lock"></app-badge>
+              <app-badge label="Recording" variant="error" [pulse]="true" icon="videocam"></app-badge>
+            </div>
+          }
+
+          @if (activeSection() === 'all' || activeSection() === 'icons') {
+            <div class="flex flex-col items-start gap-4">
+              <h3 class="text-lg font-medium text-white mb-2">Icon Variations</h3>
+              <div class="flex items-center gap-3 text-white">
+                <app-icon name="home"></app-icon>
+                <app-icon name="search"></app-icon>
+                <app-icon name="settings"></app-icon>
+                <app-icon name="favorite"></app-icon>
+                <app-icon name="notifications"></app-icon>
+              </div>
+
+              <div class="flex items-center gap-3 text-white">
+                <app-icon name="star" size="sm"></app-icon>
+                <app-icon name="star" size="md"></app-icon>
+                <app-icon name="star" size="lg"></app-icon>
+                <app-icon name="star" size="xl"></app-icon>
+              </div>
+
+              <div class="flex items-center gap-3 text-white">
+                <app-icon name="bookmark" [filled]="false"></app-icon>
+                <app-icon name="bookmark" [filled]="true"></app-icon>
+                <app-icon name="thumb_up" [filled]="false"></app-icon>
+                <app-icon name="thumb_up" [filled]="true"></app-icon>
+              </div>
+
+              <div class="flex items-center gap-3 text-white">
+                <app-icon name="folder" family="outlined"></app-icon>
+                <app-icon name="folder" family="rounded"></app-icon>
+                <app-icon name="folder" family="sharp"></app-icon>
+              </div>
+
+              <div class="flex items-center gap-3 text-white">
+                <app-icon name="progress_activity" [spin]="true"></app-icon>
+                <app-icon name="sync" [spin]="true"></app-icon>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <app-icon name="check_circle" color="var(--color-secondary)"></app-icon>
+                <app-icon name="warning" color="var(--color-tertiary)"></app-icon>
+                <app-icon name="error" color="var(--color-error)"></app-icon>
+                <app-icon name="bolt" color="var(--color-primary)"></app-icon>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  @if (activeSection() === 'all' || activeSection() === 'editor') {
+    <div class="flex flex-col gap-6 mt-6">
+      <div class="flex flex-col gap-1">
+        <h3 class="text-base font-medium text-white">Code Editor Variations</h3>
+        <p class="text-xs text-muted">Demonstrating different inputs, languages, modes, and configurations.</p>
+      </div>
+
+      <div class="flex flex-col gap-6">
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Interactive Editor</span>
+            <span class="text-xs text-muted">Two-way bound, default controls, language switcher</span>
+          </div>
+          <app-code-editor
+            fileName="fibonacci.py"
+            language="python"
+            [(code)]="pythonCode">
+          </app-code-editor>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Read-Only with Minimap</span>
+            <span class="text-xs text-muted">[readonly]="true", [showMinimap]="true", Java syntax</span>
+          </div>
+          <app-code-editor
+            fileName="BinarySearch.java"
+            language="java"
+            [code]="javaCode"
+            [readonly]="true"
+            [showMinimap]="true">
+          </app-code-editor>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Compact Without Status Bar</span>
+            <span class="text-xs text-muted">[showDots]="false", [showStatusBar]="false", tabSize 2, 11rem height</span>
+          </div>
+          <app-code-editor
+            fileName="debounce.js"
+            language="javascript"
+            [(code)]="jsCode"
+            [showDots]="false"
+            [showStatusBar]="false"
+            [minHeight]="'11rem'"
+            [tabSize]="2"
+            [availableLanguages]="['javascript', 'python']">
+          </app-code-editor>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Minimal Snippet View</span>
+            <span class="text-xs text-muted">[showLineNumbers]="false", [showStatusBar]="false", read-only, 8rem</span>
+          </div>
+          <app-code-editor
+            fileName="math_utils.py"
+            language="python"
+            [code]="minimalCode"
+            [readonly]="true"
+            [showLineNumbers]="false"
+            [showStatusBar]="false"
+            [minHeight]="'8rem'">
+          </app-code-editor>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (activeSection() === 'all' || activeSection() === 'live-grid') {
+    <div class="flex flex-col gap-6 mt-6">
+      <div class="flex flex-col gap-1">
+        <h3 class="text-base font-medium text-white">Live Grid Variations</h3>
+        <p class="text-xs text-muted">Demonstrating multiplayer race telemetry, 1v1 duel sprint, and compact leaderboard configurations.</p>
+      </div>
+
+      <div class="flex flex-col gap-6">
+        <!-- Variation 1: Standard Race with Full Telemetry -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Standard Race Mode (Full Telemetry)</span>
+            <span class="text-xs text-muted">Title, timer, runs, submissions, compile & runtime errors, progress</span>
+          </div>
+          <div class="max-w-2xl">
+            <app-live-grid
+              title="Live Grid • #743 Dijkstra"
+              remainingTime="18:42 REMAINING"
+              [competitors]="testCompetitors">
+            </app-live-grid>
+          </div>
+        </div>
+
+        <!-- Variation 2: 1v1 Sprint Duel -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">1v1 Duel Sprint</span>
+            <span class="text-xs text-muted">2-player head-to-head match with custom problem title</span>
+          </div>
+          <div class="max-w-2xl">
+            <app-live-grid
+              title="1v1 Sprint • #128 Longest Consecutive Sequence"
+              remainingTime="04:15 REMAINING"
+              [competitors]="headToHeadCompetitors">
+            </app-live-grid>
+          </div>
+        </div>
+
+        <!-- Variation 3: Compact Mode -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Compact Leaderboard</span>
+            <span class="text-xs text-muted">Lightweight leaderboard without telemetry counters</span>
+          </div>
+          <div class="max-w-2xl">
+            <app-live-grid
+              title="Quick Match • #206 Reverse Linked List"
+              remainingTime="08:30 REMAINING"
+              [competitors]="compactCompetitors">
+            </app-live-grid>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

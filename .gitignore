@@ -2,12 +2,12 @@
 __pycache__/
 *.py[codz]
 *$py.class
-.npm-cache/
+# Node / Angular
 node_modules/
+.angular/
+.npm-cache/
 .DS_Store
 
-# C extensions
-*.so
 
 # Distribution / packaging
 .Python

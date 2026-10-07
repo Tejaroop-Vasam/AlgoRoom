@@ -1,0 +1,67 @@
+  <mat-form-field 
+    [appearance]="appearance()" 
+    class="w-full" 
+    [class.has-prefix]="prefixIcon()"
+    [class.has-suffix]="suffixIcon() || type() === 'password' || clearable()">
+    
+    @if (label()) {
+      <mat-label>{{ label() }}</mat-label>
+    }
+
+    @if (prefixIcon()) {
+      <mat-icon matPrefix class="mr-2 text-muted">{{ prefixIcon() }}</mat-icon>
+    }
+
+    <input
+      matInput
+      [id]="inputId()"
+      [type]="actualType()"
+      [placeholder]="placeholder()"
+      [disabled]="disabled()"
+      [readonly]="readonly()"
+      [required]="required()"
+      [min]="min()"
+      [max]="max()"
+      [step]="step()"
+      [autocomplete]="autocomplete()"
+      [value]="value()"
+      (input)="onInputChange($event)"
+      (blur)="onBlur()"
+    />
+
+    @if (clearable() && value() && !disabled()) {
+      <button 
+        mat-icon-button 
+        matSuffix 
+        type="button" 
+        aria-label="Clear value" 
+        (click)="clearValue($event)"
+        class="text-muted hover-primary">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+
+    @if (type() === 'password') {
+      <button 
+        mat-icon-button 
+        matSuffix 
+        type="button" 
+        aria-label="Toggle password visibility" 
+        (click)="togglePasswordVisibility($event)"
+        class="text-muted hover-primary">
+        <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+    }
+
+    @if (suffixIcon() && type() !== 'password') {
+      <mat-icon matSuffix class="ml-2 text-muted">{{ suffixIcon() }}</mat-icon>
+    }
+
+    @if (hint()) {
+      <mat-hint>{{ hint() }}</mat-hint>
+    }
+
+    @if (errorMessage()) {
+      <mat-error>{{ errorMessage() }}</mat-error>
+    }
+  </mat-form-field>

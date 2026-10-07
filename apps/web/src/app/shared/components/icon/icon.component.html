@@ -1,0 +1,12 @@
+<span
+  [class]="familyClass()"
+  [class.animate-spin]="spin()"
+  [style.font-size]="computedFontSize()"
+  [style.width]="computedFontSize()"
+  [style.height]="computedFontSize()"
+  [style.line-height]="1"
+  [style.font-variation-settings]="fontVariationSettings()"
+  [style.color]="color() || null"
+  class="d-inline-flex items-center justify-center leading-none select-none">
+  {{ name() }}<ng-content></ng-content>
+</span>
