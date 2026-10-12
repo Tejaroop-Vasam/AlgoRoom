@@ -9,6 +9,12 @@
             </div>
           }
           <div>
+            @if (config?.eyebrow) {
+              <div class="d-flex items-center gap-2 mb-1">
+                <span class="d-inline-block w-2 h-2 rounded-full bg-primary"></span>
+                <span class="font-mono text-2xs font-bold uppercase tracking-wider text-primary">{{ config?.eyebrow }}</span>
+              </div>
+            }
             @if (config?.title) {
               <h3 class="font-sans text-lg text-on-surface font-bold m-0 leading-tight">
                 {{ config?.title }}
@@ -22,15 +28,20 @@
           </div>
         </div>
 
-        @if (config?.showCloseButton !== false) {
-          <button 
-            type="button" 
-            (click)="close()"
-            class="border-0 bg-transparent text-outline hover-text-on-surface cursor-pointer p-1 rounded-lg"
-            title="Dismiss">
-            <app-icon name="close" size="md"></app-icon>
-          </button>
-        }
+        <div class="flex items-center gap-2">
+          @if (config?.showEscHint && !config?.disableClose) {
+            <app-kbd [keys]="['Esc']"></app-kbd>
+          }
+          @if (config?.showCloseButton !== false) {
+            <button 
+              type="button" 
+              (click)="close()"
+              class="border-0 bg-transparent text-outline hover-text-on-surface cursor-pointer p-1 rounded-lg"
+              title="Dismiss">
+              <app-icon name="close" size="md"></app-icon>
+            </button>
+          }
+        </div>
       </div>
     }
 
@@ -42,5 +53,11 @@
         <ng-container *ngComponentOutlet="data.component"></ng-container>
       }
     </div>
+
+    @if (config?.footer) {
+      <div class="flex items-center justify-between gap-4 pt-4 mt-4 border-t border-surface-high">
+        <ng-container *ngTemplateOutlet="config!.footer!; context: templateContext"></ng-container>
+      </div>
+    }
   </div>
 </div>

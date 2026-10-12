@@ -1,0 +1,8 @@
+<span class="d-inline-flex items-center gap-1">
+  @for (key of keys(); track $index) {
+    <kbd class="kbd d-inline-flex items-center justify-center px-2 py-0 rounded-sm font-mono text-2xs uppercase tracking-wider">{{ key }}</kbd>
+  }
+  @if (keys().length === 0) {
+    <kbd class="kbd d-inline-flex items-center justify-center px-2 py-0 rounded-sm font-mono text-2xs uppercase tracking-wider"><ng-content></ng-content></kbd>
+  }
+</span>

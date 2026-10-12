@@ -1,0 +1,11 @@
+:host {
+  display: inline-flex;
+}
+
+.kbd {
+  min-width: 1.5rem;
+  height: 1.375rem;
+  background-color: var(--color-surface-container-high);
+  border: 0.0625rem solid var(--color-surface-container-highest);
+  color: var(--color-on-surface-variant);
+}

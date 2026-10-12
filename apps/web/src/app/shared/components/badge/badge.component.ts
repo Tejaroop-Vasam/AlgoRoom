@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { IconComponent } from '../icon/icon.component';
 
 export type BadgeVariant = 'secondary' | 'primary' | 'tertiary' | 'error' | 'surface';
+export type BadgeShape = 'pill' | 'square';
+export type BadgeSize = 'sm' | 'md';
 
 @Component({
   selector: 'app-badge',
@@ -19,4 +21,6 @@ export class BadgeComponent {
   readonly variant = input<BadgeVariant>('secondary');
   readonly pulse = input<boolean>(false);
   readonly icon = input<string | undefined>(undefined);
+  readonly shape = input<BadgeShape>('pill');
+  readonly size = input<BadgeSize>('md');
 }

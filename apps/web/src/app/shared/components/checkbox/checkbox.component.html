@@ -1,0 +1,29 @@
+<button
+  type="button"
+  role="checkbox"
+  [attr.aria-checked]="indeterminate() ? 'mixed' : checked()"
+  [attr.aria-label]="ariaLabel() || label() || null"
+  [disabled]="disabled()"
+  (click)="toggle($event)"
+  class="d-inline-flex items-center gap-2 border-0 bg-transparent p-0 font-sans text-sm text-on-surface"
+  [class.cursor-pointer]="!disabled()"
+  [class.cursor-not-allowed]="disabled()"
+  [class.opacity-50]="disabled()">
+  <span
+    class="checkbox-box d-inline-flex items-center justify-center rounded-xs shrink-0 transition"
+    [class.checkbox-checked]="checked() || indeterminate()"
+    [class.w-4]="size() === 'sm'"
+    [class.h-4]="size() === 'sm'"
+    [style.width]="size() === 'md' ? '1.25rem' : null"
+    [style.height]="size() === 'md' ? '1.25rem' : null">
+    @if (indeterminate()) {
+      <app-icon name="remove" [size]="size() === 'sm' ? 'xs' : 'sm'" [weight]="700"></app-icon>
+    } @else if (checked()) {
+      <app-icon name="check" [size]="size() === 'sm' ? 'xs' : 'sm'" [weight]="700"></app-icon>
+    }
+  </span>
+  @if (label()) {
+    <span>{{ label() }}</span>
+  }
+  <ng-content></ng-content>
+</button>

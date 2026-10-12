@@ -21,6 +21,9 @@ export class ModalComponent {
   readonly title = input<string | undefined>(undefined);
   readonly description = input<string | undefined>(undefined);
   readonly icon = input<string | undefined>(undefined);
+  readonly eyebrow = input<string | undefined>(undefined);
+  readonly footer = input<TemplateRef<unknown> | undefined>(undefined);
+  readonly showEscHint = input<boolean>(false);
   readonly width = input<string>('36rem');
   readonly maxWidth = input<string>('90vw');
   readonly disableClose = input<boolean>(false);
@@ -54,6 +57,9 @@ export class ModalComponent {
       title: this.title(),
       description: this.description(),
       icon: this.icon(),
+      eyebrow: this.eyebrow(),
+      footer: this.footer(),
+      showEscHint: this.showEscHint(),
       width: this.width(),
       maxWidth: this.maxWidth(),
       disableClose: this.disableClose(),

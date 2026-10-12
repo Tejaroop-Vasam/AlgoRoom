@@ -1,0 +1,22 @@
+<button
+  type="button"
+  role="switch"
+  [attr.aria-checked]="checked()"
+  [attr.aria-label]="ariaLabel() || label() || null"
+  [disabled]="disabled()"
+  (click)="toggle()"
+  class="d-inline-flex items-center gap-2 border-0 bg-transparent p-0 font-sans text-sm text-on-surface"
+  [class.flex-row-rev]="labelPosition() === 'start'"
+  [class.cursor-pointer]="!disabled()"
+  [class.cursor-not-allowed]="disabled()"
+  [class.opacity-50]="disabled()">
+  <span
+    class="switch-track relative d-inline-block rounded-full shrink-0 transition"
+    [class.switch-on]="checked()"
+    [class.switch-sm]="size() === 'sm'">
+    <span class="switch-thumb absolute rounded-full transition"></span>
+  </span>
+  @if (label()) {
+    <span>{{ label() }}</span>
+  }
+</button>

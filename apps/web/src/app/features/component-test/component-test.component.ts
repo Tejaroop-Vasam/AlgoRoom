@@ -1,20 +1,45 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import {
+  AvatarComponent,
   BadgeComponent,
   ButtonComponent,
+  CheckboxComponent,
+  ChipComponent,
   CodeEditorComponent,
   Competitor,
   IconComponent,
   InputComponent,
+  KbdComponent,
   LiveGridComponent,
-  ModalService
+  ModalService,
+  OptionCardComponent,
+  SegmentOption,
+  SegmentedControlComponent,
+  SelectComponent,
+  SelectOption,
+  ToggleSwitchComponent
 } from '../../shared';
 import { TestModalContentComponent } from './test-modal-content/test-modal-content.component';
 
-export type ComponentSection = 'all' | 'inputs' | 'buttons' | 'badges' | 'icons' | 'modals' | 'editor' | 'live-grid';
+export type ComponentSection = 'all' | 'inputs' | 'buttons' | 'badges' | 'icons' | 'modals' | 'chips' | 'controls' | 'cards' | 'editor' | 'live-grid';
 
 @Component({
-  imports: [InputComponent, ButtonComponent, BadgeComponent, IconComponent, CodeEditorComponent, LiveGridComponent],
+  imports: [
+    InputComponent,
+    ButtonComponent,
+    BadgeComponent,
+    IconComponent,
+    CodeEditorComponent,
+    LiveGridComponent,
+    ChipComponent,
+    SegmentedControlComponent,
+    SelectComponent,
+    OptionCardComponent,
+    CheckboxComponent,
+    AvatarComponent,
+    KbdComponent,
+    ToggleSwitchComponent
+  ],
   selector: 'app-component-test',
   styleUrl: './component-test.component.css',
   templateUrl: './component-test.component.html',
@@ -25,6 +50,67 @@ export class ComponentTest {
 
   readonly activeSection = signal<ComponentSection>('all');
   readonly clearableValue = signal('Clear me');
+
+  readonly tagOptions = ['Graph', 'Dynamic Programming', 'Trees', 'Arrays & Hashing', 'Two Pointers', 'Binary Search'];
+  readonly selectedTags = signal<string[]>(['Graph', 'Dynamic Programming']);
+  readonly stagedProblems = signal<string[]>(["Dijkstra's Shortest Path", 'Course Schedule II', 'Network Delay Time']);
+
+  readonly difficultyOptions: SegmentOption[] = [
+    { label: 'Easy', value: 'easy' },
+    { label: 'Med', value: 'medium' },
+    { label: 'Hard', value: 'hard' },
+  ];
+  readonly difficulty = signal<string | undefined>('medium');
+
+  readonly viewOptions: SegmentOption[] = [
+    { label: 'List', value: 'list', icon: 'view_list' },
+    { label: 'Grid', value: 'grid', icon: 'grid_view' },
+    { label: 'Board', value: 'board', icon: 'view_kanban', disabled: true },
+  ];
+  readonly view = signal<string | undefined>('list');
+
+  readonly curatedListOptions: SelectOption[] = [
+    { label: 'Blind 75', value: 'blind75' },
+    { label: 'NeetCode 150', value: 'neetcode150' },
+    { label: 'Grind 169', value: 'grind169' },
+    { label: 'Top Interview 150', value: 'top150', disabled: true },
+  ];
+  readonly curatedList = signal<string | null>('blind75');
+  readonly bufferSecurity = signal<string | null>(null);
+  readonly bufferSecurityOptions: SelectOption[] = [
+    { label: 'Obscured until round end', value: 'obscured', icon: 'visibility_off' },
+    { label: 'Visible to host', value: 'host', icon: 'shield_person' },
+    { label: 'Fully visible', value: 'open', icon: 'visibility' },
+  ];
+
+  readonly problemChecks = signal<boolean[]>([true, true, false]);
+  readonly allProblemsChecked = computed(() => this.problemChecks().every(Boolean));
+  readonly someProblemsChecked = computed(() => this.problemChecks().some(Boolean) && !this.allProblemsChecked());
+
+  readonly hiddenTests = signal(true);
+  readonly autoStart = signal(false);
+
+  readonly arenaMode = signal<'race' | 'coop'>('race');
+
+  isTagSelected(tag: string): boolean {
+    return this.selectedTags().includes(tag);
+  }
+
+  setTagSelected(tag: string, selected: boolean): void {
+    this.selectedTags.update(tags => selected ? [...tags, tag] : tags.filter(t => t !== tag));
+  }
+
+  removeStagedProblem(problem: string): void {
+    this.stagedProblems.update(problems => problems.filter(p => p !== problem));
+  }
+
+  setProblemChecked(index: number, checked: boolean): void {
+    this.problemChecks.update(checks => checks.map((c, i) => i === index ? checked : c));
+  }
+
+  setAllProblemsChecked(checked: boolean): void {
+    this.problemChecks.update(checks => checks.map(() => checked));
+  }
 
   readonly testCompetitors: Competitor[] = [
     {

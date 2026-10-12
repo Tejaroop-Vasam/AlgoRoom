@@ -1,5 +1,20 @@
 <div 
-  class="d-inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-high border border-surface-highest">
+  class="d-inline-flex items-center border"
+  [class.gap-2]="size() === 'md'"
+  [class.px-3]="size() === 'md'"
+  [class.py-1]="size() === 'md'"
+  [class.gap-1]="size() === 'sm'"
+  [class.px-2]="size() === 'sm'"
+  [class.rounded-full]="shape() === 'pill'"
+  [class.rounded-xs]="shape() === 'square'"
+  [class.bg-surface-container-high]="shape() === 'pill'"
+  [class.border-surface-highest]="shape() === 'pill'"
+  [class.badge-tinted]="shape() === 'square'"
+  [class.badge-secondary]="variant() === 'secondary'"
+  [class.badge-primary]="variant() === 'primary'"
+  [class.badge-tertiary]="variant() === 'tertiary'"
+  [class.badge-error]="variant() === 'error'"
+  [class.badge-surface]="variant() === 'surface'">
   @if (pulse()) {
     <span 
       class="d-inline-block rounded-full" 
@@ -14,7 +29,10 @@
     <app-icon [name]="icon()!" size="xs"></app-icon>
   }
   <span 
-    class="font-mono text-xs tracking-wider"
+    class="font-mono tracking-wider"
+    [class.text-xs]="size() === 'md'"
+    [class.text-2xs]="size() === 'sm'"
+    [class.font-bold]="shape() === 'square'"
     [class.text-secondary]="variant() === 'secondary'"
     [class.text-primary]="variant() === 'primary'"
     [class.text-tertiary]="variant() === 'tertiary'"

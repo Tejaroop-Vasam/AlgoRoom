@@ -1,0 +1,24 @@
+<span
+  class="d-inline-flex items-center justify-center rounded-full overflow-hidden font-sans font-semibold select-none shrink-0"
+  [style.width]="dimension()"
+  [style.height]="dimension()"
+  [class.text-2xs]="size() === 'xs'"
+  [class.text-xs]="size() === 'sm' || size() === 'md'"
+  [class.text-sm]="size() === 'lg'"
+  [class.bg-primary-container]="variant() === 'primary'"
+  [class.text-on-primary]="variant() === 'primary'"
+  [class.bg-secondary]="variant() === 'secondary'"
+  [class.text-on-secondary]="variant() === 'secondary'"
+  [class.bg-tertiary]="variant() === 'tertiary'"
+  [class.text-on-tertiary]="variant() === 'tertiary'"
+  [class.bg-surface-container-highest]="variant() === 'surface'"
+  [class.text-on-surface]="variant() === 'surface'"
+  [attr.title]="name() || null"
+  role="img"
+  [attr.aria-label]="name() || 'Avatar'">
+  @if (src() && !imageFailed()) {
+    <img [src]="src()" [alt]="name()" class="w-full h-full" style="object-fit: cover;" (error)="imageFailed.set(true)" />
+  } @else {
+    {{ initials() }}
+  }
+</span>

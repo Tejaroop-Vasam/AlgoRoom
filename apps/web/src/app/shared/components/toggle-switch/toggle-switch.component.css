@@ -1,0 +1,39 @@
+.switch-track {
+  --track-w: 2.25rem;
+  --track-h: 1.25rem;
+  --thumb: 0.875rem;
+  width: var(--track-w);
+  height: var(--track-h);
+  background-color: var(--color-surface-container-highest);
+  border: 0.0625rem solid var(--color-outline-variant);
+}
+
+.switch-sm {
+  --track-w: 1.75rem;
+  --track-h: 1rem;
+  --thumb: 0.625rem;
+}
+
+.switch-thumb {
+  width: var(--thumb);
+  height: var(--thumb);
+  top: 50%;
+  left: 0.125rem;
+  transform: translateY(-50%);
+  background-color: var(--color-outline);
+}
+
+.switch-on {
+  background-color: var(--color-primary-container);
+  border-color: var(--color-primary-container);
+}
+
+.switch-on .switch-thumb {
+  left: calc(var(--track-w) - var(--thumb) - 0.25rem);
+  background-color: var(--color-on-primary);
+}
+
+button:focus-visible .switch-track {
+  outline: 0.125rem solid var(--color-primary);
+  outline-offset: 0.125rem;
+}

@@ -4,6 +4,9 @@ export interface ModalConfig<D = unknown> {
   title?: string;
   description?: string;
   icon?: string;
+  eyebrow?: string;
+  footer?: TemplateRef<unknown>;
+  showEscHint?: boolean;
   width?: string;
   maxWidth?: string;
   disableClose?: boolean;
