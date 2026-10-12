@@ -4,6 +4,9 @@
   "description": "Collaborative & Competitive Real-Time DSA Practice Platform",
   "private": true,
   "scripts": {
+    "server:dev": "npm --prefix apps/server run dev",
+    "server:build": "npm --prefix apps/server run build",
+    "web:dev": "npm --prefix apps/web run start"
   },
   "author": "Leet-Rooms",
   "license": "MIT"
