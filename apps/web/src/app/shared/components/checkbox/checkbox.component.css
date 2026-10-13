@@ -1,0 +1,19 @@
+.checkbox-box {
+  background-color: var(--color-surface-container-high);
+  border: 0.0625rem solid var(--color-outline-variant);
+  color: var(--color-on-primary);
+}
+
+button:focus-visible .checkbox-box {
+  outline: 0.125rem solid var(--color-primary);
+  outline-offset: 0.125rem;
+}
+
+button:hover:not(:disabled) .checkbox-box:not(.checkbox-checked) {
+  border-color: var(--color-outline);
+}
+
+.checkbox-checked {
+  background-color: var(--color-primary-container);
+  border-color: var(--color-primary-container);
+}

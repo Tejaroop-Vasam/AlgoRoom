@@ -1,0 +1,38 @@
+<span
+  class="chip d-inline-flex items-center gap-1 rounded-sm font-mono whitespace-nowrap select-none border transition"
+  [class.chip-interactive]="selectable() && !disabled()"
+  [class.chip-selected]="selected()"
+  [class.chip-primary]="variant() === 'primary'"
+  [class.chip-outline]="variant() === 'outline'"
+  [class.px-2]="size() === 'sm'"
+  [class.py-0]="size() === 'sm'"
+  [class.text-2xs]="size() === 'sm'"
+  [class.px-3]="size() === 'md'"
+  [class.py-1]="size() === 'md'"
+  [class.text-xs]="size() === 'md'"
+  [class.opacity-50]="disabled()"
+  [class.cursor-not-allowed]="disabled()"
+  [attr.role]="selectable() ? 'button' : null"
+  [attr.tabindex]="selectable() && !disabled() ? 0 : null"
+  [attr.aria-pressed]="selectable() ? selected() : null"
+  (click)="toggle()"
+  (keydown.enter)="toggle()"
+  (keydown.space)="$event.preventDefault(); toggle()">
+  @if (icon()) {
+    <app-icon [name]="icon()!" size="xs"></app-icon>
+  }
+  @if (prefix()) {
+    <span class="chip-prefix font-bold">{{ prefix() }}</span>
+  }
+  <span>{{ label() }}<ng-content></ng-content></span>
+  @if (removable()) {
+    <button
+      type="button"
+      class="chip-remove d-inline-flex items-center justify-center border-0 bg-transparent p-0 cursor-pointer rounded-xs"
+      [disabled]="disabled()"
+      [attr.aria-label]="'Remove ' + label()"
+      (click)="remove($event)">
+      <app-icon name="close" size="sm"></app-icon>
+    </button>
+  }
+</span>

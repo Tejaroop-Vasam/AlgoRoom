@@ -1,0 +1,53 @@
+:host {
+  display: inline-flex;
+}
+
+.chip {
+  background-color: var(--color-surface-container-low);
+  border-color: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+}
+
+.chip-outline {
+  background-color: transparent;
+  border-color: var(--color-outline-variant);
+}
+
+.chip-primary {
+  background-color: var(--color-surface-container-lowest);
+  border-color: var(--color-surface-container-high);
+  color: var(--color-on-surface);
+}
+
+.chip-primary .chip-prefix {
+  color: var(--color-primary);
+}
+
+.chip-interactive {
+  cursor: pointer;
+}
+
+.chip-interactive:hover:not(.chip-selected) {
+  background-color: var(--color-surface-container-high);
+}
+
+.chip-interactive:focus-visible {
+  outline: 0.125rem solid var(--color-primary);
+  outline-offset: 0.0625rem;
+}
+
+.chip-selected {
+  background-color: var(--color-primary-container);
+  border-color: var(--color-primary-container);
+  color: var(--color-on-primary);
+  font-weight: 700;
+}
+
+.chip-remove {
+  color: inherit;
+  opacity: 0.8;
+}
+
+.chip-remove:hover {
+  opacity: 1;
+}

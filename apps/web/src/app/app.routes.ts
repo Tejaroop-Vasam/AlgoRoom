@@ -1,12 +1,9 @@
 import { Routes } from '@angular/router';
 
-
-import { ComponentTest } from './features/component-test/component-test.component';
-
 export const routes: Routes = [
   {
     path: 'test',
-    component: ComponentTest,
+    loadComponent: () => import('./features/component-test/component-test.component').then(m => m.ComponentTest),
   },
   {
     path: '**',

@@ -1,3 +1,16 @@
 :host {
   display: inline-flex;
 }
+
+/* Square badges use a tinted fill of their variant color (e.g. difficulty tags) */
+.badge-tinted {
+  --badge-tint: var(--color-on-surface);
+  background-color: color-mix(in srgb, var(--badge-tint) 14%, transparent);
+  border-color: color-mix(in srgb, var(--badge-tint) 24%, transparent);
+}
+
+.badge-tinted.badge-secondary { --badge-tint: var(--color-secondary); }
+.badge-tinted.badge-primary { --badge-tint: var(--color-primary); }
+.badge-tinted.badge-tertiary { --badge-tint: var(--color-tertiary); }
+.badge-tinted.badge-error { --badge-tint: var(--color-error); }
+.badge-tinted.badge-surface { --badge-tint: var(--color-outline); }

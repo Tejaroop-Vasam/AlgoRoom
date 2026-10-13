@@ -1,0 +1,19 @@
+.segment {
+  background-color: transparent;
+  color: var(--color-on-surface-variant);
+}
+
+.segment:hover:not(.segment-active):not(:disabled) {
+  background-color: var(--color-surface-container-high);
+}
+
+.segment:focus-visible {
+  outline: 0.125rem solid var(--color-primary);
+  outline-offset: 0.0625rem;
+}
+
+.segment-active {
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary);
+  font-weight: 700;
+}

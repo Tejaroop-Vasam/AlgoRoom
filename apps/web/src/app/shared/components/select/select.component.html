@@ -1,0 +1,54 @@
+<mat-form-field
+  [appearance]="appearance()"
+  class="w-full"
+  [class.has-prefix]="prefixIcon()">
+
+  @if (label()) {
+    <mat-label>{{ label() }}</mat-label>
+  }
+
+  @if (prefixIcon()) {
+    <mat-icon matPrefix class="mr-2 text-muted">{{ prefixIcon() }}</mat-icon>
+  }
+
+  <mat-select
+    [id]="inputId()"
+    [placeholder]="placeholder()"
+    [disabled]="disabled() || readonly()"
+    [required]="required()"
+    [multiple]="multiple()"
+    [value]="value()"
+    (valueChange)="onSelectionChange($event)"
+    (closed)="onBlur()">
+    @if (valuePrefix() && !multiple()) {
+      <mat-select-trigger>{{ valuePrefix() }} {{ selectedLabel() }}</mat-select-trigger>
+    }
+    @for (option of options(); track option.value) {
+      <mat-option [value]="option.value" [disabled]="option.disabled">
+        @if (option.icon) {
+          <mat-icon>{{ option.icon }}</mat-icon>
+        }
+        {{ option.label }}
+      </mat-option>
+    }
+  </mat-select>
+
+  @if (clearable() && value() !== null && value() !== '' && !disabled() && !multiple()) {
+    <button
+      matSuffix
+      type="button"
+      aria-label="Clear selection"
+      (click)="clearValue($event)"
+      class="d-inline-flex items-center border-0 bg-transparent cursor-pointer mr-2 text-muted hover-primary">
+      <mat-icon>close</mat-icon>
+    </button>
+  }
+
+  @if (hint()) {
+    <mat-hint>{{ hint() }}</mat-hint>
+  }
+
+  @if (errorMessage()) {
+    <mat-error>{{ errorMessage() }}</mat-error>
+  }
+</mat-form-field>
