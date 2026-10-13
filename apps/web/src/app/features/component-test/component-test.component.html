@@ -1,16 +1,19 @@
 <div class="p-8 max-w-6xl mx-auto flex flex-col gap-6">
-  <div class="flex items-center gap-2">
+  <div class="flex flex-wrap items-center gap-2">
     <app-button [variant]="activeSection() === 'all' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('all')">All</app-button>
     <app-button [variant]="activeSection() === 'inputs' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('inputs')">Inputs</app-button>
     <app-button [variant]="activeSection() === 'buttons' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('buttons')">Buttons</app-button>
     <app-button [variant]="activeSection() === 'badges' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('badges')">Badges</app-button>
     <app-button [variant]="activeSection() === 'icons' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('icons')">Icons</app-button>
     <app-button [variant]="activeSection() === 'modals' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('modals')">Modals</app-button>
+    <app-button [variant]="activeSection() === 'chips' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('chips')">Chips</app-button>
+    <app-button [variant]="activeSection() === 'controls' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('controls')">Controls</app-button>
+    <app-button [variant]="activeSection() === 'cards' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('cards')">Cards</app-button>
     <app-button [variant]="activeSection() === 'editor' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('editor')">Editor</app-button>
     <app-button [variant]="activeSection() === 'live-grid' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('live-grid')">Live Grid</app-button>
   </div>
 
-  @if (activeSection() !== 'editor' && activeSection() !== 'live-grid') {
+  @if (activeSection() === 'all' || activeSection() === 'inputs' || activeSection() === 'buttons' || activeSection() === 'badges' || activeSection() === 'icons' || activeSection() === 'modals') {
     <div [class]="activeSection() === 'all' ? 'd-grid grid-cols-3 gap-8 items-start' : 'max-w-md flex flex-col gap-4'">
       @if (activeSection() === 'all' || activeSection() === 'inputs') {
         <div class="flex flex-col gap-4">
@@ -74,6 +77,21 @@
                 Open with Component
               </app-button>
 
+              <app-button variant="surface" icon="rocket_launch" iconPosition="start" (clicked)="modalService.open(templateModal, { eyebrow: 'Instance Config // Node 04', title: 'Deploy Arena Session', description: 'Eyebrow, Esc hint and footer slot', showEscHint: true, footer: modalFooter, width: '40rem' })">
+                Open with eyebrow &amp; footer
+              </app-button>
+
+              <ng-template #modalFooter let-close="close">
+                <span class="flex items-center gap-2 text-xs text-muted">
+                  <app-icon name="lock" size="sm"></app-icon>
+                  Session token hash will generate upon room provisioning
+                </span>
+                <div class="flex items-center gap-2">
+                  <app-button size="sm" variant="ghost" (clicked)="close()">Cancel</app-button>
+                  <app-button size="sm" variant="primary" icon="arrow_forward" (clicked)="close()">Create Room</app-button>
+                </div>
+              </ng-template>
+
               <!-- 1. By passing ng-template -->
               <ng-template #templateModal let-close="close">
                 <div class="flex flex-col gap-4">
@@ -111,6 +129,15 @@
               <app-badge label="Fast track" variant="tertiary" icon="bolt"></app-badge>
               <app-badge label="Locked profile" variant="surface" icon="lock"></app-badge>
               <app-badge label="Recording" variant="error" [pulse]="true" icon="videocam"></app-badge>
+
+              <span class="text-xs text-muted mt-2">Square + small (difficulty tags)</span>
+              <div class="flex flex-wrap items-center gap-2">
+                <app-badge label="Easy" variant="secondary" shape="square" size="sm"></app-badge>
+                <app-badge label="Medium" variant="tertiary" shape="square" size="sm"></app-badge>
+                <app-badge label="Hard" variant="error" shape="square" size="sm"></app-badge>
+                <app-badge label="Premium" variant="primary" shape="square" size="sm" icon="lock"></app-badge>
+                <app-badge label="Archived" variant="surface" shape="square"></app-badge>
+              </div>
             </div>
           }
 
@@ -158,6 +185,178 @@
               </div>
             </div>
           }
+        </div>
+      }
+    </div>
+  }
+
+  @if (activeSection() === 'all' || activeSection() === 'chips' || activeSection() === 'controls' || activeSection() === 'cards') {
+    <div [class]="activeSection() === 'all' ? 'd-grid grid-cols-3 gap-8 items-start' : 'max-w-2xl flex flex-col gap-4'">
+      @if (activeSection() === 'all' || activeSection() === 'chips') {
+        <div class="flex flex-col items-start gap-4">
+          <h3 class="text-lg font-medium text-white mb-2">Chip Variations</h3>
+
+          <span class="text-xs text-muted">Static (feature tags)</span>
+          <div class="flex flex-wrap gap-2">
+            <app-chip label="Zero-Code Leakage"></app-chip>
+            <app-chip label="Strict Timers"></app-chip>
+            <app-chip label="Shared AST" variant="outline"></app-chip>
+            <app-chip label="Peer Audio/Video" icon="videocam" size="sm"></app-chip>
+          </div>
+
+          <span class="text-xs text-muted">Selectable filters (selected ones are removable)</span>
+          <div class="flex flex-wrap gap-2">
+            <app-chip
+              label="All"
+              [selectable]="true"
+              [selected]="selectedTags().length === 0"
+              (selectedChange)="selectedTags.set([])">
+            </app-chip>
+            @for (tag of tagOptions; track tag) {
+              <app-chip
+                [label]="tag"
+                [selectable]="true"
+                [removable]="isTagSelected(tag)"
+                [selected]="isTagSelected(tag)"
+                (selectedChange)="setTagSelected(tag, $event)"
+                (removed)="setTagSelected(tag, false)">
+              </app-chip>
+            }
+          </div>
+
+          <span class="text-xs text-muted">Prefixed + removable (staged order)</span>
+          <div class="flex flex-wrap gap-2">
+            @for (problem of stagedProblems(); track problem; let i = $index) {
+              <app-chip
+                variant="primary"
+                [prefix]="'#' + (i + 1)"
+                [label]="problem"
+                [removable]="true"
+                (removed)="removeStagedProblem(problem)">
+              </app-chip>
+            } @empty {
+              <span class="text-xs text-subtle">No problems staged</span>
+            }
+          </div>
+
+          <span class="text-xs text-muted">Disabled</span>
+          <div class="flex flex-wrap gap-2">
+            <app-chip label="Locked tag" [selectable]="true" [disabled]="true"></app-chip>
+            <app-chip label="Locked selected" [selectable]="true" [selected]="true" [removable]="true" [disabled]="true"></app-chip>
+          </div>
+        </div>
+      }
+
+      @if (activeSection() === 'all' || activeSection() === 'controls') {
+        <div class="flex flex-col gap-4">
+          <h3 class="text-lg font-medium text-white mb-2">Control Variations</h3>
+
+          <span class="text-xs text-muted">Segmented control — selected: {{ difficulty() }}</span>
+          <app-segmented-control ariaLabel="Difficulty" size="sm" [options]="difficultyOptions" [(value)]="difficulty"></app-segmented-control>
+          <app-segmented-control ariaLabel="View" [options]="viewOptions" [(value)]="view"></app-segmented-control>
+          <app-segmented-control ariaLabel="Difficulty full width" [options]="difficultyOptions" [fullWidth]="true" [(value)]="difficulty"></app-segmented-control>
+
+          <span class="text-xs text-muted mt-2">Select</span>
+          <app-select label="Curated list" prefixIcon="bookmark" valuePrefix="Curated:" [options]="curatedListOptions" [(value)]="curatedList"></app-select>
+          <app-select label="Buffer security" placeholder="Choose a policy" [clearable]="true" [options]="bufferSecurityOptions" [(value)]="bufferSecurity"></app-select>
+          <app-select label="Required select" [required]="true" errorMessage="Pick one" hint="Shown below the field" [options]="curatedListOptions"></app-select>
+          <app-select label="Disabled select" [disabled]="true" [options]="curatedListOptions" [value]="'blind75'"></app-select>
+
+          <span class="text-xs text-muted mt-2">Checkbox</span>
+          <app-checkbox
+            label="Select all problems"
+            [checked]="allProblemsChecked()"
+            [indeterminate]="someProblemsChecked()"
+            (checkedChange)="setAllProblemsChecked($event)">
+          </app-checkbox>
+          <div class="flex flex-col gap-2 pl-6">
+            @for (checked of problemChecks(); track $index; let i = $index) {
+              <app-checkbox
+                [label]="['Dijkstra\'s Shortest Path', 'Course Schedule II', 'Word Ladder'][i]"
+                [checked]="checked"
+                (checkedChange)="setProblemChecked(i, $event)">
+              </app-checkbox>
+            }
+          </div>
+          <div class="flex items-center gap-4">
+            <app-checkbox size="sm" label="Small" [checked]="true"></app-checkbox>
+            <app-checkbox label="Disabled" [disabled]="true"></app-checkbox>
+            <app-checkbox label="Disabled on" [disabled]="true" [checked]="true"></app-checkbox>
+          </div>
+
+          <span class="text-xs text-muted mt-2">Toggle switch</span>
+          <app-toggle-switch label="Hidden test cases" [(checked)]="hiddenTests"></app-toggle-switch>
+          <app-toggle-switch label="Auto-start when lobby is full" [(checked)]="autoStart"></app-toggle-switch>
+          <app-toggle-switch label="Label at start" labelPosition="start" [checked]="true"></app-toggle-switch>
+          <div class="flex items-center gap-4">
+            <app-toggle-switch size="sm" ariaLabel="Small switch" [checked]="true"></app-toggle-switch>
+            <app-toggle-switch label="Disabled" [disabled]="true"></app-toggle-switch>
+            <app-toggle-switch label="Disabled on" [disabled]="true" [checked]="true"></app-toggle-switch>
+          </div>
+        </div>
+      }
+
+      @if (activeSection() === 'all' || activeSection() === 'cards') {
+        <div class="flex flex-col gap-8">
+          <div class="flex flex-col gap-4">
+            <h3 class="text-lg font-medium text-white mb-2">Option Card Variations</h3>
+            <div role="radiogroup" aria-label="Arena mode" class="flex flex-col gap-3">
+              <app-option-card
+                icon="sports_score"
+                title="Race Mode"
+                subtitle="Competitive Arena"
+                description="Isolated sandboxes, live progress telemetry, obscured buffers until round finish."
+                [selected]="arenaMode() === 'race'"
+                (selectedChange)="arenaMode.set('race')">
+                <app-chip label="Zero-Code Leakage" size="sm"></app-chip>
+                <app-chip label="Strict Timers" size="sm"></app-chip>
+              </app-option-card>
+              <app-option-card
+                icon="handshake"
+                title="Co-op Mode"
+                subtitle="Collaborative Pair"
+                description="Shared CRDT operational buffer, synchronized multi-cursor editing and co-executed unit tests."
+                [selected]="arenaMode() === 'coop'"
+                (selectedChange)="arenaMode.set('coop')">
+                <app-chip label="Shared AST" size="sm"></app-chip>
+                <app-chip label="Peer Audio/Video" size="sm"></app-chip>
+              </app-option-card>
+              <app-option-card
+                icon="lock"
+                title="Tournament"
+                subtitle="Coming soon"
+                description="Bracket-style elimination across multiple rounds."
+                [disabled]="true">
+              </app-option-card>
+            </div>
+          </div>
+
+          <div class="flex flex-col items-start gap-4">
+            <h3 class="text-lg font-medium text-white mb-2">Avatar Variations</h3>
+            <div class="flex items-center gap-3">
+              <app-avatar name="Teja" size="xs"></app-avatar>
+              <app-avatar name="Teja" size="sm"></app-avatar>
+              <app-avatar name="Teja" size="md"></app-avatar>
+              <app-avatar name="Teja" size="lg"></app-avatar>
+            </div>
+            <div class="flex items-center gap-3">
+              <app-avatar name="Rahul Sharma" variant="primary"></app-avatar>
+              <app-avatar name="Ananya Iyer" variant="secondary"></app-avatar>
+              <app-avatar name="Marcus Chen" variant="tertiary"></app-avatar>
+              <app-avatar name="Priya Patel" variant="surface"></app-avatar>
+              <app-avatar name="Broken Image" src="https://invalid.example/nope.png"></app-avatar>
+            </div>
+          </div>
+
+          <div class="flex flex-col items-start gap-4">
+            <h3 class="text-lg font-medium text-white mb-2">Key Hint Variations</h3>
+            <div class="flex items-center gap-3">
+              <app-kbd>Esc</app-kbd>
+              <app-kbd [keys]="['⌘', 'K']"></app-kbd>
+              <app-kbd [keys]="['Ctrl', 'Enter']"></app-kbd>
+              <app-kbd [keys]="['Shift', '?']"></app-kbd>
+            </div>
+          </div>
         </div>
       }
     </div>

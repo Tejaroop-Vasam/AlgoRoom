@@ -112,6 +112,7 @@
 .text-on-error-container { color: var(--color-on-error-container); }
 
 /* Background Colors */
+.bg-transparent { background-color: transparent; }
 .bg-background { background-color: var(--color-background, var(--color-surface)); }
 .bg-surface { background-color: var(--color-surface); }
 .bg-surface-dim { background-color: var(--color-surface-dim); }

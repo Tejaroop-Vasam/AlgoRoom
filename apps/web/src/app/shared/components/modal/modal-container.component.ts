@@ -2,12 +2,13 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { IconComponent } from '../icon/icon.component';
+import { KbdComponent } from '../kbd/kbd.component';
 import { ModalData } from './modal.types';
 
 @Component({
   selector: 'app-modal-container',
   standalone: true,
-  imports: [CommonModule, IconComponent],
+  imports: [CommonModule, IconComponent, KbdComponent],
   templateUrl: './modal-container.component.html',
   styleUrl: './modal-container.component.css'
 })
@@ -20,7 +21,7 @@ export class ModalContainerComponent {
   }
 
   get showHeader(): boolean {
-    return !!(this.config?.title || this.config?.icon || this.config?.showCloseButton !== false);
+    return !!(this.config?.title || this.config?.icon || this.config?.eyebrow || this.config?.showCloseButton !== false);
   }
 
   get templateContext() {
