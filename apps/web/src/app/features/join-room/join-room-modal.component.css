@@ -1,0 +1,8 @@
+:host {
+  display: block;
+}
+
+.field-error {
+  margin-top: -1rem;
+  padding-left: 1rem;
+}

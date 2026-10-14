@@ -18,14 +18,14 @@
 
   <div class="flex flex-col gap-2">
     @for (competitor of sortedCompetitors(); track competitor.name) {
-      <div 
+      <div
         class="p-3 rounded-lg bg-surface-container-lowest flex flex-col gap-2 border shadow-xs"
         [class.border-primary]="competitor.isCurrentUser"
         [class.border-surface-high]="!competitor.isCurrentUser"
         [class.opacity-75]="!competitor.isCurrentUser && competitor.rank > 2">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span 
+            <span
               class="font-mono text-xs font-bold"
               [class.text-secondary]="competitor.rank === 1"
               [class.text-primary]="competitor.isCurrentUser"
@@ -35,12 +35,12 @@
             <span class="font-semibold text-on-surface font-sans">{{ competitor.name }}</span>
 
             @if (competitor.isCurrentUser) {
-              <span class="px-1.5 py-0.5 rounded bg-primary text-on-primary font-semibold text-xs">
+              <span class="px-1 rounded bg-primary text-on-primary font-semibold text-xs">
                 YOU
               </span>
             }
 
-            <span 
+            <span
               class="flex items-center gap-1 font-medium"
               [class.text-secondary]="competitor.hasPassedTests"
               [class.text-primary]="competitor.isCurrentUser && !competitor.hasPassedTests"
@@ -52,7 +52,7 @@
             </span>
           </div>
 
-          <span 
+          <span
             class="font-bold"
             [class.text-on-surface]="competitor.rank === 1"
             [class.text-primary]="competitor.isCurrentUser"
@@ -84,7 +84,7 @@
 
         <div class="w-full pt-1">
           <div class="w-full h-1-5 bg-surface-container-high rounded-full overflow-hidden">
-            <div 
+            <div
               class="h-full"
               [class.bg-secondary]="competitor.rank === 1"
               [class.bg-primary]="competitor.isCurrentUser"

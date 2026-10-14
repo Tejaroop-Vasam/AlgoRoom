@@ -1,0 +1,71 @@
+@if (joinedRoom(); as room) {
+  <div class="flex flex-col items-center text-center gap-4 py-4">
+    <div class="w-14 h-14 rounded-full flex items-center justify-center bg-secondary-container text-on-secondary">
+      <app-icon name="how_to_reg" size="xl"></app-icon>
+    </div>
+    <div class="flex flex-col gap-1">
+      <h3 class="text-xl font-bold text-white m-0">You're in {{ room.name }}</h3>
+      <p class="text-sm text-on-surface-variant m-0">Waiting for {{ room.host.username }} to start the round.</p>
+    </div>
+    <div class="flex flex-wrap justify-center gap-2">
+      @for (player of room.participants; track player.id) {
+        <app-chip [label]="player.username" [icon]="player.isHost ? 'star' : 'person'" size="sm"></app-chip>
+      }
+    </div>
+    <app-button variant="primary" (clicked)="close()">Done</app-button>
+  </div>
+} @else {
+  <form class="flex flex-col gap-4" (submit)="$event.preventDefault(); submit()">
+    <app-input
+      label="Room code"
+      placeholder="e.g. GW7Q4K"
+      prefixIcon="key"
+      [hint]="error() ? '' : '6 characters, shared by the room host'"
+      [value]="code()"
+      (valueChange)="onCodeChange($event)">
+    </app-input>
+    @if (error()) {
+      <p class="field-error flex items-center gap-1 text-xs text-error m-0" role="alert">
+        <app-icon name="error" size="sm"></app-icon>
+        {{ error() }}
+      </p>
+    }
+
+    @if (preview(); as room) {
+      <div class="flex flex-col gap-3 p-4 rounded-lg bg-surface-container-low border border-surface-high">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex flex-col gap-1 min-w-0">
+            <span class="text-base font-semibold text-white truncate">{{ room.name }}</span>
+            <span class="text-xs text-muted">Hosted by {{ room.hostName }}</span>
+          </div>
+          <app-badge
+            [label]="room.mode === 'RACE' ? 'Race' : 'Co-op'"
+            [variant]="room.mode === 'RACE' ? 'error' : 'secondary'"
+            shape="square"
+            size="sm">
+          </app-badge>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <app-chip [label]="room.participantCount + ' / ' + room.maxParticipants + ' players'" icon="group" size="sm"></app-chip>
+          <app-chip [label]="room.problemCount + (room.problemCount === 1 ? ' problem' : ' problems')" icon="list" size="sm"></app-chip>
+          <app-chip [label]="room.status === 'LOBBY' ? 'In lobby' : 'In progress'" icon="schedule" size="sm"></app-chip>
+        </div>
+        @if (roomFull()) {
+          <span class="flex items-center gap-2 text-xs text-error">
+            <app-icon name="block" size="sm"></app-icon>
+            This room is full.
+          </span>
+        }
+      </div>
+    }
+
+    <div class="flex items-center justify-end gap-2">
+      <app-button variant="ghost" (clicked)="close()">Cancel</app-button>
+      @if (preview()) {
+        <app-button type="submit" variant="primary" icon="login" [loading]="loading()" [disabled]="roomFull()">Join Room</app-button>
+      } @else {
+        <app-button type="submit" variant="primary" icon="search" [loading]="loading()" [disabled]="!codeComplete()">Find Room</app-button>
+      }
+    </div>
+  </form>
+}
