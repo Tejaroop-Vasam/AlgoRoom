@@ -36,7 +36,9 @@ const plain = (text: string): CodeToken => ({ text, kind: 'plain' });
   standalone: true,
   imports: [BadgeComponent, ButtonComponent, IconComponent, LiveGridComponent],
   templateUrl: './landing.component.html',
-  styleUrl: './landing.component.css',
+  host: {
+    class: 'd-block',
+  },
 })
 export class LandingComponent implements OnInit {
   private readonly modalService = inject(ModalService);

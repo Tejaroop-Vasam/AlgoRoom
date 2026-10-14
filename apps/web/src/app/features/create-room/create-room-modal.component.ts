@@ -66,7 +66,9 @@ function randomRoomName(): string {
     ToggleSwitchComponent,
   ],
   templateUrl: './create-room-modal.component.html',
-  styleUrl: './create-room-modal.component.css',
+  host: {
+    class: 'd-block',
+  },
 })
 export class CreateRoomModalComponent {
   private readonly container = inject(ModalContainerComponent, { optional: true });
