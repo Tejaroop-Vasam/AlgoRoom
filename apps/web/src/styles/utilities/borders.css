@@ -14,4 +14,6 @@
 .border-t { border-top-width: 0.0625rem; border-top-style: solid; }
 .border-b { border-bottom-width: 0.0625rem; border-bottom-style: solid; }
 .border-l { border-left-width: 0.0625rem; border-left-style: solid; }
+.border-l-2 { border-left-width: 0.125rem; border-left-style: solid; }
+.border-l-4 { border-left-width: 0.25rem; border-left-style: solid; }
 .border-r { border-right-width: 0.0625rem; border-right-style: solid; }
