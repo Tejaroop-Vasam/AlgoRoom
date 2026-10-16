@@ -6,7 +6,11 @@
   "scripts": {
     "server:dev": "npm --prefix apps/server run dev",
     "server:build": "npm --prefix apps/server run build",
-    "web:dev": "npm --prefix apps/web run start"
+    "web:dev": "npm --prefix apps/web run start",
+    "scraper:seed": "apps/scraper/.venv/bin/python3 apps/scraper/seed_problems.py",
+    "swagger:export": "npm --prefix apps/server run swagger:export",
+    "api:generate": "npm --prefix apps/web run api:generate",
+    "api:sync": "npm run swagger:export && npm run api:generate"
   },
   "author": "Leet-Rooms",
   "license": "MIT"

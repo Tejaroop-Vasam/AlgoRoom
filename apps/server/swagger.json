@@ -1,0 +1,515 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/register": {
+      "post": {
+        "operationId": "UsersController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Register a new user account",
+        "tags": [
+          "Users & Auth"
+        ]
+      }
+    },
+    "/login": {
+      "post": {
+        "operationId": "UsersController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Authenticate user with username/email and password",
+        "tags": [
+          "Users & Auth"
+        ]
+      }
+    },
+    "/update": {
+      "put": {
+        "operationId": "UsersController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Update user profile details",
+        "tags": [
+          "Users & Auth"
+        ]
+      }
+    },
+    "/profile": {
+      "get": {
+        "operationId": "UsersController_profile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Get current user profile",
+        "tags": [
+          "Users & Auth"
+        ]
+      }
+    },
+    "/change-password": {
+      "put": {
+        "operationId": "UsersController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Change user password",
+        "tags": [
+          "Users & Auth"
+        ]
+      }
+    },
+    "/google-oauth": {
+      "post": {
+        "operationId": "UsersController_googleOAuth",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleOAuthDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Authenticate or register user with Google OAuth id token",
+        "tags": [
+          "Users & Auth"
+        ]
+      }
+    },
+    "/problems": {
+      "get": {
+        "operationId": "ProblemsController_getProblems",
+        "parameters": [
+          {
+            "name": "difficulty",
+            "required": false,
+            "in": "query",
+            "description": "Difficulty level",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "EASY",
+                "MEDIUM",
+                "HARD"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term by title or slug",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tags",
+            "required": false,
+            "in": "query",
+            "description": "Filter by tag slugs",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "list",
+            "required": false,
+            "in": "query",
+            "description": "Filter by curated list slug",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Page limit",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List and filter DSA problems with pagination",
+        "tags": [
+          "Problems"
+        ]
+      }
+    },
+    "/problems/tags": {
+      "get": {
+        "operationId": "ProblemsController_getTags",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get list of available problem topics and tags",
+        "tags": [
+          "Problems"
+        ]
+      }
+    },
+    "/problems/lists": {
+      "get": {
+        "operationId": "ProblemsController_getLists",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get curated DSA challenge lists",
+        "tags": [
+          "Problems"
+        ]
+      }
+    },
+    "/problems/{id}": {
+      "get": {
+        "operationId": "ProblemsController_getProblem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get DSA problem statement, constraints, and starter codes by ID",
+        "tags": [
+          "Problems"
+        ]
+      }
+    },
+    "/api/run": {
+      "post": {
+        "operationId": "RunnerController_run",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunCodeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Execute code against custom input or problem sample test case",
+        "tags": [
+          "Code Runner"
+        ]
+      }
+    },
+    "/api/submit": {
+      "post": {
+        "operationId": "RunnerController_submit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitCodeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Submit solution to evaluate against full test cases from storage/DB",
+        "tags": [
+          "Code Runner"
+        ]
+      }
+    },
+    "/rooms": {
+      "post": {
+        "operationId": "RoomsController_createRoom",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoomDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Create a new room instance",
+        "tags": [
+          "Rooms"
+        ]
+      }
+    },
+    "/rooms/{code}": {
+      "get": {
+        "operationId": "RoomsController_getRoomPreview",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get preview for a room by code",
+        "tags": [
+          "Rooms"
+        ]
+      }
+    },
+    "/rooms/{code}/join": {
+      "post": {
+        "operationId": "RoomsController_joinRoom",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Join a room by code",
+        "tags": [
+          "Rooms"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "AlgoRoom API",
+    "description": "REST API documentation for the AlgoRoom collaborative DSA platform",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "JWT-auth": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http",
+        "name": "Authorization",
+        "description": "Enter your JWT token",
+        "in": "header"
+      }
+    },
+    "schemas": {
+      "RegisterUserDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "LoginUserDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "GoogleOAuthDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "RunCodeDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "SubmitCodeDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateRoomDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Room name"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "RACE",
+              "COOP"
+            ],
+            "description": "Room mode"
+          },
+          "problemIds": {
+            "description": "List of problem IDs",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "maxParticipants": {
+            "type": "number",
+            "description": "Max participants",
+            "default": 4
+          },
+          "hiddenTestCases": {
+            "type": "boolean",
+            "description": "Hidden test cases",
+            "default": true
+          },
+          "bufferVisibility": {
+            "type": "string",
+            "enum": [
+              "OBSCURED",
+              "HOST_ONLY",
+              "OPEN"
+            ],
+            "description": "Buffer visibility"
+          }
+        },
+        "required": [
+          "name",
+          "mode",
+          "problemIds",
+          "maxParticipants",
+          "hiddenTestCases",
+          "bufferVisibility"
+        ]
+      }
+    }
+  }
+}
