@@ -1,0 +1,132 @@
+<div class="w-full max-w-1440 mx-auto px-4 pb-12 font-sans">
+  <section class="py-20 flex flex-col items-center text-center gap-6">
+    <app-badge label="Live arenas online" variant="secondary" [pulse]="true"></app-badge>
+
+    <h1 class="text-display tracking-tight font-sans font-bold text-white m-0 text-balance">
+      Practice DSA Together in Real-Time.
+    </h1>
+
+    <p class="max-w-xl text-lg text-on-surface-variant leading-relaxed m-0 text-balance">
+      Race your peers head-to-head or solve complex algorithmic challenges collaboratively in shared low-latency execution buffers.
+    </p>
+
+    <div class="flex flex-wrap justify-center gap-3 w-full">
+      <div class="w-64 max-w-full">
+        <app-button variant="primary" size="lg" icon="add_box" iconPosition="start" [fullWidth]="true" (clicked)="openCreateRoom()">
+          Create Room
+        </app-button>
+      </div>
+      <div class="w-64 max-w-full">
+        <app-button variant="outline" size="lg" icon="key" iconPosition="start" [fullWidth]="true" (clicked)="openJoinRoom()">
+          Join with Code
+        </app-button>
+      </div>
+    </div>
+  </section>
+
+  <section class="flex flex-col gap-6">
+    <div class="flex flex-col gap-2">
+      <span class="font-mono text-xs font-bold uppercase tracking-wider text-primary">Arenas &amp; Collaboration</span>
+      <h2 class="text-3xl font-bold text-white m-0 tracking-tight">Engineered for Competitive &amp; Team Problem Solving</h2>
+    </div>
+
+    <div class="d-grid grid-cols-1 lg-grid-cols-2 gap-6 items-stretch">
+      <article class="mode-card flex flex-col gap-5 p-6 rounded-xl bg-surface-container-lowest border border-surface-high">
+        <header class="flex flex-wrap items-start justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="bg-surface-container-high text-primary flex items-center justify-center w-12 h-12 rounded-lg">
+              <app-icon name="sports_score" size="lg"></app-icon>
+            </div>
+            <div class="flex flex-col">
+              <h3 class="text-xl font-bold text-white m-0">Race Mode</h3>
+              <span class="font-mono text-xs text-muted">Lockout Sprint Grid</span>
+            </div>
+          </div>
+          <app-badge label="COMPETITIVE HEAD-TO-HEAD" variant="error" shape="square" size="sm"></app-badge>
+        </header>
+
+        <p class="text-base text-on-surface-variant leading-relaxed m-0">
+          Zero-leak isolated test runtime. Compete against the clock while your solution buffer remains strictly private.
+        </p>
+
+        <ul class="list-none m-0 p-0 flex flex-col gap-2">
+          @for (feature of raceFeatures; track feature.label) {
+            <li class="flex items-center gap-2 text-sm text-on-surface">
+              <app-icon name="verified" size="md" color="var(--color-secondary)"></app-icon>
+              {{ feature.label }}
+            </li>
+          }
+        </ul>
+
+        <div class="mt-auto">
+          <app-live-grid title="Live Grid • #743 Dijkstra" remainingTime="18:42 REMAINING" [competitors]="raceDemo"></app-live-grid>
+        </div>
+      </article>
+
+      <article class="mode-card flex flex-col gap-5 p-6 rounded-xl bg-surface-container-lowest border border-surface-high">
+        <header class="flex flex-wrap items-start justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="bg-surface-container-high text-primary flex items-center justify-center w-12 h-12 rounded-lg">
+              <app-icon name="group_work" size="lg"></app-icon>
+            </div>
+            <div class="flex flex-col">
+              <h3 class="text-xl font-bold text-white m-0">Co-op Mode</h3>
+              <span class="font-mono text-xs text-muted">Shared Deterministic Buffer</span>
+            </div>
+          </div>
+          <app-badge label="COLLABORATIVE MULTIPLAYER" variant="secondary" shape="square" size="sm"></app-badge>
+        </header>
+
+        <p class="text-base text-on-surface-variant leading-relaxed m-0">
+          Distributed pair-programming engine powered by Conflict-free Replicated Data Types (CRDTs) with deterministic AST syncing.
+        </p>
+
+        <ul class="list-none m-0 p-0 flex flex-col gap-2">
+          @for (feature of coopFeatures; track feature.label) {
+            <li class="flex items-center gap-2 text-sm text-on-surface">
+              <app-icon name="check_circle" size="md" color="var(--color-primary)"></app-icon>
+              {{ feature.label }}
+            </li>
+          }
+        </ul>
+
+        <div class="mt-auto flex flex-col gap-3 p-4 rounded-xl bg-surface-container-low border border-surface-high">
+          <div class="flex items-center justify-between gap-2 pb-2 border-b border-surface-high">
+            <span class="font-mono text-xs font-semibold text-on-surface">Dijkstra.java • CRDT v14.2</span>
+            <div class="flex items-center gap-1">
+              @for (peer of coopParticipants; track peer.name) {
+                <app-badge [label]="peer.name" [variant]="peer.tone" shape="square" size="sm"></app-badge>
+              }
+            </div>
+          </div>
+
+          <div class="coop-code flex flex-col gap-2 p-3 rounded-lg bg-surface-container-lowest font-mono text-xs overflow-x-auto" aria-label="Shared editor preview">
+            @for (line of coopLines; track $index) {
+              <div class="flex items-center whitespace-nowrap" [style.padding-left.rem]="line.indent * 1.25">
+                <span class="text-on-surface">@for (token of line.tokens; track $index) {<span [class.text-primary]="token.kind !== 'plain'" [class.font-bold]="token.kind === 'kw'">{{ token.text }}</span>}</span>
+                @if (line.cursor; as cursor) {
+                  <span
+                    class="d-inline-block w-0-5 h-4 ml-1"
+                    [class.bg-primary]="cursor.tone === 'primary'"
+                    [class.bg-secondary]="cursor.tone === 'secondary'"
+                    [class.bg-tertiary]="cursor.tone === 'tertiary'">
+                  </span>
+                  <span
+                    class="ml-1 px-1 rounded-xs text-2xs font-bold"
+                    [class.bg-primary]="cursor.tone === 'primary'"
+                    [class.text-on-primary]="cursor.tone === 'primary'"
+                    [class.bg-secondary]="cursor.tone === 'secondary'"
+                    [class.text-on-secondary]="cursor.tone === 'secondary'"
+                    [class.bg-tertiary]="cursor.tone === 'tertiary'"
+                    [class.text-on-tertiary]="cursor.tone === 'tertiary'">
+                    {{ cursor.label }}
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+</div>

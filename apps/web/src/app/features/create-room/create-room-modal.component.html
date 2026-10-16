@@ -1,0 +1,329 @@
+@if (createdRoom(); as room) {
+  <div class="flex flex-col items-center text-center gap-4 py-6">
+    <div class="w-14 h-14 rounded-full flex items-center justify-center bg-secondary-container text-on-secondary">
+      <app-icon name="check" size="xl" [weight]="600"></app-icon>
+    </div>
+    <div class="flex flex-col gap-1">
+      <h3 class="text-xl font-bold text-white m-0">{{ room.name }} is live</h3>
+      <p class="text-sm text-on-surface-variant m-0">Share the code below. Players land in your lobby until you start the round.</p>
+    </div>
+
+    <div class="flex items-center gap-3 px-5 py-3 rounded-lg bg-surface-container-low border border-surface-high">
+      <span class="font-mono text-3xl font-bold tracking-wider text-primary">{{ room.code }}</span>
+    </div>
+
+    <div class="flex flex-wrap justify-center gap-2">
+      <app-button size="sm" variant="surface" [icon]="copied() === 'code' ? 'check' : 'content_copy'" iconPosition="start" (clicked)="copy('code', room)">
+        {{ copied() === 'code' ? 'Copied' : 'Copy code' }}
+      </app-button>
+      <app-button size="sm" variant="surface" [icon]="copied() === 'link' ? 'check' : 'link'" iconPosition="start" (clicked)="copy('link', room)">
+        {{ copied() === 'link' ? 'Copied' : 'Copy invite link' }}
+      </app-button>
+    </div>
+
+    <div class="flex flex-wrap justify-center gap-2">
+      <app-chip [label]="room.mode === 'RACE' ? 'Race Mode' : 'Co-op Mode'" [icon]="room.mode === 'RACE' ? 'sports_score' : 'handshake'"></app-chip>
+      <app-chip [label]="room.problemIds.length + ' problems'" icon="list"></app-chip>
+      <app-chip [label]="room.participants.length + ' / ' + room.settings.maxParticipants + ' players'" icon="group"></app-chip>
+    </div>
+
+    <app-button variant="primary" (clicked)="close()">Done</app-button>
+  </div>
+} @else {
+  <div class="max-h-dialog overflow-y-auto flex flex-col gap-6 pr-2">
+    <div class="d-grid grid-cols-1 lg-grid-cols-3 gap-4">
+      <div class="flex flex-col gap-2 min-w-0 lg-col-span-2">
+        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Room Instance Name</span>
+        <div class="flex items-start gap-2">
+          <div class="flex-1 min-w-0">
+            <app-input
+              prefixIcon="tag"
+              placeholder="Name your room"
+              [required]="true"
+              [(value)]="roomName">
+            </app-input>
+            @if (!roomName().trim()) {
+              <p class="-mt-4 pl-4 text-xs text-error m-0">A room needs a name</p>
+            }
+          </div>
+          <app-button class="mt-2" variant="surface" size="sm" icon="casino" iconPosition="start" (clicked)="rerollName()">Reroll</app-button>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2 min-w-0">
+        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Session Host</span>
+        <div class="h-14 flex items-center gap-2 px-3 rounded-md bg-surface-container-low border border-surface-high">
+          @if (host(); as user) {
+            <app-avatar [name]="user.username" size="sm"></app-avatar>
+            <span class="text-sm font-semibold text-white truncate">{{ user.username }}</span>
+            <app-icon name="verified" size="sm" color="var(--color-primary)" ariaLabel="Verified"></app-icon>
+            <span class="ml-auto"><app-chip label="Owner" size="sm"></app-chip></span>
+          } @else {
+            <app-icon name="progress_activity" size="sm" [spin]="true" class="text-muted"></app-icon>
+            <span class="text-sm text-muted">Loading profile…</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Topology &amp; Synchronization</span>
+        <span class="font-mono text-xs text-muted">Protocol: WebRTC + OT v4</span>
+      </div>
+      <div role="radiogroup" aria-label="Room mode" class="d-grid grid-cols-1 lg-grid-cols-2 gap-3">
+        <app-option-card
+          icon="sports_score"
+          title="Race Mode"
+          subtitle="Competitive Arena"
+          description="Isolated sandboxes, live progress telemetry, obscured buffers until round finish. Real-time test-pass benchmark leaderboard."
+          [selected]="mode() === 'RACE'"
+          (selectedChange)="mode.set('RACE')">
+          <app-chip label="Zero-Code Leakage" size="sm"></app-chip>
+          <app-chip label="Strict Timers" size="sm"></app-chip>
+        </app-option-card>
+        <app-option-card
+          icon="handshake"
+          title="Co-op Mode"
+          subtitle="Collaborative Pair"
+          description="Shared CRDT operational buffer, synchronized multi-cursor editing, voice telemetry strip, and co-executed unit tests."
+          [selected]="mode() === 'COOP'"
+          (selectedChange)="mode.set('COOP')">
+          <app-chip label="Shared AST" size="sm"></app-chip>
+          <app-chip label="Peer Audio/Video" size="sm"></app-chip>
+        </app-option-card>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <h4 class="text-lg font-bold text-white m-0">Challenge Set Topology</h4>
+          <app-badge [label]="staged().length + ' / ' + maxStaged + ' Selected'" variant="primary" shape="square" size="sm"></app-badge>
+        </div>
+        <div class="flex items-center gap-2 font-mono text-xs text-muted">
+          <app-icon name="schedule" size="sm" color="var(--color-secondary)"></app-icon>
+          <span>Est. Duration: ~{{ estimatedMinutes() }} mins</span>
+          <span>•</span>
+          <span class="font-bold text-tertiary">Total Score: {{ totalPoints() }} pts</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3 p-3 rounded-lg bg-surface-container-low border border-surface-high">
+        <div class="flex flex-wrap items-start gap-3">
+          <div class="flex-1 min-w-0">
+            <app-input
+              prefixIcon="search"
+              placeholder="Filter problems by title, tag, or ID…"
+              [clearable]="true"
+              [(value)]="search">
+            </app-input>
+          </div>
+          <div class="w-72 max-w-full">
+            <app-select
+              prefixIcon="bookmark"
+              valuePrefix="Curated:"
+              placeholder="All problems"
+              [clearable]="true"
+              [options]="listOptions()"
+              [(value)]="curatedList">
+            </app-select>
+          </div>
+          <app-segmented-control
+            class="mt-2"
+            ariaLabel="Difficulty"
+            size="sm"
+            [allowDeselect]="true"
+            [options]="difficultyOptions"
+            [(value)]="difficulty">
+          </app-segmented-control>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-mono text-xs text-muted mr-1">TAGS:</span>
+          <app-chip
+            label="All"
+            size="sm"
+            [selectable]="true"
+            [selected]="selectedTags().length === 0"
+            (selectedChange)="selectedTags.set([])">
+          </app-chip>
+          @for (tag of tags(); track tag.slug) {
+            <app-chip
+              size="sm"
+              [label]="tag.name"
+              [selectable]="true"
+              [removable]="isTagSelected(tag.slug)"
+              [selected]="isTagSelected(tag.slug)"
+              (selectedChange)="setTagSelected(tag.slug, $event)"
+              (removed)="setTagSelected(tag.slug, false)">
+            </app-chip>
+          }
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2" cdkDropList [cdkDropListData]="staged()" (cdkDropListDropped)="reorderStaged($event)">
+        @for (problem of staged(); track problem.id; let i = $index) {
+          <div class="flex items-center gap-3 px-3 py-3 rounded-md border bg-surface-container border-primary-soft" cdkDrag cdkDragLockAxis="y">
+            <app-checkbox
+              [ariaLabel]="'Remove ' + problem.title"
+              [checked]="true"
+              (checkedChange)="setStaged(problem, $event)">
+            </app-checkbox>
+            <ng-container *ngTemplateOutlet="problemInfo; context: { $implicit: problem, staged: true }"></ng-container>
+            <span class="font-mono text-sm font-bold text-primary whitespace-nowrap">{{ problem.points }} pts</span>
+            <button type="button" class="flex items-center justify-center p-1 border-0 rounded bg-transparent text-outline hover-bg-surface-high hover-text-on-surface focus-ring cursor-grab" cdkDragHandle [attr.aria-label]="'Reorder ' + problem.title">
+              <app-icon name="drag_indicator" size="md"></app-icon>
+            </button>
+          </div>
+        }
+      </div>
+
+      <div class="flex flex-col gap-2">
+        @if (loadingProblems() && unstagedResults().length === 0) {
+          <div class="flex items-center justify-center gap-2 py-6 text-sm text-muted">
+            <app-icon name="progress_activity" size="sm" [spin]="true"></app-icon>
+            Loading problems…
+          </div>
+        } @else if (problemsError()) {
+          <div class="flex items-center justify-center gap-2 py-6 text-sm text-error">
+            <app-icon name="error" size="sm"></app-icon>
+            {{ problemsError() }}
+          </div>
+        } @else {
+          @for (problem of unstagedResults(); track problem.id) {
+            <div class="flex items-center gap-3 px-3 py-3 rounded-md border bg-surface-container-lowest border-surface-high" [class.opacity-50]="loadingProblems()">
+              <app-checkbox
+                [ariaLabel]="'Add ' + problem.title"
+                [checked]="false"
+                [disabled]="stagingFull()"
+                (checkedChange)="setStaged(problem, $event)">
+              </app-checkbox>
+              <ng-container *ngTemplateOutlet="problemInfo; context: { $implicit: problem }"></ng-container>
+              <span class="font-mono text-sm text-muted whitespace-nowrap">{{ problem.points }} pts</span>
+              <button
+                type="button"
+                class="flex items-center justify-center p-1 border-0 rounded bg-transparent text-outline hover-bg-surface-high hover-text-on-surface focus-ring"
+                [class.cursor-pointer]="!stagingFull()"
+                [class.cursor-not-allowed]="stagingFull()"
+                [class.opacity-50]="stagingFull()"
+                [disabled]="stagingFull()"
+                [attr.aria-label]="'Add ' + problem.title"
+                [title]="stagingFull() ? 'Challenge set is full (' + maxStaged + ' max)' : 'Add to challenge set'"
+                (click)="setStaged(problem, true)">
+                <app-icon name="add" size="md"></app-icon>
+              </button>
+            </div>
+          } @empty {
+            <div class="flex flex-col items-center gap-1 py-6 text-sm text-muted">
+              <app-icon name="search_off" size="lg"></app-icon>
+              @if (staged().length > 0) {
+                No other problems match these filters.
+              } @else {
+                No problems match these filters.
+              }
+            </div>
+          }
+        }
+      </div>
+
+      <ng-template #problemInfo let-problem let-staged="staged">
+        <div class="flex flex-col gap-1 flex-1 min-w-0">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-base font-semibold truncate" [class.text-white]="staged" [class.text-on-surface-variant]="!staged">{{ problem.title }}</span>
+            <app-badge [label]="difficultyLabel(problem.difficulty)" [variant]="difficultyVariant(problem.difficulty)" shape="square" size="sm"></app-badge>
+          </div>
+          <span class="font-mono text-xs text-muted truncate">
+            {{ tagNames(problem) }} • Target: {{ problem.targetMinutes }}m • Acceptance: {{ problem.acceptanceRate }}%
+          </span>
+        </div>
+      </ng-template>
+
+      @if (staged().length > 0) {
+        <div class="flex flex-wrap items-center gap-2 px-3 py-2 rounded-md bg-surface-container-low border border-surface-high">
+          <span class="font-mono text-xs text-muted">Staged Order:</span>
+          @for (problem of staged(); track problem.id; let i = $index) {
+            <app-chip
+              variant="primary"
+              size="sm"
+              [prefix]="'#' + (i + 1)"
+              [label]="problem.title"
+              [removable]="true"
+              (removed)="setStaged(problem, false)">
+            </app-chip>
+          }
+          <button type="button" class="ml-auto p-1 border-0 bg-transparent cursor-pointer hover-underline focus-ring font-mono text-xs text-error" (click)="clearStaged()">Clear All</button>
+        </div>
+      }
+    </div>
+
+    <div class="d-grid grid-cols-1 lg-grid-cols-3 gap-4 p-3 rounded-lg bg-surface-container-low border border-surface-high">
+      <div class="flex flex-col gap-2">
+        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Lobby Headcount</span>
+        <app-input
+          type="number"
+          prefixIcon="group"
+          [min]="minParticipants"
+          [max]="maxParticipants"
+          [step]="1"
+          [hint]="headcountError() ? '' : 'Max players, ' + minParticipants + '–' + maxParticipants"
+          [(value)]="headcount">
+        </app-input>
+        @if (headcountError()) {
+          <p class="-mt-4 pl-4 text-xs text-error m-0">{{ headcountError() }}</p>
+        }
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Test Suite Engine</span>
+        <div class="h-14 flex items-center justify-between gap-3 px-3 rounded-md bg-surface-container-lowest border border-surface-high">
+          <div class="flex flex-col min-w-0">
+            <span class="text-sm text-on-surface">Hidden test cases</span>
+            <span class="text-xs text-muted truncate">{{ hiddenTestCases() ? 'Graded on full suite' : 'Samples only' }}</span>
+          </div>
+          <app-toggle-switch ariaLabel="Hidden test cases" [(checked)]="hiddenTestCases"></app-toggle-switch>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Buffer Security</span>
+        <app-select
+          [options]="bufferOptions"
+          [disabled]="mode() === 'COOP'"
+          [hint]="mode() === 'COOP' ? 'Co-op rooms share one buffer' : ''"
+          [(value)]="bufferVisibility">
+        </app-select>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap items-center justify-between gap-3 pt-4 mt-4 border-t border-surface-high">
+    @if (submitError()) {
+      <span class="flex items-center gap-2 text-xs text-error">
+        <app-icon name="error" size="sm"></app-icon>
+        {{ submitError() }}
+      </span>
+    } @else if (staged().length === 0) {
+      <span class="flex items-center gap-2 text-xs text-muted">
+        <app-icon name="info" size="sm"></app-icon>
+        Add at least one problem to the challenge set
+      </span>
+    } @else {
+      <span class="flex items-center gap-2 font-mono text-xs text-muted">
+        <app-icon name="lock" size="sm"></app-icon>
+        Session token hash will generate upon room provisioning
+      </span>
+    }
+    <div class="flex items-center gap-2 ml-auto">
+      <app-button variant="ghost" (clicked)="close()">Cancel</app-button>
+      <app-button
+        variant="primary"
+        icon="arrow_forward"
+        [loading]="submitting()"
+        [disabled]="!canSubmit()"
+        (clicked)="create()">
+        Create Room &amp; Launch Lobby
+      </app-button>
+    </div>
+  </div>
+}

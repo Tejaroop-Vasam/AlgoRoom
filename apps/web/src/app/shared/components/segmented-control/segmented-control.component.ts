@@ -27,13 +27,19 @@ export class SegmentedControlComponent<T = string> {
   readonly size = input<SegmentedControlSize>('md');
   readonly fullWidth = input<boolean>(false);
   readonly disabled = input<boolean>(false);
+  readonly allowDeselect = input<boolean>(false);
   readonly ariaLabel = input<string | undefined>(undefined);
 
   readonly value = model<T | undefined>(undefined);
 
   select(option: SegmentOption<T>): void {
-    if (!this.disabled() && !option.disabled) {
-      this.value.set(option.value);
+    if (this.disabled() || option.disabled) {
+      return;
     }
+    if (this.allowDeselect() && this.value() === option.value) {
+      this.value.set(undefined);
+      return;
+    }
+    this.value.set(option.value);
   }
 }

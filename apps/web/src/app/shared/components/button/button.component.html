@@ -18,17 +18,16 @@
   [class.hover-opacity-95]="variant() === 'primary'"
   [class.bg-secondary]="variant() === 'secondary'"
   [class.text-on-secondary]="variant() === 'secondary'"
+  [class.text-on-surface]="variant() === 'surface' || variant() === 'outline' || variant() === 'ghost'"
   [class.bg-surface-container-high]="variant() === 'surface'"
-  [class.text-on-surface]="variant() === 'surface'"
   [class.hover-bg-surface-bright]="variant() === 'surface'"
   [class.border]="variant() === 'outline'"
   [class.border-outline-variant]="variant() === 'outline'"
-  [class.text-on-surface]="variant() === 'outline'"
+  [class.bg-transparent]="variant() === 'outline'"
   [class.bg-surface]="variant() === 'ghost'"
-  [class.text-on-surface]="variant() === 'ghost'"
   [class.opacity-50]="disabled() || loading()"
   [class.cursor-not-allowed]="disabled() || loading()">
-  
+
   @if (icon() && iconPosition() === 'start' && !loading()) {
     <app-icon [name]="icon()!" [size]="size() === 'sm' ? 'sm' : 'base'"></app-icon>
   }
