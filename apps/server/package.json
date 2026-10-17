@@ -4,7 +4,7 @@
   "description": "Eligible.ai NestJS Server",
   "private": true,
   "scripts": {
-    "build": "nest build",
+             "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -14,7 +14,9 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "seed:problems": "../scraper/.venv/bin/python3 ../scraper/seed_problems.py",
+    "swagger:export": "ts-node src/export-swagger.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1147.0",
