@@ -17,11 +17,12 @@ import {
   SegmentedControlComponent,
   SelectComponent,
   SelectOption,
-  ToggleSwitchComponent
+  ToggleSwitchComponent,
+  ToastService,
 } from '../../shared';
 import { TestModalContentComponent } from './test-modal-content/test-modal-content.component';
 
-export type ComponentSection = 'all' | 'inputs' | 'buttons' | 'badges' | 'icons' | 'modals' | 'chips' | 'controls' | 'cards' | 'editor' | 'live-grid';
+export type ComponentSection = 'all' | 'inputs' | 'buttons' | 'badges' | 'icons' | 'modals' | 'toasts' | 'chips' | 'controls' | 'cards' | 'editor' | 'live-grid';
 
 @Component({
   imports: [
@@ -46,10 +47,47 @@ export type ComponentSection = 'all' | 'inputs' | 'buttons' | 'badges' | 'icons'
 })
 export class ComponentTest {
   readonly modalService = inject(ModalService);
+  readonly toastService = inject(ToastService);
   readonly testModalContent = TestModalContentComponent;
 
   readonly activeSection = signal<ComponentSection>('all');
   readonly clearableValue = signal('Clear me');
+
+  triggerSuccessToast(): void {
+    this.toastService.success('Room instance deployed successfully! Lobby code: #X92A1', {
+      title: 'Room Created',
+    });
+  }
+
+  triggerErrorToast(): void {
+    this.toastService.error('Connection to runner sandbox timed out after 10000ms.', {
+      title: 'Execution Failed',
+    });
+  }
+
+  triggerWarningToast(): void {
+    this.toastService.warning('Your session will automatically expire in 2 minutes of inactivity.', {
+      title: 'Session Warning',
+    });
+  }
+
+  triggerInfoToast(): void {
+    this.toastService.info('Rahul Sharma submitted 12/12 test cases.', {
+      title: 'Leaderboard Telemetry',
+    });
+  }
+
+  triggerActionToast(): void {
+    this.toastService.info('Problem was removed from the staged set.', {
+      title: 'Set Modified',
+      action: {
+        label: 'Undo',
+        action: () => {
+          this.toastService.success('Problem restored to challenge set.');
+        },
+      },
+    });
+  }
 
   readonly tagOptions = ['Graph', 'Dynamic Programming', 'Trees', 'Arrays & Hashing', 'Two Pointers', 'Binary Search'];
   readonly selectedTags = signal<string[]>(['Graph', 'Dynamic Programming']);

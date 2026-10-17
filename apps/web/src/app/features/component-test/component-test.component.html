@@ -6,6 +6,7 @@
     <app-button [variant]="activeSection() === 'badges' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('badges')">Badges</app-button>
     <app-button [variant]="activeSection() === 'icons' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('icons')">Icons</app-button>
     <app-button [variant]="activeSection() === 'modals' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('modals')">Modals</app-button>
+    <app-button [variant]="activeSection() === 'toasts' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('toasts')">Toasts</app-button>
     <app-button [variant]="activeSection() === 'chips' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('chips')">Chips</app-button>
     <app-button [variant]="activeSection() === 'controls' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('controls')">Controls</app-button>
     <app-button [variant]="activeSection() === 'cards' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('cards')">Cards</app-button>
@@ -13,7 +14,7 @@
     <app-button [variant]="activeSection() === 'live-grid' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('live-grid')">Live Grid</app-button>
   </div>
 
-  @if (activeSection() === 'all' || activeSection() === 'inputs' || activeSection() === 'buttons' || activeSection() === 'badges' || activeSection() === 'icons' || activeSection() === 'modals') {
+  @if (activeSection() === 'all' || activeSection() === 'inputs' || activeSection() === 'buttons' || activeSection() === 'badges' || activeSection() === 'icons' || activeSection() === 'modals' || activeSection() === 'toasts') {
     <div [class]="activeSection() === 'all' ? 'd-grid grid-cols-3 gap-8 items-start' : 'max-w-md flex flex-col gap-4'">
       @if (activeSection() === 'all' || activeSection() === 'inputs') {
         <div class="flex flex-col gap-4">
@@ -105,6 +106,27 @@
                   </div>
                 </div>
               </ng-template>
+            </div>
+          }
+
+          @if (activeSection() === 'all' || activeSection() === 'toasts') {
+            <div class="flex flex-col gap-4">
+              <h3 class="text-lg font-medium text-white mb-2">Toast Messages</h3>
+              <app-button variant="secondary" icon="check_circle" iconPosition="start" (clicked)="triggerSuccessToast()">
+                Trigger Success Toast
+              </app-button>
+              <app-button variant="primary" icon="info" iconPosition="start" (clicked)="triggerInfoToast()">
+                Trigger Info Toast
+              </app-button>
+              <app-button variant="surface" icon="warning" iconPosition="start" (clicked)="triggerWarningToast()">
+                Trigger Warning Toast
+              </app-button>
+              <app-button variant="ghost" icon="error" iconPosition="start" (clicked)="triggerErrorToast()">
+                Trigger Error Toast
+              </app-button>
+              <app-button variant="outline" icon="touch_app" iconPosition="start" (clicked)="triggerActionToast()">
+                Trigger Toast with Action
+              </app-button>
             </div>
           }
         </div>

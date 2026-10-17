@@ -146,6 +146,8 @@
 .border-surface-highest { border-color: var(--color-surface-container-highest); }
 .border-primary { border-color: var(--color-primary); }
 .border-secondary { border-color: var(--color-secondary); }
+.border-tertiary { border-color: var(--color-tertiary); }
+.border-error { border-color: var(--color-error); }
 
 /* Hover States */
 .hover-primary:hover { color: var(--color-primary); }

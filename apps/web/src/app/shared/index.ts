@@ -20,5 +20,6 @@ export * from './components/checkbox/checkbox.component';
 export * from './components/avatar/avatar.component';
 export * from './components/kbd/kbd.component';
 export * from './components/toggle-switch/toggle-switch.component';
+export * from './components/toast';
 export * from '../services/theme.service';
 

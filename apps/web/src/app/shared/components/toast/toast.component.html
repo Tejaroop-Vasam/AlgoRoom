@@ -1,0 +1,40 @@
+<div
+  role="alert"
+  aria-live="polite"
+  class="flex items-start gap-3 p-3 rounded-lg border bg-surface-container-high shadow-xl w-80 max-w-sm pointer-events-auto transition select-none border-l-4"
+  [class.border-secondary]="toast().type === 'success'"
+  [class.border-error]="toast().type === 'error'"
+  [class.border-tertiary]="toast().type === 'warning'"
+  [class.border-primary]="toast().type === 'info'">
+  <div class="flex items-center justify-center shrink-0 mt-0-5">
+    <app-icon [name]="iconName()" size="md" [color]="iconColor()"></app-icon>
+  </div>
+
+  <div class="flex flex-col gap-1 flex-1 min-w-0">
+    @if (toast().title) {
+      <span class="text-sm font-semibold text-white truncate leading-tight">{{ toast().title }}</span>
+    }
+    <span class="text-xs text-on-surface-variant leading-relaxed break-words">{{ toast().message }}</span>
+
+    @if (toast().action; as action) {
+      <div class="pt-1">
+        <button
+          type="button"
+          class="font-mono text-xs font-semibold uppercase tracking-wider text-primary bg-transparent border-0 p-0 cursor-pointer hover-underline focus-ring"
+          (click)="onAction()">
+          {{ action.label }}
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (toast().dismissible) {
+    <button
+      type="button"
+      class="flex items-center justify-center p-1 rounded border-0 bg-transparent text-outline hover-bg-surface-bright hover-text-on-surface cursor-pointer focus-ring shrink-0"
+      aria-label="Dismiss notification"
+      (click)="onDismiss()">
+      <app-icon name="close" size="xs"></app-icon>
+    </button>
+  }
+</div>
