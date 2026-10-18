@@ -15,26 +15,17 @@ export interface ProfileResponse {
   user: UserProfile;
 }
 
-export interface ProblemTagRef {
-  slug: string;
-  name: string;
-}
-
 export interface ProblemSummary {
   id: number;
   title: string;
   difficulty: Difficulty;
-  tags: ProblemTagRef[];
-  acceptanceRate: number;
-  targetMinutes: number;
-  points: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ProblemsQuery {
   search?: string;
   difficulty?: Difficulty;
-  tags?: string[];
-  list?: string;
   page?: number;
   limit?: number;
 }
@@ -45,16 +36,6 @@ export interface ProblemsListResponse {
   page: number;
   limit: number;
   totalPages: number;
-}
-
-export interface ProblemTag extends ProblemTagRef {
-  problemCount: number;
-}
-
-export interface ProblemList {
-  slug: string;
-  name: string;
-  problemCount: number;
 }
 
 export interface RoomSettings {

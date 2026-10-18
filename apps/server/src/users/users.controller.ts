@@ -6,13 +6,14 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { GoogleOAuthDto } from './dto/google-oauth.dto';
+import { ProfileResponseDto } from './dto/user-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtPayload } from './interfaces/user.interface';
@@ -49,7 +50,8 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   @ApiOperation({ summary: 'Get current user profile' })
-  async profile(@CurrentUser() user: JwtPayload) {
+  @ApiResponse({ status: 200, description: 'Current user profile', type: ProfileResponseDto })
+  async profile(@CurrentUser() user: JwtPayload): Promise<ProfileResponseDto> {
     return this.usersService.getProfile(user.id);
   }
 

@@ -19,6 +19,7 @@ export interface LanguageConfig {
   id: SupportedLanguage;
   image: string;
   filename: string;
+  compileCommand?: string;
   buildRunCommand: (timeoutSec: number) => string;
 }
 

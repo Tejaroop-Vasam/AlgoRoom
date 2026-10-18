@@ -4,14 +4,22 @@
   "description": "Collaborative & Competitive Real-Time DSA Practice Platform",
   "private": true,
   "scripts": {
+    "dev": "npm run db:start && concurrently -n \"server,web,studio\" -c \"blue,green,magenta\" --kill-others-on-fail \"npm run server:dev\" \"npm run web:dev\" \"npm run db:studio\"",
+    "dev:app": "npm run db:start && concurrently -n \"server,web\" -c \"blue,green\" --kill-others-on-fail \"npm run server:dev\" \"npm run web:dev\"",
     "server:dev": "npm --prefix apps/server run dev",
     "server:build": "npm --prefix apps/server run build",
     "web:dev": "npm --prefix apps/web run start",
+    "db:start": "brew services start postgresql@15",
+    "db:stop": "brew services stop postgresql@15",
+    "db:studio": "npm --prefix apps/server run db:studio",
     "scraper:seed": "apps/scraper/.venv/bin/python3 apps/scraper/seed_problems.py",
     "swagger:export": "npm --prefix apps/server run swagger:export",
     "api:generate": "npm --prefix apps/web run api:generate",
     "api:sync": "npm run swagger:export && npm run api:generate"
   },
   "author": "Leet-Rooms",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
 }

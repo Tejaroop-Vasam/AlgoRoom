@@ -1,33 +1,40 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { API_BASE_URL } from '../../configs/api.config';
-import { ProblemList, ProblemsListResponse, ProblemsQuery, ProblemTag } from './api.types';
+import { firstValueFrom, Observable } from 'rxjs';
+import { ProblemsControllerClient } from './api-client';
+import { Difficulty, ProblemsListResponse, ProblemsQuery } from './api.types';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProblemsApiService {
-  private readonly http = inject(HttpClient);
-  private readonly baseUrl = inject(API_BASE_URL);
+  private readonly problemsClient = inject(ProblemsControllerClient);
 
-  getProblems(query: ProblemsQuery = {}): Observable<ProblemsListResponse> {
-    let params = new HttpParams();
-    if (query.search) params = params.set('search', query.search);
-    if (query.difficulty) params = params.set('difficulty', query.difficulty);
-    if (query.tags?.length) params = params.set('tags', query.tags.join(','));
-    if (query.list) params = params.set('list', query.list);
-    if (query.page) params = params.set('page', query.page);
-    if (query.limit) params = params.set('limit', query.limit);
+  async getProblems(query: ProblemsQuery = {}): Promise<ProblemsListResponse> {
+    const res = await firstValueFrom(
+      this.problemsClient.getProblems(
+        query.difficulty,
+        query.search,
+        query.page,
+        query.limit,
+      ),
+    );
 
-    return this.http.get<ProblemsListResponse>(`${this.baseUrl}/problems`, { params });
+    return {
+      problems: (res?.problems ?? []).map(p => ({
+        id: p.id,
+        title: p.title,
+        difficulty: p.difficulty as Difficulty,
+        createdAt: p.createdAt ? (p.createdAt instanceof Date ? p.createdAt.toISOString() : String(p.createdAt)) : undefined,
+        updatedAt: p.updatedAt ? (p.updatedAt instanceof Date ? p.updatedAt.toISOString() : String(p.updatedAt)) : undefined,
+      })),
+      total: res?.total ?? 0,
+      page: res?.page ?? 1,
+      limit: res?.limit ?? 20,
+      totalPages: res?.totalPages ?? 0,
+    };
   }
 
-  getTags(): Observable<ProblemTag[]> {
-    return this.http.get<ProblemTag[]>(`${this.baseUrl}/problems/tags`);
-  }
-
-  getLists(): Observable<ProblemList[]> {
-    return this.http.get<ProblemList[]>(`${this.baseUrl}/problem-lists`);
+  getProblem(id: number): Promise<unknown> {
+    return firstValueFrom(this.problemsClient.getProblem(id));
   }
 }

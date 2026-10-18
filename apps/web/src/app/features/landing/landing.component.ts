@@ -1,6 +1,13 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { BadgeComponent, ButtonComponent, Competitor, IconComponent, LiveGridComponent, ModalService } from '../../shared';
+import {
+  BadgeComponent,
+  ButtonComponent,
+  Competitor,
+  IconComponent,
+  LiveGridComponent,
+  ModalService,
+} from '../../shared';
 import { CreateRoomModalComponent } from '../create-room/create-room-modal.component';
 import { JoinRoomModalComponent, JoinRoomModalData } from '../join-room/join-room-modal.component';
 
@@ -36,6 +43,7 @@ const plain = (text: string): CodeToken => ({ text, kind: 'plain' });
   standalone: true,
   imports: [BadgeComponent, ButtonComponent, IconComponent, LiveGridComponent],
   templateUrl: './landing.component.html',
+  styleUrl: './landing.component.css',
   host: {
     class: 'd-block',
   },
@@ -104,9 +112,7 @@ export class LandingComponent implements OnInit {
 
   openCreateRoom(): void {
     this.modalService.open(CreateRoomModalComponent, {
-      eyebrow: 'Instance Config // Node 04',
-      title: 'Deploy Arena Session',
-      description: 'Configure match topology, permissions, and multi-problem challenge set',
+      title: 'Create Room',
       showEscHint: true,
       width: '60rem',
       maxWidth: '95vw',

@@ -38,22 +38,123 @@ export class RunnerService {
       memoryLimitMb = 256,
     } = options;
 
+    const evaluation = await this.evaluateTestCases({
+      language,
+      code,
+      testCases: [{ input, expectedOutput: '' }],
+      timeLimitMs,
+      memoryLimitMb,
+    });
+
+    const firstResult = evaluation.results[0];
+    if (!firstResult) {
+      return {
+        status: 'RUNTIME_ERROR',
+        stdout: '',
+        stderr: 'Execution produced no result',
+        executionTimeMs: 0,
+      };
+    }
+
+    let status: ExecutionStatus = 'SUCCESS';
+    if (firstResult.verdict === 'COMPILE_ERROR') {
+      status = 'COMPILE_ERROR';
+    } else if (firstResult.verdict === 'TIME_LIMIT_EXCEEDED') {
+      status = 'TIME_LIMIT_EXCEEDED';
+    } else if (firstResult.verdict === 'MEMORY_LIMIT_EXCEEDED') {
+      status = 'MEMORY_LIMIT_EXCEEDED';
+    } else if (firstResult.verdict === 'RUNTIME_ERROR') {
+      status = 'RUNTIME_ERROR';
+    }
+
+    return {
+      status,
+      stdout: firstResult.actualOutput,
+      stderr: firstResult.stderr,
+      executionTimeMs: firstResult.executionTimeMs,
+    };
+  }
+
+  async evaluateTestCases(options: EvaluateTestCasesOptions): Promise<SubmissionEvaluationResult> {
+    const {
+      language,
+      code,
+      testCases = [],
+      timeLimitMs = 2000,
+      memoryLimitMb = 256,
+    } = options;
+
+    if (testCases.length === 0) {
+      return {
+        passed: false,
+        totalCount: 0,
+        passedCount: 0,
+        results: [],
+      };
+    }
+
     const langConfig = SUPPORTED_LANGUAGES[language as SupportedLanguage];
     if (!langConfig) {
       throw new BadRequestException(
         `Unsupported language "${language}". Supported: ${Object.keys(SUPPORTED_LANGUAGES).join(', ')}`,
       );
     }
-    const timeoutSec = Math.max(1, Math.ceil(timeLimitMs / 1000));
 
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'eligible-run-'));
+    const timeoutSec = Math.max(1, Math.ceil(timeLimitMs / 1000));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'eligible-batch-'));
+    const workspaceDir = path.join(tempDir, 'workspace');
+    const inputsDir = path.join(workspaceDir, 'inputs');
+    const outputsDir = path.join(tempDir, 'outputs');
 
     try {
-      await fs.writeFile(path.join(tempDir, langConfig.filename), code ?? '', 'utf8');
-      await fs.writeFile(path.join(tempDir, 'input.txt'), input ?? '', 'utf8');
+      await fs.mkdir(workspaceDir, { recursive: true });
+      await fs.mkdir(inputsDir, { recursive: true });
+      await fs.mkdir(outputsDir, { recursive: true, mode: 0o777 });
+      await fs.chmod(outputsDir, 0o777);
 
+      // 1. Write user source code
+      await fs.writeFile(path.join(workspaceDir, langConfig.filename), code ?? '', 'utf8');
+
+      // 2. Write all testcase inputs
+      for (let i = 0; i < testCases.length; i++) {
+        await fs.writeFile(path.join(inputsDir, `${i}.in`), testCases[i].input ?? '', 'utf8');
+      }
+
+      // 3. Build single-container execution harness
       const runCommand = langConfig.buildRunCommand(timeoutSec);
+      const compileSection = langConfig.compileCommand
+        ? `${langConfig.compileCommand} > /outputs/compile.out 2> /outputs/compile.err
+if [ $? -ne 0 ]; then
+  echo "COMPILE_ERROR" > /outputs/batch.status
+  exit 0
+fi`
+        : '';
 
+      const harnessScript = `#!/bin/bash
+# Phase 1: Compile once (if needed)
+${compileSection}
+
+# Phase 2: Execute all test cases sequentially against compiled binary
+for (( i=0; i<${testCases.length}; i++ )); do
+  START=$(date +%s%3N)
+  ${runCommand} < "/workspace/inputs/\${i}.in" > "/outputs/\${i}.out" 2> "/outputs/\${i}.err"
+  EXIT_CODE=$?
+  END=$(date +%s%3N)
+  DIFF=$((END - START))
+
+  echo "$EXIT_CODE" > "/outputs/\${i}.status"
+  echo "$DIFF" > "/outputs/\${i}.time"
+done
+
+echo "SUCCESS" > /outputs/batch.status
+`;
+
+      await fs.writeFile(path.join(workspaceDir, 'harness.sh'), harnessScript, {
+        mode: 0o755,
+        encoding: 'utf8',
+      });
+
+      // 4. Run single Docker container for the whole batch
       const dockerArgs = [
         'run',
         '--rm',
@@ -69,64 +170,167 @@ export class RunnerService {
         '--tmpfs',
         '/tmp:rw,exec,nosuid,size=64m',
         '-v',
-        `${tempDir}:/workspace:ro`,
+        `${workspaceDir}:/workspace:ro`,
+        '-v',
+        `${outputsDir}:/outputs:rw`,
         langConfig.image,
-        'sh',
-        '-c',
-        runCommand,
+        'bash',
+        '/workspace/harness.sh',
       ];
 
-      const startTime = Date.now();
-      let stdout = '';
-      let stderr = '';
-      let exitCode: number | string = 0;
+      const extendedPath = [
+        path.join(os.homedir(), '.docker', 'bin'),
+        '/usr/local/bin',
+        '/opt/homebrew/bin',
+        process.env.PATH,
+      ]
+        .filter(Boolean)
+        .join(':');
+
+      const hostProcessTimeout = Math.max(10000, timeoutSec * testCases.length * 1000 + 10000);
 
       try {
-        const hostProcessTimeout = timeLimitMs + 3000;
-        const extendedPath = [
-          path.join(os.homedir(), '.docker', 'bin'),
-          '/usr/local/bin',
-          '/opt/homebrew/bin',
-          process.env.PATH,
-        ]
-          .filter(Boolean)
-          .join(':');
-
-        const result = await execFileAsync('docker', dockerArgs, {
+        await execFileAsync('docker', dockerArgs, {
           timeout: hostProcessTimeout,
-          maxBuffer: 1024 * 1024,
+          maxBuffer: 2 * 1024 * 1024,
           env: {
             ...process.env,
             PATH: extendedPath,
           },
         });
-        stdout = result.stdout as string;
-        stderr = result.stderr as string;
       } catch (err: any) {
-        exitCode = err.code ?? (err.killed ? 124 : 1);
-        stdout = err.stdout ?? '';
-        stderr = err.stderr ?? err.message ?? '';
+        // If container timed out on the host or failed to launch
+        const isHostTimeout = err.killed || err.code === 'ETIMEDOUT';
+        if (isHostTimeout) {
+          const results: TestCaseEvaluationResult[] = testCases.map((tc, idx) => ({
+            testCaseIndex: idx + 1,
+            verdict: 'TIME_LIMIT_EXCEEDED' as SubmissionVerdict,
+            input: tc.input,
+            expectedOutput: this.normalizeOutput(tc.expectedOutput),
+            actualOutput: '',
+            stderr: 'Container execution timed out',
+            executionTimeMs: timeoutSec * 1000,
+          }));
+
+          return {
+            passed: false,
+            totalCount: testCases.length,
+            passedCount: 0,
+            results,
+          };
+        }
+
+        // If batch status was written, we continue to parse outputs below
+        const hasStatusFile = await fs
+          .access(path.join(outputsDir, 'batch.status'))
+          .then(() => true)
+          .catch(() => false);
+
+        if (!hasStatusFile) {
+          throw new InternalServerErrorException(err.message || 'Execution container failed');
+        }
       }
 
-      const executionTimeMs = Date.now() - startTime;
+      // 5. Check compilation status
+      let batchStatus = 'SUCCESS';
+      try {
+        batchStatus = (await fs.readFile(path.join(outputsDir, 'batch.status'), 'utf8')).trim();
+      } catch {
+        batchStatus = 'FAILED';
+      }
 
-      let status: ExecutionStatus = 'SUCCESS';
-      if (exitCode === 124 || exitCode === 'ETIMEDOUT') {
-        status = 'TIME_LIMIT_EXCEEDED';
-      } else if (exitCode === 137) {
-        status = 'MEMORY_LIMIT_EXCEEDED';
-      } else if (exitCode !== 0) {
-        const isCompileError =
-          (language === 'cpp' && stderr.includes('error:')) ||
-          (language === 'java' && (stderr.includes('error:') || stderr.includes('javac')));
-        status = isCompileError ? 'COMPILE_ERROR' : 'RUNTIME_ERROR';
+      if (batchStatus === 'COMPILE_ERROR') {
+        let compileErr = '';
+        try {
+          compileErr = await fs.readFile(path.join(outputsDir, 'compile.err'), 'utf8');
+        } catch {}
+
+        const results: TestCaseEvaluationResult[] = testCases.map((tc, idx) => ({
+          testCaseIndex: idx + 1,
+          verdict: 'COMPILE_ERROR' as SubmissionVerdict,
+          input: tc.input,
+          expectedOutput: this.normalizeOutput(tc.expectedOutput),
+          actualOutput: '',
+          stderr: compileErr.trimEnd(),
+          executionTimeMs: 0,
+        }));
+
+        return {
+          passed: false,
+          totalCount: testCases.length,
+          passedCount: 0,
+          results,
+        };
+      }
+
+      // 6. Parse results for each testcase
+      const results: TestCaseEvaluationResult[] = [];
+      let passedCount = 0;
+
+      for (let i = 0; i < testCases.length; i++) {
+        let exitCode = 0;
+        try {
+          const statusStr = await fs.readFile(path.join(outputsDir, `${i}.status`), 'utf8');
+          exitCode = parseInt(statusStr.trim(), 10) || 0;
+        } catch {
+          exitCode = 1;
+        }
+
+        let executionTimeMs = 0;
+        try {
+          const timeStr = await fs.readFile(path.join(outputsDir, `${i}.time`), 'utf8');
+          executionTimeMs = parseInt(timeStr.trim(), 10) || 0;
+        } catch {}
+
+        let actualOutput = '';
+        try {
+          actualOutput = await fs.readFile(path.join(outputsDir, `${i}.out`), 'utf8');
+          if (actualOutput.length > 65536) {
+            actualOutput = actualOutput.slice(0, 65536) + '\n[Output truncated]';
+          }
+        } catch {}
+
+        let stderr = '';
+        try {
+          stderr = await fs.readFile(path.join(outputsDir, `${i}.err`), 'utf8');
+          if (stderr.length > 65536) {
+            stderr = stderr.slice(0, 65536) + '\n[Stderr truncated]';
+          }
+        } catch {}
+
+        const normalizedActual = this.normalizeOutput(actualOutput);
+        const normalizedExpected = this.normalizeOutput(testCases[i].expectedOutput);
+
+        let verdict: SubmissionVerdict;
+        if (exitCode === 124) {
+          verdict = 'TIME_LIMIT_EXCEEDED';
+        } else if (exitCode === 137) {
+          verdict = 'MEMORY_LIMIT_EXCEEDED';
+        } else if (exitCode !== 0) {
+          verdict = 'RUNTIME_ERROR';
+        } else if (normalizedActual === normalizedExpected) {
+          verdict = 'ACCEPTED';
+          passedCount++;
+        } else {
+          verdict = 'WRONG_ANSWER';
+        }
+
+        results.push({
+          testCaseIndex: i + 1,
+          verdict,
+          input: testCases[i].input,
+          expectedOutput: normalizedExpected,
+          actualOutput: normalizedActual,
+          stderr: stderr.trimEnd(),
+          executionTimeMs,
+        });
       }
 
       return {
-        status,
-        stdout: stdout.trimEnd(),
-        stderr: stderr.trimEnd(),
-        executionTimeMs,
+        passed: passedCount === testCases.length && testCases.length > 0,
+        totalCount: testCases.length,
+        passedCount,
+        results,
       };
     } catch (err: any) {
       if (err instanceof BadRequestException) {
@@ -136,65 +340,5 @@ export class RunnerService {
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
     }
-  }
-
-  async evaluateTestCases(options: EvaluateTestCasesOptions): Promise<SubmissionEvaluationResult> {
-    const {
-      language,
-      code,
-      testCases = [],
-      timeLimitMs = 2000,
-      memoryLimitMb = 256,
-    } = options;
-
-    const results: TestCaseEvaluationResult[] = [];
-    let passedCount = 0;
-
-    for (let i = 0; i < testCases.length; i++) {
-      const { input = '', expectedOutput = '' } = testCases[i];
-      const execResult = await this.executeCode({
-        language,
-        code,
-        input,
-        timeLimitMs,
-        memoryLimitMb,
-      });
-
-      const normalizedActual = this.normalizeOutput(execResult.stdout);
-      const normalizedExpected = this.normalizeOutput(expectedOutput);
-
-      let verdict: SubmissionVerdict;
-      if (execResult.status === 'SUCCESS') {
-        if (normalizedActual === normalizedExpected) {
-          verdict = 'ACCEPTED';
-          passedCount++;
-        } else {
-          verdict = 'WRONG_ANSWER';
-        }
-      } else {
-        verdict = execResult.status;
-      }
-
-      results.push({
-        testCaseIndex: i + 1,
-        verdict,
-        input,
-        expectedOutput: normalizedExpected,
-        actualOutput: normalizedActual,
-        stderr: execResult.stderr,
-        executionTimeMs: execResult.executionTimeMs,
-      });
-
-      if (verdict === 'COMPILE_ERROR') {
-        break;
-      }
-    }
-
-    return {
-      passed: passedCount === testCases.length && testCases.length > 0,
-      totalCount: testCases.length,
-      passedCount,
-      results,
-    };
   }
 }

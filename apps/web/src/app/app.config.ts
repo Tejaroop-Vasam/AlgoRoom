@@ -3,15 +3,15 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
-import { provideMonaco } from './configs';
-import { mockApiInterceptor } from './mocks/mock-api.interceptor';
+import { API_BASE_URL_PROVIDER, provideMonaco } from './configs';
+import { apiErrorInterceptor } from './interceptors';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withFetch(), withInterceptors([mockApiInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([apiErrorInterceptor])),
     provideMonaco(),
+    API_BASE_URL_PROVIDER,
   ],
 };
-
