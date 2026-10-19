@@ -275,8 +275,15 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "Code execution result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionResultDto"
+                }
+              }
+            }
           }
         },
         "summary": "Execute code against custom input or problem sample test case",
@@ -300,11 +307,50 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "Evaluation results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionEvaluationResultDto"
+                }
+              }
+            }
           }
         },
         "summary": "Submit solution to evaluate against full test cases from storage/DB",
+        "tags": [
+          "Code Runner"
+        ]
+      }
+    },
+    "/api/format": {
+      "post": {
+        "operationId": "RunnerController_format",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormatCodeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Formatted code result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormatResultDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Format source code using backend formatters (Ruff, Clang-Format, Prettier)",
         "tags": [
           "Code Runner"
         ]
@@ -687,9 +733,177 @@
         "type": "object",
         "properties": {}
       },
+      "ExecutionResultDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "TIME_LIMIT_EXCEEDED",
+              "MEMORY_LIMIT_EXCEEDED",
+              "COMPILE_ERROR",
+              "RUNTIME_ERROR"
+            ],
+            "example": "SUCCESS"
+          },
+          "stdout": {
+            "type": "string",
+            "example": "true"
+          },
+          "stderr": {
+            "type": "string",
+            "example": ""
+          },
+          "executionTimeMs": {
+            "type": "number",
+            "example": 45
+          }
+        },
+        "required": [
+          "status",
+          "stdout",
+          "stderr",
+          "executionTimeMs"
+        ]
+      },
       "SubmitCodeDto": {
         "type": "object",
         "properties": {}
+      },
+      "TestCaseEvaluationResultDto": {
+        "type": "object",
+        "properties": {
+          "testCaseIndex": {
+            "type": "number",
+            "example": 1
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "ACCEPTED",
+              "WRONG_ANSWER",
+              "TIME_LIMIT_EXCEEDED",
+              "MEMORY_LIMIT_EXCEEDED",
+              "COMPILE_ERROR",
+              "RUNTIME_ERROR"
+            ],
+            "example": "ACCEPTED"
+          },
+          "input": {
+            "type": "string",
+            "example": "s = \"()\""
+          },
+          "expectedOutput": {
+            "type": "string",
+            "example": "true"
+          },
+          "actualOutput": {
+            "type": "string",
+            "example": "true"
+          },
+          "stderr": {
+            "type": "string",
+            "example": ""
+          },
+          "executionTimeMs": {
+            "type": "number",
+            "example": 45
+          }
+        },
+        "required": [
+          "testCaseIndex",
+          "verdict",
+          "input",
+          "expectedOutput",
+          "actualOutput",
+          "stderr",
+          "executionTimeMs"
+        ]
+      },
+      "SubmissionEvaluationResultDto": {
+        "type": "object",
+        "properties": {
+          "passed": {
+            "type": "boolean",
+            "example": true
+          },
+          "totalCount": {
+            "type": "number",
+            "example": 5
+          },
+          "passedCount": {
+            "type": "number",
+            "example": 5
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestCaseEvaluationResultDto"
+            }
+          }
+        },
+        "required": [
+          "passed",
+          "totalCount",
+          "passedCount",
+          "results"
+        ]
+      },
+      "FormatLanguage": {
+        "type": "string",
+        "enum": [
+          "python",
+          "cpp",
+          "java",
+          "javascript",
+          "typescript"
+        ],
+        "description": "Programming language to format"
+      },
+      "FormatCodeDto": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "description": "Programming language to format",
+            "example": "python",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FormatLanguage"
+              }
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Source code to format"
+          }
+        },
+        "required": [
+          "language",
+          "code"
+        ]
+      },
+      "FormatResultDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Formatted code or original code if formatting failed"
+          },
+          "formatted": {
+            "type": "boolean",
+            "description": "Whether the code was successfully formatted",
+            "example": true
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message if formatting failed"
+          }
+        },
+        "required": [
+          "code",
+          "formatted"
+        ]
       },
       "CreateRoomDto": {
         "type": "object",

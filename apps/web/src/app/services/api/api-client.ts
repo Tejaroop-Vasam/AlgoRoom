@@ -529,12 +529,19 @@ export class ProblemsControllerClient implements IProblemsControllerClient {
 export interface IRunnerControllerClient {
     /**
      * Execute code against custom input or problem sample test case
+     * @return Code execution result
      */
-    run(body: RunCodeDto): Observable<void>;
+    run(body: RunCodeDto): Observable<ExecutionResultDto>;
     /**
      * Submit solution to evaluate against full test cases from storage/DB
+     * @return Evaluation results
      */
-    submit(body: SubmitCodeDto): Observable<void>;
+    submit(body: SubmitCodeDto): Observable<SubmissionEvaluationResultDto>;
+    /**
+     * Format source code using backend formatters (Ruff, Clang-Format, Prettier)
+     * @return Formatted code result
+     */
+    format(body: FormatCodeDto): Observable<FormatResultDto>;
 }
 
 @Injectable({
@@ -552,8 +559,9 @@ export class RunnerControllerClient implements IRunnerControllerClient {
 
     /**
      * Execute code against custom input or problem sample test case
+     * @return Code execution result
      */
-    run(body: RunCodeDto): Observable<void> {
+    run(body: RunCodeDto): Observable<ExecutionResultDto> {
         let url_ = this.baseUrl + "/api/run";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -566,6 +574,7 @@ export class RunnerControllerClient implements IRunnerControllerClient {
             withCredentials: true,
             headers: new HttpHeaders({
                 "Content-Type": "application/json",
+                "Accept": "application/json"
             })
         };
 
@@ -576,23 +585,25 @@ export class RunnerControllerClient implements IRunnerControllerClient {
                 try {
                     return this.processRun(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<ExecutionResultDto>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<ExecutionResultDto>;
         }));
     }
 
-    protected processRun(response: HttpResponseBase): Observable<void> {
+    protected processRun(response: HttpResponseBase): Observable<ExecutionResultDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 201) {
+        if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ExecutionResultDto;
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -604,8 +615,9 @@ export class RunnerControllerClient implements IRunnerControllerClient {
 
     /**
      * Submit solution to evaluate against full test cases from storage/DB
+     * @return Evaluation results
      */
-    submit(body: SubmitCodeDto): Observable<void> {
+    submit(body: SubmitCodeDto): Observable<SubmissionEvaluationResultDto> {
         let url_ = this.baseUrl + "/api/submit";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -618,6 +630,7 @@ export class RunnerControllerClient implements IRunnerControllerClient {
             withCredentials: true,
             headers: new HttpHeaders({
                 "Content-Type": "application/json",
+                "Accept": "application/json"
             })
         };
 
@@ -628,23 +641,81 @@ export class RunnerControllerClient implements IRunnerControllerClient {
                 try {
                     return this.processSubmit(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<SubmissionEvaluationResultDto>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<SubmissionEvaluationResultDto>;
         }));
     }
 
-    protected processSubmit(response: HttpResponseBase): Observable<void> {
+    protected processSubmit(response: HttpResponseBase): Observable<SubmissionEvaluationResultDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 201) {
+        if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SubmissionEvaluationResultDto;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Format source code using backend formatters (Ruff, Clang-Format, Prettier)
+     * @return Formatted code result
+     */
+    format(body: FormatCodeDto): Observable<FormatResultDto> {
+        let url_ = this.baseUrl + "/api/format";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processFormat(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processFormat(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FormatResultDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FormatResultDto>;
+        }));
+    }
+
+    protected processFormat(response: HttpResponseBase): Observable<FormatResultDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as FormatResultDto;
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -956,7 +1027,60 @@ export interface RunCodeDto {
     [key: string]: any;
 }
 
+export interface ExecutionResultDto {
+    status: ExecutionResultDtoStatus;
+    stdout: string;
+    stderr: string;
+    executionTimeMs: number;
+
+    [key: string]: any;
+}
+
 export interface SubmitCodeDto {
+
+    [key: string]: any;
+}
+
+export interface TestCaseEvaluationResultDto {
+    testCaseIndex: number;
+    verdict: TestCaseEvaluationResultDtoVerdict;
+    input: string;
+    expectedOutput: string;
+    actualOutput: string;
+    stderr: string;
+    executionTimeMs: number;
+
+    [key: string]: any;
+}
+
+export interface SubmissionEvaluationResultDto {
+    passed: boolean;
+    totalCount: number;
+    passedCount: number;
+    results: TestCaseEvaluationResultDto[];
+
+    [key: string]: any;
+}
+
+/** Programming language to format */
+export type FormatLanguage = "python" | "cpp" | "java" | "javascript" | "typescript";
+
+export interface FormatCodeDto {
+    /** Programming language to format */
+    language: FormatLanguage;
+    /** Source code to format */
+    code: string;
+
+    [key: string]: any;
+}
+
+export interface FormatResultDto {
+    /** Formatted code or original code if formatting failed */
+    code: string;
+    /** Whether the code was successfully formatted */
+    formatted: boolean;
+    /** Error message if formatting failed */
+    error?: string;
 
     [key: string]: any;
 }
@@ -1027,6 +1151,10 @@ export type Difficulty = "EASY" | "MEDIUM" | "HARD";
 export type ProblemListItemDtoDifficulty = "EASY" | "MEDIUM" | "HARD";
 
 export type ProblemDetailResponseDtoDifficulty = "EASY" | "MEDIUM" | "HARD";
+
+export type ExecutionResultDtoStatus = "SUCCESS" | "TIME_LIMIT_EXCEEDED" | "MEMORY_LIMIT_EXCEEDED" | "COMPILE_ERROR" | "RUNTIME_ERROR";
+
+export type TestCaseEvaluationResultDtoVerdict = "ACCEPTED" | "WRONG_ANSWER" | "TIME_LIMIT_EXCEEDED" | "MEMORY_LIMIT_EXCEEDED" | "COMPILE_ERROR" | "RUNTIME_ERROR";
 
 export type CreateRoomDtoMode = "RACE" | "COOP";
 

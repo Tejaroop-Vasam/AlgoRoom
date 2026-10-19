@@ -2,6 +2,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { BadgeComponent, ButtonComponent, ChipComponent, IconComponent, InputComponent } from '../../shared';
 import { ModalContainerComponent } from '../../shared/components/modal/modal-container.component';
 import { Room, RoomPreview, RoomsApiService } from '../../services/api';
+import { LoadingService } from '../../services/loading.service';
 
 export interface JoinRoomModalData {
   code?: string;
@@ -21,6 +22,7 @@ const ROOM_CODE_LENGTH = 6;
 export class JoinRoomModalComponent implements OnInit {
   private readonly container = inject(ModalContainerComponent, { optional: true });
   private readonly roomsApi = inject(RoomsApiService);
+  private readonly loadingService = inject(LoadingService);
 
   readonly code = signal('');
   readonly normalizedCode = computed(() => this.code().replace(/[^a-z0-9]/gi, '').toUpperCase());
@@ -28,7 +30,7 @@ export class JoinRoomModalComponent implements OnInit {
 
   readonly preview = signal<RoomPreview | null>(null);
   readonly joinedRoom = signal<Room | null>(null);
-  readonly loading = signal(false);
+  readonly loading = this.loadingService.isLoading;
 
   readonly roomFull = computed(() => {
     const room = this.preview();
@@ -54,14 +56,11 @@ export class JoinRoomModalComponent implements OnInit {
     if (!this.codeComplete() || this.loading()) {
       return;
     }
-    this.loading.set(true);
     try {
       const preview = await this.roomsApi.getRoomPreview(this.normalizedCode());
       this.preview.set(preview);
     } catch {
       // Error toasted globally by apiErrorInterceptor
-    } finally {
-      this.loading.set(false);
     }
   }
 
@@ -70,14 +69,11 @@ export class JoinRoomModalComponent implements OnInit {
     if (!room || this.loading() || this.roomFull()) {
       return;
     }
-    this.loading.set(true);
     try {
       const joined = await this.roomsApi.joinRoom(room.code);
       this.joinedRoom.set(joined);
     } catch {
       // Error toasted globally by apiErrorInterceptor
-    } finally {
-      this.loading.set(false);
     }
   }
 

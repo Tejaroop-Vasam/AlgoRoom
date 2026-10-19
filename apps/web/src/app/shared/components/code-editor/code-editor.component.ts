@@ -4,12 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { EditorComponent } from 'ngx-monaco-editor-v2';
 import type * as Monaco from 'monaco-editor';
 import { IconComponent } from '../icon/icon.component';
+import { SelectComponent, SelectOption } from '../select/select.component';
 import { ThemeService } from '../../../services/theme.service';
+import { FormatLanguage, RunnerApiService } from '../../../services/api/runner-api.service';
 
 @Component({
   selector: 'app-code-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, EditorComponent, IconComponent],
+  imports: [CommonModule, FormsModule, EditorComponent, IconComponent, SelectComponent],
   templateUrl: './code-editor.component.html',
   styleUrl: './code-editor.component.css',
   host: {
@@ -17,17 +19,24 @@ import { ThemeService } from '../../../services/theme.service';
   },
 })
 export class CodeEditorComponent {
-  readonly code = model<string>('');
-  readonly fileName = input<string>('untitled');
-  readonly language = model<string>('python');
-  readonly availableLanguages = input<string[]>(['python', 'java', 'javascript']);
-  readonly theme = input<'dark' | 'light' | 'stitch-dark' | 'stitch-light' | undefined>(undefined);
-  readonly readonly = input<boolean>(false);
-  readonly readOnly = input<boolean>(false);
-
+  private readonly runnerApi = inject(RunnerApiService, { optional: true });
   private readonly themeService = inject(ThemeService, { optional: true });
 
-  readonly isReadOnly = computed(() => this.readonly() || this.readOnly());
+  readonly code = model<string>('');
+  readonly fileName = input<string>('untitled');
+  readonly language = model.required<string>();
+  readonly availableLanguages = input<string[]>(['python', 'java', 'javascript']);
+
+  readonly languageOptions = computed<SelectOption<string>[]>(() =>
+    this.availableLanguages().map(lang => ({
+      label:lang,
+      value: lang,
+    }))
+  );
+
+  readonly theme = input<'dark' | 'light' | 'stitch-dark' | 'stitch-light' | undefined>(undefined);
+  readonly readonly = input<boolean>(false);
+
   readonly resolvedTheme = computed(() => {
     const custom = this.theme();
     if (custom) {
@@ -43,12 +52,18 @@ export class CodeEditorComponent {
   readonly showStatusBar = input<boolean>(true);
   readonly showMinimap = input<boolean>(false);
   readonly copyable = input<boolean>(true);
-  readonly formattable = input<boolean>(true);
   readonly minHeight = input<string>('16rem');
   readonly maxHeight = input<string>('36rem');
   readonly tabSize = input<number>(4);
+  readonly showReset = input<boolean>(false);
+  readonly showFullscreen = input<boolean>(false);
 
   readonly saved = output<string>();
+  readonly reset = output<void>();
+  readonly fullscreenToggle = output<void>();
+  readonly bannerAction = output<void>();
+  readonly run = output<void>();
+  readonly submit = output<void>();
 
   private editor?: Monaco.editor.IStandaloneCodeEditor;
 
@@ -60,6 +75,18 @@ export class CodeEditorComponent {
   readonly isCopied = signal<boolean>(false);
   readonly isFormatted = signal<boolean>(false);
   readonly statusMessage = signal<string>('READY');
+
+  onReset(): void {
+    this.reset.emit();
+  }
+
+  onFullscreenToggle(): void {
+    this.fullscreenToggle.emit();
+  }
+
+  onBannerAction(): void {
+    this.bannerAction.emit();
+  }
 
   constructor() {
     effect(() => {
@@ -82,8 +109,10 @@ export class CodeEditorComponent {
     });
   }
 
-  onLanguageChange(newLang: string): void {
-    this.language.set(newLang);
+  onLanguageChange(newLang: string | null): void {
+    if (newLang) {
+      this.language.set(newLang);
+    }
   }
 
   readonly editorOptions = computed<Monaco.editor.IStandaloneEditorConstructionOptions>(() => ({
@@ -99,8 +128,8 @@ export class CodeEditorComponent {
     folding: true,
     lineDecorationsWidth: 0,
     lineNumbersMinChars: 3,
-    readOnly: this.isReadOnly(),
-    domReadOnly: this.isReadOnly(),
+    readOnly: this.readonly(),
+    domReadOnly: this.readonly(),
     tabSize: this.tabSize(),
     automaticLayout: true,
     formatOnPaste: true,
@@ -127,7 +156,7 @@ export class CodeEditorComponent {
       editor.layout();
     }, 100);
 
-    if (this.isReadOnly()) {
+    if (this.readonly()) {
       this.statusMessage.set('READ ONLY');
     }
 
@@ -147,53 +176,78 @@ export class CodeEditorComponent {
         () => {
           this.saved.emit(this.code());
           this.statusMessage.set('SAVED');
-          setTimeout(() => this.statusMessage.set(this.isReadOnly() ? 'READ ONLY' : 'READY'), 2000);
+          setTimeout(() => this.statusMessage.set(this.readonly() ? 'READ ONLY' : 'READY'), 2000);
+        }
+      );
+
+      editor.addCommand(
+        monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+        () => {
+          this.run.emit();
+        }
+      );
+
+      editor.addCommand(
+        monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+        () => {
+          this.submit.emit();
+        }
+      );
+
+      editor.addCommand(
+        monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyF,
+        () => {
+          this.formatCode();
         }
       );
     }
   }
 
-  formatCode(): void {
-    if (this.isReadOnly() || !this.editor) return;
+  async formatCode(): Promise<void> {
+    if (this.readonly() || !this.editor) return;
+
+    const currentCode = this.editor.getValue();
+    const currentLang = this.language();
+
+    if (this.runnerApi && currentCode.trim()) {
+      try {
+        const res = await this.runnerApi.format({
+          language: currentLang as FormatLanguage,
+          code: currentCode,
+        });
+
+        if (res.formatted && res.code !== undefined) {
+          if (res.code !== currentCode) {
+            const model = this.editor.getModel();
+            if (model) {
+              this.editor.executeEdits('format', [
+                {
+                  range: model.getFullModelRange(),
+                  text: res.code,
+                  forceMoveMarkers: true,
+                },
+              ]);
+              this.code.set(res.code);
+            }
+          }
+          this.notifyFormatted();
+          return;
+        }
+      } catch {
+        // Fall back to client-side format if API errors
+      }
+    }
 
     const action = this.editor.getAction('editor.action.formatDocument');
     if (action) {
       action.run().then(() => {
         this.notifyFormatted();
       }).catch(() => {
-        this.fallbackFormat();
       });
     } else {
-      this.fallbackFormat();
     }
   }
 
-  private fallbackFormat(): void {
-    if (!this.editor) return;
-    const model = this.editor.getModel();
-    if (!model) return;
-
-    const lines = model.getLinesContent();
-    const cleaned: string[] = [];
-    let blankCount = 0;
-    for (const line of lines) {
-      const trimmedEnd = line.replace(/\s+$/, '');
-      if (!trimmedEnd) {
-        blankCount++;
-        if (blankCount <= 2) cleaned.push('');
-      } else {
-        blankCount = 0;
-        cleaned.push(trimmedEnd);
-      }
-    }
-
-    this.editor.executeEdits('format', [{
-      range: model.getFullModelRange(),
-      text: cleaned.join('\n') + (cleaned.length ? '\n' : ''),
-      forceMoveMarkers: true,
-    }]);
-    this.notifyFormatted();
-  }
 
   private notifyFormatted(): void {
     this.isFormatted.set(true);
@@ -201,7 +255,7 @@ export class CodeEditorComponent {
     this.updateCounts();
     setTimeout(() => {
       this.isFormatted.set(false);
-      this.statusMessage.set(this.isReadOnly() ? 'READ ONLY' : 'READY');
+      this.statusMessage.set(this.readonly() ? 'READ ONLY' : 'READY');
     }, 1500);
   }
 

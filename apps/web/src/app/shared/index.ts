@@ -20,6 +20,14 @@ export * from './components/checkbox/checkbox.component';
 export * from './components/avatar/avatar.component';
 export * from './components/kbd/kbd.component';
 export * from './components/toggle-switch/toggle-switch.component';
+export * from './components/accordion/accordion.component';
+export * from './components/accordion/accordion-item.component';
+export * from './components/split-pane/split-pane.component';
+export * from './components/testcase-console/testcase-console.component';
 export * from './components/toast';
+export * from './directives/run-shortcuts.directive';
+export * from './utils/platform';
+export * from './components/loader/loader.component';
+export * from '../services/loading.service';
 export * from '../services/theme.service';
 

@@ -19,10 +19,40 @@ import {
   SelectOption,
   ToggleSwitchComponent,
   ToastService,
+  SplitPaneComponent,
+  TestcaseConsoleComponent,
+  TestResultData,
+  TestCaseItem,
+  AccordionComponent,
+  AccordionItemComponent,
+  DividerComponent,
+  RunShortcutsDirective,
+  getPlatformModifierKey,
+  LoaderComponent,
+  LoadingService,
 } from '../../shared';
+import { ProblemPanelComponent, ProblemData } from '../problem-panel/problem-panel.component';
 import { TestModalContentComponent } from './test-modal-content/test-modal-content.component';
 
-export type ComponentSection = 'all' | 'inputs' | 'buttons' | 'badges' | 'icons' | 'modals' | 'toasts' | 'chips' | 'controls' | 'cards' | 'editor' | 'live-grid';
+export type ComponentSection =
+  | 'all'
+  | 'inputs'
+  | 'buttons'
+  | 'badges'
+  | 'icons'
+  | 'modals'
+  | 'toasts'
+  | 'chips'
+  | 'controls'
+  | 'cards'
+  | 'accordions'
+  | 'dividers'
+  | 'editor'
+  | 'split-pane'
+  | 'console'
+  | 'live-grid'
+  | 'loader'
+  | 'workspace';
 
 @Component({
   imports: [
@@ -39,7 +69,15 @@ export type ComponentSection = 'all' | 'inputs' | 'buttons' | 'badges' | 'icons'
     CheckboxComponent,
     AvatarComponent,
     KbdComponent,
-    ToggleSwitchComponent
+    ToggleSwitchComponent,
+    SplitPaneComponent,
+    ProblemPanelComponent,
+    TestcaseConsoleComponent,
+    AccordionComponent,
+    AccordionItemComponent,
+    DividerComponent,
+    RunShortcutsDirective,
+    LoaderComponent,
   ],
   selector: 'app-component-test',
   styleUrl: './component-test.component.css',
@@ -48,10 +86,20 @@ export type ComponentSection = 'all' | 'inputs' | 'buttons' | 'badges' | 'icons'
 export class ComponentTest {
   readonly modalService = inject(ModalService);
   readonly toastService = inject(ToastService);
+  readonly loadingService = inject(LoadingService);
   readonly testModalContent = TestModalContentComponent;
 
+  readonly modKey = signal<string>(getPlatformModifierKey());
   readonly activeSection = signal<ComponentSection>('all');
   readonly clearableValue = signal('Clear me');
+
+  triggerGlobalLoader(): void {
+    this.loadingService.show();
+    setTimeout(() => {
+      this.loadingService.hide();
+      this.toastService.info('Global loader simulation completed.');
+    }, 2500);
+  }
 
   triggerSuccessToast(): void {
     this.toastService.success('Room instance deployed successfully! Lobby code: #X92A1', {
@@ -282,7 +330,136 @@ print(fibonacci(8))`);
 def circle_area(radius):
     return math.pi * (radius ** 2)`;
 
+  readonly sampleProblem: ProblemData = {
+    id: 1,
+    title: 'Two Sum',
+    difficulty: 'EASY',
+    description:
+      'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume that each input would have exactly one solution, and you may not use the same element twice. You can return the answer in any order.',
+    examples: [
+      {
+        input: 'nums = [2,7,11,15], target = 9',
+        output: '[0,1]',
+        explanation: 'Because nums[0] + nums[1] == 9, we return [0, 1].',
+      },
+      {
+        input: 'nums = [3,2,4], target = 6',
+        output: '[1,2]',
+      },
+      {
+        input: 'nums = [3,3], target = 6',
+        output: '[0,1]',
+      },
+    ],
+    constraints: [
+      '2 <= nums.length <= 10^4',
+      '-10^9 <= nums[i] <= 10^9',
+      '-10^9 <= target <= 10^9',
+      'Only one valid answer exists.',
+    ],
+    hints: [
+      'A really brute force way would be to search for all possible pairs of numbers but that would be too slow. Can you do it in O(n) runtime?',
+      'Can we use a hash map to look up if the complement exists in O(1) time?',
+    ],
+    topics: ['Array', 'Hash Table'],
+    companies: ['Amazon', 'Google', 'Apple', 'Meta'],
+    likes: 70800,
+    commentsCount: 2100,
+  };
+
+  readonly workspaceLanguage = signal<string>('cpp');
+  readonly workspaceCode = signal<string>(`class Solution {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        unordered_map<int, int> seen;
+        for (int i = 0; i < nums.size(); ++i) {
+            int complement = target - nums[i];
+            if (seen.find(complement) != seen.end()) {
+                return {seen[complement], i};
+            }
+            seen[nums[i]] = i;
+        }
+        return {};
+    }
+};`);
+
+  readonly isWorkspaceRunning = signal<boolean>(false);
+  readonly isWorkspaceSubmitting = signal<boolean>(false);
+  readonly workspaceResult = signal<TestResultData | null>(null);
+
+  onRunWorkspace(testcase?: TestCaseItem): void {
+    this.isWorkspaceRunning.set(true);
+    const tc = testcase || {
+      id: 1,
+      name: 'Case 1',
+      params: [{ name: 'nums', value: '[2,7,11,15]' }, { name: 'target', value: '9' }],
+      expectedOutput: '[0,1]',
+    };
+    setTimeout(() => {
+      this.isWorkspaceRunning.set(false);
+      this.workspaceResult.set({
+        status: 'ACCEPTED',
+        runtimeMs: 42,
+        memoryMb: 14.8,
+        input: tc.params.map(p => `${p.name} = ${p.value}`).join(', '),
+        output: '[0,1]',
+        expectedOutput: '[0,1]',
+      });
+      this.toastService.success('Testcase passed! Output matched expected solution.', {
+        title: 'Run Completed',
+      });
+    }, 800);
+  }
+
+  onShortcutRunWorkspace(): void {
+    if (this.isWorkspaceRunning() || this.isWorkspaceSubmitting()) return;
+    this.onRunWorkspace();
+  }
+
+  onSubmitWorkspace(): void {
+    this.isWorkspaceSubmitting.set(true);
+    setTimeout(() => {
+      this.isWorkspaceSubmitting.set(false);
+      this.workspaceResult.set({
+        status: 'ACCEPTED',
+        runtimeMs: 38,
+        memoryMb: 15.2,
+        input: 'Full 55/55 hidden test suites evaluated',
+        output: 'All testcases passed',
+        expectedOutput: 'All testcases passed',
+      });
+      this.toastService.success('Solution Accepted! Beats 94.2% of submissions in runtime.', {
+        title: 'Submission Accepted',
+      });
+    }, 1200);
+  }
+
+  onResetWorkspace(): void {
+    this.workspaceCode.set(`class Solution {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        
+    }
+};`);
+    this.toastService.info('Code reset to original boilerplate.');
+  }
+
+  readonly splitHorizontal = signal<number>(50);
+  readonly splitVertical = signal<number>(50);
+  readonly accordionMulti = signal<boolean>(true);
+
+  readonly sampleConsoleResult: TestResultData = {
+    status: 'WRONG_ANSWER',
+    runtimeMs: 38,
+    memoryMb: 14.2,
+    input: 'nums = [3,2,4], target = 6',
+    output: '[0,1]',
+    expectedOutput: '[1,2]',
+    errorMessage: 'Output [0,1] did not match expected solution [1,2] for testcase #2.',
+  };
+
   setSection(section: ComponentSection): void {
     this.activeSection.set(section);
   }
 }
+

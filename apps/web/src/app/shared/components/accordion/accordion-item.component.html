@@ -1,0 +1,57 @@
+<div
+  cdkAccordionItem
+  #accordionItem="cdkAccordionItem"
+  role="button"
+  tabindex="0"
+  [attr.id]="'accordion-header-' + accordionItem.id"
+  [attr.aria-expanded]="accordionItem.expanded"
+  [attr.aria-controls]="'accordion-body-' + accordionItem.id"
+  [(expanded)]="expanded"
+  [disabled]="disabled()"
+  class="w-full rounded-lg border border-surface-highest overflow-hidden transition-colors"
+  [class.bg-surface-container-low]="accordionItem.expanded"
+  [class.bg-surface-container]="!accordionItem.expanded"
+  [class.opacity-50]="disabled()">
+
+  <!-- Accordion Header Button -->
+  <button
+    type="button"
+    (click)="accordionItem.toggle()"
+    [disabled]="disabled()"
+    class="w-full flex items-center justify-between p-3.5 text-left bg-transparent border-0 text-white cursor-pointer select-none transition-colors hover-bg-surface-container-high"
+    [class.cursor-not-allowed]="disabled()">
+    <div class="flex items-center gap-2.5 min-w-0">
+      @if (icon()) {
+        <app-icon [name]="icon()!" size="sm" [color]="iconColor()"></app-icon>
+      }
+      <div class="flex flex-col min-w-0">
+        <span class="text-xs font-semibold text-white tracking-wide truncate">{{ title() }}</span>
+        @if (subtitle()) {
+          <span class="text-xs text-outline font-normal truncate">{{ subtitle() }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2.5 flex-shrink-0">
+      @if (badge()) {
+        <app-badge [label]="badge()!" [variant]="badgeVariant()" size="sm"></app-badge>
+      }
+      <app-icon
+        name="expand_more"
+        size="sm"
+        class="transition-transform duration-200"
+        [class.rotate-180]="accordionItem.expanded">
+      </app-icon>
+    </div>
+  </button>
+
+  @if (accordionItem.expanded) {
+    <div
+      role="region"
+      [attr.id]="'accordion-body-' + accordionItem.id"
+      [attr.aria-labelledby]="'accordion-header-' + accordionItem.id"
+      class="p-4 border-t border-surface-highest bg-surface-container-lowest text-xs text-on-surface-variant leading-relaxed font-sans">
+      <ng-content></ng-content>
+    </div>
+  }
+</div>

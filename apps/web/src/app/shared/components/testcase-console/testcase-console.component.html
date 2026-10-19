@@ -1,0 +1,142 @@
+<app-segmented-control
+  size="sm"
+  [options]="consoleTabOptions"
+  [(value)]="activeTab"
+  headerClass="px-3 py-2 border-b border-surface-highest bg-surface-container select-none"
+  class="flex-1 flex flex-col min-h-0 w-full">
+
+  <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3 min-h-0">
+    @if (activeTab() === 'testcase') {
+      <app-segmented-control
+        size="sm"
+        [options]="caseOptions()"
+        [(value)]="activeCaseIndex">
+        <button
+          trailing
+          type="button"
+          (click)="addCustomCase()"
+          class="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-container text-outline hover-text-white hover-bg-surface-container-high border-0 cursor-pointer"
+          title="Add new testcase">
+          <app-icon name="add" size="xs"></app-icon>
+        </button>
+
+        @if (activeCase(); as selected) {
+          <div class="flex flex-col gap-3 mt-3">
+            @for (param of selected.params; track param.name) {
+              <div class="flex flex-col gap-1.5">
+                <span class="text-xs font-mono text-outline font-medium">{{ param.name }} =</span>
+                <div class="rounded-lg bg-surface-container border border-surface-highest p-2.5">
+                  <input
+                    type="text"
+                    [(ngModel)]="param.value"
+                    class="w-full bg-transparent border-0 outline-none text-white font-mono text-xs"
+                    [placeholder]="'Enter value for ' + param.name" />
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </app-segmented-control>
+    } @else if (activeTab() === 'result') {
+      @if (testResult(); as res) {
+        <div class="flex flex-col gap-4">
+~          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <app-badge
+                [label]="formattedResultStatus()"
+                [variant]="resultBadgeVariant()"
+                shape="pill"
+                size="md">
+              </app-badge>
+
+              @if (res.runtimeMs !== undefined) {
+                <span class="text-xs font-mono text-outline">
+                  Runtime: <strong class="text-white">{{ res.runtimeMs }} ms</strong>
+                </span>
+              }
+
+              @if (res.memoryMb !== undefined) {
+                <span class="text-xs font-mono text-outline">
+                  Memory: <strong class="text-white">{{ res.memoryMb }} MB</strong>
+                </span>
+              }
+            </div>
+          </div>
+
+          <!-- Diff / Output Boxes -->
+          <div class="flex flex-col gap-3 font-mono text-xs">
+            @if (res.input) {
+              <div class="flex flex-col gap-1">
+                <span class="text-outline font-semibold">Input</span>
+                <div class="p-2.5 rounded-lg bg-surface-container border border-surface-highest text-white">
+                  {{ res.input }}
+                </div>
+              </div>
+            }
+
+            @if (res.output) {
+              <div class="flex flex-col gap-1">
+                <span class="text-outline font-semibold">Output</span>
+                <div class="p-2.5 rounded-lg bg-surface-container border border-surface-highest text-white">
+                  {{ res.output }}
+                </div>
+              </div>
+            }
+
+            @if (res.expectedOutput) {
+              <div class="flex flex-col gap-1">
+                <span class="text-outline font-semibold">Expected</span>
+                <div class="p-2.5 rounded-lg bg-surface-container border border-surface-highest text-secondary">
+                  {{ res.expectedOutput }}
+                </div>
+              </div>
+            }
+
+            @if (res.errorMessage) {
+              <div class="flex flex-col gap-1">
+                <span class="text-error font-semibold">Error Message</span>
+                <div class="p-2.5 rounded-lg bg-surface-container border border-error text-error whitespace-pre-wrap">
+                  {{ res.errorMessage }}
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="flex flex-col items-center justify-center p-8 text-outline gap-2">
+          <app-icon name="terminal" size="lg"></app-icon>
+          <span class="text-xs">You must run your code to view test results.</span>
+        </div>
+      }
+    }
+  </div>
+</app-segmented-control>
+
+<div class="flex items-center justify-between px-3 py-2 border-t border-surface-highest bg-surface-container select-none">
+  <div class="flex items-center gap-1.5 text-xs text-outline cursor-pointer hover-text-white">
+    <app-icon name="terminal" size="xs"></app-icon>
+    <span class="font-medium">Console</span>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <app-button
+      variant="surface"
+      size="sm"
+      icon="play_arrow"
+      iconPosition="start"
+      [loading]="isRunning()"
+      (clicked)="onRun()">
+      Run
+    </app-button>
+
+    <app-button
+      variant="primary"
+      size="sm"
+      icon="cloud_upload"
+      iconPosition="start"
+      [loading]="isSubmitting()"
+      (clicked)="onSubmit()">
+      Submit
+    </app-button>
+  </div>
+</div>

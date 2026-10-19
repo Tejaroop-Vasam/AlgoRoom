@@ -1,0 +1,44 @@
+<main
+  class="flex-1 overflow-hidden relative flex flex-col min-h-0 bg-surface-container-lowest"
+  appRunShortcuts
+  (run)="onShortcutRun()"
+  (submit)="onShortcutSubmit()">
+  <div class="w-full h-full p-2 flex flex-col min-h-0">
+    <app-split-pane direction="horizontal" [split]="45">
+      <div pane-1 class="w-full h-full pr-1 flex flex-col min-h-0">
+        <app-problem-panel [problem]="problemData()"></app-problem-panel>
+      </div>
+
+      <div pane-2 class="w-full h-full pl-1 flex flex-col min-h-0">
+        <app-split-pane direction="vertical" [split]="58">
+          <div pane-1 class="w-full h-full pb-1 flex flex-col min-h-0">
+            <app-code-editor
+              [showReset]="true"
+              [showFullscreen]="true"
+              [(code)]="code"
+              [(language)]="language"
+              (languageChange)="onLanguageChange($event)"
+              (reset)="resetCode()"
+              (run)="onShortcutRun()"
+              (submit)="onShortcutSubmit()"
+              minHeight="100%"
+              class="flex-1 h-full block">
+            </app-code-editor>
+          </div>
+
+          <div pane-2 class="w-full h-full pt-1 flex flex-col min-h-0">
+            <app-testcase-console
+              [(testcases)]="testcases"
+              [(activeTab)]="consoleTab"
+              [testResult]="testResult()"
+              [isRunning]="isRunning()"
+              [isSubmitting]="isSubmitting()"
+              (runClicked)="onRun($event)"
+              (submitClicked)="onSubmit()">
+            </app-testcase-console>
+          </div>
+        </app-split-pane>
+      </div>
+    </app-split-pane>
+  </div>
+</main>

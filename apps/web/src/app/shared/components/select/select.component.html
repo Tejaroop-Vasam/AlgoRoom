@@ -1,6 +1,8 @@
 <mat-form-field
   [appearance]="appearance()"
+  subscriptSizing="dynamic"
   class="w-full"
+  [class.select-sm]="size() === 'sm'"
   [class.has-prefix]="prefixIcon()">
 
   @if (label()) {

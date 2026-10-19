@@ -1,9 +1,11 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RunnerService } from './runner.service';
 import { ProblemsService } from '../problems/problems.service';
 import { RunCodeDto } from './dto/run-code.dto';
 import { SubmitCodeDto } from './dto/submit-code.dto';
+import { FormatCodeDto, FormatResultDto } from './dto/format-code.dto';
+import { ExecutionResultDto, SubmissionEvaluationResultDto } from './dto/runner-response.dto';
 
 @ApiTags('Code Runner')
 @Controller('api')
@@ -14,7 +16,9 @@ export class RunnerController {
   ) {}
 
   @Post('run')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Execute code against custom input or problem sample test case' })
+  @ApiResponse({ status: 200, description: 'Code execution result', type: ExecutionResultDto })
   async run(@Body() runCodeDto: RunCodeDto) {
     let executableCode = runCodeDto.code;
     let input = runCodeDto.input ?? '';
@@ -47,7 +51,9 @@ export class RunnerController {
   }
 
   @Post('submit')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Submit solution to evaluate against full test cases from storage/DB' })
+  @ApiResponse({ status: 200, description: 'Evaluation results', type: SubmissionEvaluationResultDto })
   async submit(@Body() submitCodeDto: SubmitCodeDto) {
     const problem = await this.problemsService.getProblemEntity(submitCodeDto.problemId);
     const executableCode = this.problemsService.assembleExecutableCode(
@@ -71,6 +77,17 @@ export class RunnerController {
       testCases,
       timeLimitMs: problem.time_limit_ms,
       memoryLimitMb: problem.memory_limit_mb,
+    });
+  }
+
+  @Post('format')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Format source code using backend formatters (Ruff, Clang-Format, Prettier)' })
+  @ApiResponse({ status: 200, description: 'Formatted code result', type: FormatResultDto })
+  async format(@Body() formatCodeDto: FormatCodeDto): Promise<FormatResultDto> {
+    return this.runnerService.formatCode({
+      language: formatCodeDto.language,
+      code: formatCodeDto.code,
     });
   }
 }

@@ -31,6 +31,7 @@ export class SelectComponent<T = string> extends BaseInput<T | null> {
   readonly options = input<SelectOption<T>[]>([]);
   readonly multiple = input<boolean>(false);
   readonly valuePrefix = input<string>('');
+  readonly size = input<'sm' | 'base'>('base');
 
   onSelectionChange(value: T | null): void {
     this.value.set(value);
