@@ -1,25 +1,29 @@
-import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { API_BASE_URL } from '../../configs/api.config';
+import { firstValueFrom, Observable } from 'rxjs';
+import { CreateRoomDto, RoomsControllerClient } from './api-client';
 import { CreateRoomRequest, Room, RoomPreview } from './api.types';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RoomsApiService {
-  private readonly http = inject(HttpClient);
-  private readonly baseUrl = inject(API_BASE_URL);
+  private readonly roomsClient = inject(RoomsControllerClient);
 
-  createRoom(request: CreateRoomRequest): Observable<Room> {
-    return this.http.post<Room>(`${this.baseUrl}/rooms`, request);
+  createRoom(request: CreateRoomRequest): Promise<Room> {
+    return firstValueFrom(
+      this.roomsClient.createRoom(request as unknown as CreateRoomDto) as unknown as Observable<Room>,
+    );
   }
 
-  getRoomPreview(code: string): Observable<RoomPreview> {
-    return this.http.get<RoomPreview>(`${this.baseUrl}/rooms/${encodeURIComponent(code)}`);
+  getRoomPreview(code: string): Promise<RoomPreview> {
+    return firstValueFrom(
+      this.roomsClient.getRoomPreview(code) as unknown as Observable<RoomPreview>,
+    );
   }
 
-  joinRoom(code: string): Observable<Room> {
-    return this.http.post<Room>(`${this.baseUrl}/rooms/${encodeURIComponent(code)}/join`, {});
+  joinRoom(code: string): Promise<Room> {
+    return firstValueFrom(
+      this.roomsClient.joinRoom(code) as unknown as Observable<Room>,
+    );
   }
 }

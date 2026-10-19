@@ -29,8 +29,9 @@ export interface IUsersControllerClient {
     update(body: UpdateUserDto): Observable<void>;
     /**
      * Get current user profile
+     * @return Current user profile
      */
-    profile(): Observable<void>;
+    profile(): Observable<ProfileResponseDto>;
     /**
      * Change user password
      */
@@ -212,8 +213,9 @@ export class UsersControllerClient implements IUsersControllerClient {
 
     /**
      * Get current user profile
+     * @return Current user profile
      */
-    profile(): Observable<void> {
+    profile(): Observable<ProfileResponseDto> {
         let url_ = this.baseUrl + "/profile";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -222,6 +224,7 @@ export class UsersControllerClient implements IUsersControllerClient {
             responseType: "blob",
             withCredentials: true,
             headers: new HttpHeaders({
+                "Accept": "application/json"
             })
         };
 
@@ -232,14 +235,14 @@ export class UsersControllerClient implements IUsersControllerClient {
                 try {
                     return this.processProfile(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<ProfileResponseDto>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<ProfileResponseDto>;
         }));
     }
 
-    protected processProfile(response: HttpResponseBase): Observable<void> {
+    protected processProfile(response: HttpResponseBase): Observable<ProfileResponseDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -248,7 +251,9 @@ export class UsersControllerClient implements IUsersControllerClient {
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProfileResponseDto;
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -367,25 +372,17 @@ export interface IProblemsControllerClient {
     /**
      * List and filter DSA problems with pagination
      * @param difficulty (optional) Difficulty level
-     * @param search (optional) Search term by title or slug
-     * @param tags (optional) Filter by tag slugs
-     * @param list (optional) Filter by curated list slug
+     * @param search (optional) Search term by problem title or description
      * @param page (optional) Page number
      * @param limit (optional) Page limit
+     * @return Paginated list of problems
      */
-    getProblems(difficulty?: Difficulty | undefined, search?: string | undefined, tags?: string | undefined, list?: string | undefined, page?: number | undefined, limit?: number | undefined): Observable<void>;
-    /**
-     * Get list of available problem topics and tags
-     */
-    getTags(): Observable<void>;
-    /**
-     * Get curated DSA challenge lists
-     */
-    getLists(): Observable<void>;
+    getProblems(difficulty?: Difficulty | undefined, search?: string | undefined, page?: number | undefined, limit?: number | undefined): Observable<ProblemsListResponseDto>;
     /**
      * Get DSA problem statement, constraints, and starter codes by ID
+     * @return Problem statement details
      */
-    getProblem(id: number): Observable<void>;
+    getProblem(id: number): Observable<ProblemDetailResponseDto>;
 }
 
 @Injectable({
@@ -404,13 +401,12 @@ export class ProblemsControllerClient implements IProblemsControllerClient {
     /**
      * List and filter DSA problems with pagination
      * @param difficulty (optional) Difficulty level
-     * @param search (optional) Search term by title or slug
-     * @param tags (optional) Filter by tag slugs
-     * @param list (optional) Filter by curated list slug
+     * @param search (optional) Search term by problem title or description
      * @param page (optional) Page number
      * @param limit (optional) Page limit
+     * @return Paginated list of problems
      */
-    getProblems(difficulty?: Difficulty | undefined, search?: string | undefined, tags?: string | undefined, list?: string | undefined, page?: number | undefined, limit?: number | undefined): Observable<void> {
+    getProblems(difficulty?: Difficulty | undefined, search?: string | undefined, page?: number | undefined, limit?: number | undefined): Observable<ProblemsListResponseDto> {
         let url_ = this.baseUrl + "/problems?";
         if (difficulty === null)
             throw new globalThis.Error("The parameter 'difficulty' cannot be null.");
@@ -420,14 +416,6 @@ export class ProblemsControllerClient implements IProblemsControllerClient {
             throw new globalThis.Error("The parameter 'search' cannot be null.");
         else if (search !== undefined)
             url_ += "search=" + encodeURIComponent("" + search) + "&";
-        if (tags === null)
-            throw new globalThis.Error("The parameter 'tags' cannot be null.");
-        else if (tags !== undefined)
-            url_ += "tags=" + encodeURIComponent("" + tags) + "&";
-        if (list === null)
-            throw new globalThis.Error("The parameter 'list' cannot be null.");
-        else if (list !== undefined)
-            url_ += "list=" + encodeURIComponent("" + list) + "&";
         if (page === null)
             throw new globalThis.Error("The parameter 'page' cannot be null.");
         else if (page !== undefined)
@@ -443,6 +431,7 @@ export class ProblemsControllerClient implements IProblemsControllerClient {
             responseType: "blob",
             withCredentials: true,
             headers: new HttpHeaders({
+                "Accept": "application/json"
             })
         };
 
@@ -453,14 +442,14 @@ export class ProblemsControllerClient implements IProblemsControllerClient {
                 try {
                     return this.processGetProblems(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<ProblemsListResponseDto>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<ProblemsListResponseDto>;
         }));
     }
 
-    protected processGetProblems(response: HttpResponseBase): Observable<void> {
+    protected processGetProblems(response: HttpResponseBase): Observable<ProblemsListResponseDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -469,103 +458,9 @@ export class ProblemsControllerClient implements IProblemsControllerClient {
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Get list of available problem topics and tags
-     */
-    getTags(): Observable<void> {
-        let url_ = this.baseUrl + "/problems/tags";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_ : any = {
-            observe: "response",
-            responseType: "blob",
-            withCredentials: true,
-            headers: new HttpHeaders({
-            })
-        };
-
-        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetTags(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetTags(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<void>;
-        }));
-    }
-
-    protected processGetTags(response: HttpResponseBase): Observable<void> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Get curated DSA challenge lists
-     */
-    getLists(): Observable<void> {
-        let url_ = this.baseUrl + "/problems/lists";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_ : any = {
-            observe: "response",
-            responseType: "blob",
-            withCredentials: true,
-            headers: new HttpHeaders({
-            })
-        };
-
-        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetLists(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetLists(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<void>;
-        }));
-    }
-
-    protected processGetLists(response: HttpResponseBase): Observable<void> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemsListResponseDto;
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -577,8 +472,9 @@ export class ProblemsControllerClient implements IProblemsControllerClient {
 
     /**
      * Get DSA problem statement, constraints, and starter codes by ID
+     * @return Problem statement details
      */
-    getProblem(id: number): Observable<void> {
+    getProblem(id: number): Observable<ProblemDetailResponseDto> {
         let url_ = this.baseUrl + "/problems/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -590,6 +486,7 @@ export class ProblemsControllerClient implements IProblemsControllerClient {
             responseType: "blob",
             withCredentials: true,
             headers: new HttpHeaders({
+                "Accept": "application/json"
             })
         };
 
@@ -600,14 +497,14 @@ export class ProblemsControllerClient implements IProblemsControllerClient {
                 try {
                     return this.processGetProblem(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<ProblemDetailResponseDto>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<ProblemDetailResponseDto>;
         }));
     }
 
-    protected processGetProblem(response: HttpResponseBase): Observable<void> {
+    protected processGetProblem(response: HttpResponseBase): Observable<ProblemDetailResponseDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -616,7 +513,9 @@ export class ProblemsControllerClient implements IProblemsControllerClient {
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetailResponseDto;
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -759,16 +658,19 @@ export class RunnerControllerClient implements IRunnerControllerClient {
 export interface IRoomsControllerClient {
     /**
      * Create a new room instance
+     * @return Room created successfully
      */
-    createRoom(body: CreateRoomDto): Observable<void>;
+    createRoom(body: CreateRoomDto): Observable<RoomDto>;
     /**
      * Get preview for a room by code
+     * @return Room preview details
      */
-    getRoomPreview(code: string): Observable<void>;
+    getRoomPreview(code: string): Observable<RoomPreviewDto>;
     /**
      * Join a room by code
+     * @return Joined room details
      */
-    joinRoom(code: string): Observable<void>;
+    joinRoom(code: string): Observable<RoomDto>;
 }
 
 @Injectable({
@@ -786,8 +688,9 @@ export class RoomsControllerClient implements IRoomsControllerClient {
 
     /**
      * Create a new room instance
+     * @return Room created successfully
      */
-    createRoom(body: CreateRoomDto): Observable<void> {
+    createRoom(body: CreateRoomDto): Observable<RoomDto> {
         let url_ = this.baseUrl + "/rooms";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -800,6 +703,7 @@ export class RoomsControllerClient implements IRoomsControllerClient {
             withCredentials: true,
             headers: new HttpHeaders({
                 "Content-Type": "application/json",
+                "Accept": "application/json"
             })
         };
 
@@ -810,14 +714,14 @@ export class RoomsControllerClient implements IRoomsControllerClient {
                 try {
                     return this.processCreateRoom(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<RoomDto>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<RoomDto>;
         }));
     }
 
-    protected processCreateRoom(response: HttpResponseBase): Observable<void> {
+    protected processCreateRoom(response: HttpResponseBase): Observable<RoomDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -826,7 +730,9 @@ export class RoomsControllerClient implements IRoomsControllerClient {
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
         if (status === 201) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RoomDto;
+            return _observableOf(result201);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -838,8 +744,9 @@ export class RoomsControllerClient implements IRoomsControllerClient {
 
     /**
      * Get preview for a room by code
+     * @return Room preview details
      */
-    getRoomPreview(code: string): Observable<void> {
+    getRoomPreview(code: string): Observable<RoomPreviewDto> {
         let url_ = this.baseUrl + "/rooms/{code}";
         if (code === undefined || code === null)
             throw new globalThis.Error("The parameter 'code' must be defined.");
@@ -851,6 +758,7 @@ export class RoomsControllerClient implements IRoomsControllerClient {
             responseType: "blob",
             withCredentials: true,
             headers: new HttpHeaders({
+                "Accept": "application/json"
             })
         };
 
@@ -861,14 +769,14 @@ export class RoomsControllerClient implements IRoomsControllerClient {
                 try {
                     return this.processGetRoomPreview(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<RoomPreviewDto>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<RoomPreviewDto>;
         }));
     }
 
-    protected processGetRoomPreview(response: HttpResponseBase): Observable<void> {
+    protected processGetRoomPreview(response: HttpResponseBase): Observable<RoomPreviewDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -877,7 +785,9 @@ export class RoomsControllerClient implements IRoomsControllerClient {
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RoomPreviewDto;
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -889,8 +799,9 @@ export class RoomsControllerClient implements IRoomsControllerClient {
 
     /**
      * Join a room by code
+     * @return Joined room details
      */
-    joinRoom(code: string): Observable<void> {
+    joinRoom(code: string): Observable<RoomDto> {
         let url_ = this.baseUrl + "/rooms/{code}/join";
         if (code === undefined || code === null)
             throw new globalThis.Error("The parameter 'code' must be defined.");
@@ -902,6 +813,7 @@ export class RoomsControllerClient implements IRoomsControllerClient {
             responseType: "blob",
             withCredentials: true,
             headers: new HttpHeaders({
+                "Accept": "application/json"
             })
         };
 
@@ -912,23 +824,25 @@ export class RoomsControllerClient implements IRoomsControllerClient {
                 try {
                     return this.processJoinRoom(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<RoomDto>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<RoomDto>;
         }));
     }
 
-    protected processJoinRoom(response: HttpResponseBase): Observable<void> {
+    protected processJoinRoom(response: HttpResponseBase): Observable<RoomDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 201) {
+        if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RoomDto;
+            return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -954,12 +868,85 @@ export interface UpdateUserDto {
     [key: string]: any;
 }
 
+export interface UserProfileDto {
+    id: string;
+    username: string;
+    email: string;
+    is_admin: boolean;
+    created_at: Date;
+
+    [key: string]: any;
+}
+
+export interface ProfileResponseDto {
+    user: UserProfileDto;
+
+    [key: string]: any;
+}
+
 export interface ChangePasswordDto {
 
     [key: string]: any;
 }
 
 export interface GoogleOAuthDto {
+
+    [key: string]: any;
+}
+
+export interface ProblemListItemDto {
+    /** Unique problem identifier */
+    id: number;
+    /** Problem title */
+    title: string;
+    /** Difficulty level */
+    difficulty: ProblemListItemDtoDifficulty;
+    /** Created timestamp */
+    createdAt: Date;
+    /** Updated timestamp */
+    updatedAt: Date;
+
+    [key: string]: any;
+}
+
+export interface ProblemsListResponseDto {
+    /** List of problems matching the query */
+    problems: ProblemListItemDto[];
+    /** Total number of problems matching the query */
+    total: number;
+    /** Current page number */
+    page: number;
+    /** Items per page limit */
+    limit: number;
+    /** Total number of pages */
+    totalPages: number;
+
+    [key: string]: any;
+}
+
+export interface SampleTestCaseDto {
+    id?: number;
+    input: string;
+    expectedOutput: string;
+    explanation?: string;
+
+    [key: string]: any;
+}
+
+export interface ProblemDetailResponseDto {
+    id: number;
+    title: string;
+    description: string;
+    difficulty: ProblemDetailResponseDtoDifficulty;
+    constraints: string[];
+    hints: string[];
+    sampleTestCases: SampleTestCaseDto[];
+    starterTemplates: { [key: string]: string; };
+    starterCodes: { [key: string]: string; };
+    timeLimitMs: number;
+    memoryLimitMb: number;
+    createdAt: Date;
+    updatedAt: Date;
 
     [key: string]: any;
 }
@@ -991,11 +978,69 @@ export interface CreateRoomDto {
     [key: string]: any;
 }
 
+export interface RoomParticipantDto {
+    id: string;
+    username: string;
+    isHost: boolean;
+
+    [key: string]: any;
+}
+
+export interface RoomSettingsDto {
+    maxParticipants: number;
+    hiddenTestCases: boolean;
+    bufferVisibility: RoomSettingsDtoBufferVisibility;
+
+    [key: string]: any;
+}
+
+export interface RoomDto {
+    id: string;
+    code: string;
+    name: string;
+    mode: RoomDtoMode;
+    status: RoomDtoStatus;
+    host: RoomParticipantDto;
+    participants: RoomParticipantDto[];
+    problemIds: number[];
+    settings: RoomSettingsDto;
+    createdAt: string;
+
+    [key: string]: any;
+}
+
+export interface RoomPreviewDto {
+    code: string;
+    name: string;
+    mode: RoomPreviewDtoMode;
+    status: RoomPreviewDtoStatus;
+    hostName: string;
+    participantCount: number;
+    maxParticipants: number;
+    problemCount: number;
+
+    [key: string]: any;
+}
+
 export type Difficulty = "EASY" | "MEDIUM" | "HARD";
+
+export type ProblemListItemDtoDifficulty = "EASY" | "MEDIUM" | "HARD";
+
+export type ProblemDetailResponseDtoDifficulty = "EASY" | "MEDIUM" | "HARD";
 
 export type CreateRoomDtoMode = "RACE" | "COOP";
 
 export type CreateRoomDtoBufferVisibility = "OBSCURED" | "HOST_ONLY" | "OPEN";
+
+export type RoomSettingsDtoBufferVisibility = "OBSCURED" | "HOST_ONLY" | "OPEN";
+
+export type RoomDtoMode = "RACE" | "COOP";
+
+export type RoomDtoStatus = "LOBBY" | "IN_PROGRESS" | "FINISHED";
+
+export type RoomPreviewDtoMode = "RACE" | "COOP";
+
+export type RoomPreviewDtoStatus = "LOBBY" | "IN_PROGRESS" | "FINISHED";
 
 export class SwaggerException extends Error {
     override message: string;

@@ -40,13 +40,10 @@
               prefixIcon="tag"
               placeholder="Name your room"
               [required]="true"
-              [(value)]="roomName">
+              [(value)]="roomName"
+              [errorMessage]="'A room needs a name'">
             </app-input>
-            @if (!roomName().trim()) {
-              <p class="-mt-4 pl-4 text-xs text-error m-0">A room needs a name</p>
-            }
           </div>
-          <app-button class="mt-2" variant="surface" size="sm" icon="casino" iconPosition="start" (clicked)="rerollName()">Reroll</app-button>
         </div>
       </div>
 
@@ -68,8 +65,6 @@
 
     <div class="flex flex-col gap-2">
       <div class="flex items-center justify-between gap-2">
-        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Topology &amp; Synchronization</span>
-        <span class="font-mono text-xs text-muted">Protocol: WebRTC + OT v4</span>
       </div>
       <div role="radiogroup" aria-label="Room mode" class="d-grid grid-cols-1 lg-grid-cols-2 gap-3">
         <app-option-card
@@ -79,8 +74,6 @@
           description="Isolated sandboxes, live progress telemetry, obscured buffers until round finish. Real-time test-pass benchmark leaderboard."
           [selected]="mode() === 'RACE'"
           (selectedChange)="mode.set('RACE')">
-          <app-chip label="Zero-Code Leakage" size="sm"></app-chip>
-          <app-chip label="Strict Timers" size="sm"></app-chip>
         </app-option-card>
         <app-option-card
           icon="handshake"
@@ -89,8 +82,6 @@
           description="Shared CRDT operational buffer, synchronized multi-cursor editing, voice telemetry strip, and co-executed unit tests."
           [selected]="mode() === 'COOP'"
           (selectedChange)="mode.set('COOP')">
-          <app-chip label="Shared AST" size="sm"></app-chip>
-          <app-chip label="Peer Audio/Video" size="sm"></app-chip>
         </app-option-card>
       </div>
     </div>
@@ -98,68 +89,28 @@
     <div class="flex flex-col gap-3">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-2">
-          <h4 class="text-lg font-bold text-white m-0">Challenge Set Topology</h4>
+          <h4 class="text-lg font-bold text-white m-0">Problems Set</h4>
           <app-badge [label]="staged().length + ' / ' + maxStaged + ' Selected'" variant="primary" shape="square" size="sm"></app-badge>
         </div>
-        <div class="flex items-center gap-2 font-mono text-xs text-muted">
-          <app-icon name="schedule" size="sm" color="var(--color-secondary)"></app-icon>
-          <span>Est. Duration: ~{{ estimatedMinutes() }} mins</span>
-          <span>•</span>
-          <span class="font-bold text-tertiary">Total Score: {{ totalPoints() }} pts</span>
-        </div>
+        <span class="font-mono text-xs text-muted">Up to {{ maxStaged }} problems</span>
       </div>
 
-      <div class="flex flex-col gap-3 p-3 rounded-lg bg-surface-container-low border border-surface-high">
-        <div class="flex flex-wrap items-start gap-3">
-          <div class="flex-1 min-w-0">
-            <app-input
-              prefixIcon="search"
-              placeholder="Filter problems by title, tag, or ID…"
-              [clearable]="true"
-              [(value)]="search">
-            </app-input>
-          </div>
-          <div class="w-72 max-w-full">
-            <app-select
-              prefixIcon="bookmark"
-              valuePrefix="Curated:"
-              placeholder="All problems"
-              [clearable]="true"
-              [options]="listOptions()"
-              [(value)]="curatedList">
-            </app-select>
-          </div>
-          <app-segmented-control
-            class="mt-2"
-            ariaLabel="Difficulty"
-            size="sm"
-            [allowDeselect]="true"
-            [options]="difficultyOptions"
-            [(value)]="difficulty">
-          </app-segmented-control>
+      <div class="flex flex-wrap items-center gap-3 p-3 rounded-lg bg-surface-container-low border border-surface-high">
+        <div class="flex-1 min-w-0">
+          <app-input
+            prefixIcon="search"
+            placeholder="Search problems by title…"
+            [clearable]="true"
+            [(value)]="search">
+          </app-input>
         </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="font-mono text-xs text-muted mr-1">TAGS:</span>
-          <app-chip
-            label="All"
-            size="sm"
-            [selectable]="true"
-            [selected]="selectedTags().length === 0"
-            (selectedChange)="selectedTags.set([])">
-          </app-chip>
-          @for (tag of tags(); track tag.slug) {
-            <app-chip
-              size="sm"
-              [label]="tag.name"
-              [selectable]="true"
-              [removable]="isTagSelected(tag.slug)"
-              [selected]="isTagSelected(tag.slug)"
-              (selectedChange)="setTagSelected(tag.slug, $event)"
-              (removed)="setTagSelected(tag.slug, false)">
-            </app-chip>
-          }
-        </div>
+        <app-segmented-control
+          ariaLabel="Difficulty"
+          size="sm"
+          [allowDeselect]="true"
+          [options]="difficultyOptions"
+          [(value)]="difficulty">
+        </app-segmented-control>
       </div>
 
       <div class="flex flex-col gap-2" cdkDropList [cdkDropListData]="staged()" (cdkDropListDropped)="reorderStaged($event)">
@@ -171,7 +122,6 @@
               (checkedChange)="setStaged(problem, $event)">
             </app-checkbox>
             <ng-container *ngTemplateOutlet="problemInfo; context: { $implicit: problem, staged: true }"></ng-container>
-            <span class="font-mono text-sm font-bold text-primary whitespace-nowrap">{{ problem.points }} pts</span>
             <button type="button" class="flex items-center justify-center p-1 border-0 rounded bg-transparent text-outline hover-bg-surface-high hover-text-on-surface focus-ring cursor-grab" cdkDragHandle [attr.aria-label]="'Reorder ' + problem.title">
               <app-icon name="drag_indicator" size="md"></app-icon>
             </button>
@@ -185,11 +135,6 @@
             <app-icon name="progress_activity" size="sm" [spin]="true"></app-icon>
             Loading problems…
           </div>
-        } @else if (problemsError()) {
-          <div class="flex items-center justify-center gap-2 py-6 text-sm text-error">
-            <app-icon name="error" size="sm"></app-icon>
-            {{ problemsError() }}
-          </div>
         } @else {
           @for (problem of unstagedResults(); track problem.id) {
             <div class="flex items-center gap-3 px-3 py-3 rounded-md border bg-surface-container-lowest border-surface-high" [class.opacity-50]="loadingProblems()">
@@ -200,7 +145,6 @@
                 (checkedChange)="setStaged(problem, $event)">
               </app-checkbox>
               <ng-container *ngTemplateOutlet="problemInfo; context: { $implicit: problem }"></ng-container>
-              <span class="font-mono text-sm text-muted whitespace-nowrap">{{ problem.points }} pts</span>
               <button
                 type="button"
                 class="flex items-center justify-center p-1 border-0 rounded bg-transparent text-outline hover-bg-surface-high hover-text-on-surface focus-ring"
@@ -228,14 +172,10 @@
       </div>
 
       <ng-template #problemInfo let-problem let-staged="staged">
-        <div class="flex flex-col gap-1 flex-1 min-w-0">
-          <div class="flex items-center gap-2 min-w-0">
-            <span class="text-base font-semibold truncate" [class.text-white]="staged" [class.text-on-surface-variant]="!staged">{{ problem.title }}</span>
-            <app-badge [label]="difficultyLabel(problem.difficulty)" [variant]="difficultyVariant(problem.difficulty)" shape="square" size="sm"></app-badge>
-          </div>
-          <span class="font-mono text-xs text-muted truncate">
-            {{ tagNames(problem) }} • Target: {{ problem.targetMinutes }}m • Acceptance: {{ problem.acceptanceRate }}%
-          </span>
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+          <span class="font-mono text-xs text-muted">#{{ problem.id }}</span>
+          <span class="text-base font-semibold truncate" [class.text-white]="staged" [class.text-on-surface-variant]="!staged">{{ problem.title }}</span>
+          <app-badge [label]="difficultyLabel(problem.difficulty)" [variant]="difficultyVariant(problem.difficulty)" shape="square" size="sm"></app-badge>
         </div>
       </ng-template>
 
@@ -298,12 +238,7 @@
   </div>
 
   <div class="flex flex-wrap items-center justify-between gap-3 pt-4 mt-4 border-t border-surface-high">
-    @if (submitError()) {
-      <span class="flex items-center gap-2 text-xs text-error">
-        <app-icon name="error" size="sm"></app-icon>
-        {{ submitError() }}
-      </span>
-    } @else if (staged().length === 0) {
+    @if (staged().length === 0) {
       <span class="flex items-center gap-2 text-xs text-muted">
         <app-icon name="info" size="sm"></app-icon>
         Add at least one problem to the challenge set

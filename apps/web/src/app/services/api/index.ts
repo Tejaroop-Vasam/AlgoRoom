@@ -4,6 +4,7 @@ export * from './problems-api.service';
 export * from './rooms-api.service';
 export * from './runner-api.service';
 export {
+  API_BASE_URL,
   ProblemsControllerClient,
   UsersControllerClient,
   RunnerControllerClient,
@@ -15,6 +16,12 @@ export type {
   IUsersControllerClient,
   IRunnerControllerClient,
   IRoomsControllerClient,
+  ProblemsListResponseDto,
+  ProblemListItemDto,
+  ProblemDetailResponseDto,
+  RoomDto,
+  RoomPreviewDto,
+  ProfileResponseDto,
   LoginUserDto,
   RegisterUserDto,
   UpdateUserDto,

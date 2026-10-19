@@ -1,9 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
-import { catchError, debounceTime, map, of, switchMap, tap } from 'rxjs';
+import { debounceTime } from 'rxjs';
 import {
   AvatarComponent,
   BadgeComponent,
@@ -22,27 +21,25 @@ import {
 } from '../../shared';
 import { ModalContainerComponent } from '../../shared/components/modal/modal-container.component';
 import {
-  ApiError,
   BufferVisibility,
   Difficulty,
   ProblemsApiService,
+  ProblemsQuery,
   ProblemSummary,
   Room,
   RoomMode,
   RoomsApiService,
+  UserProfile,
   UsersApiService,
 } from '../../services/api';
+import {
+  MAX_PARTICIPANTS,
+  MAX_STAGED_PROBLEMS,
+  MIN_PARTICIPANTS,
+} from '../../app.constants';
 
-export const MAX_STAGED_PROBLEMS = 5;
-export const MIN_PARTICIPANTS = 2;
-export const MAX_PARTICIPANTS = 8;
-
-const NAME_ADJECTIVES = ['Graph', 'Greedy', 'Recursive', 'Binary', 'Dynamic', 'Sliding', 'Heap', 'Trie'];
-const NAME_NOUNS = ['Warriors', 'Raiders', 'Sprinters', 'Architects', 'Hunters', 'Mavericks', 'Pilots', 'Titans'];
-
-function randomRoomName(): string {
-  const pick = <T>(items: T[]) => items[Math.floor(Math.random() * items.length)];
-  return `${pick(NAME_ADJECTIVES)} ${pick(NAME_NOUNS)} #${100 + Math.floor(Math.random() * 900)}`;
+export interface CreateRoomModalData {
+  initialProblem?: ProblemSummary;
 }
 
 @Component({
@@ -80,21 +77,13 @@ export class CreateRoomModalComponent {
   readonly minParticipants = MIN_PARTICIPANTS;
   readonly maxParticipants = MAX_PARTICIPANTS;
 
-  readonly roomName = signal(randomRoomName());
-  readonly host = toSignal(
-    this.usersApi.getProfile().pipe(
-      map(res => res.user),
-      catchError(() => of(null)),
-    ),
-    { initialValue: null },
-  );
+  readonly roomName = signal<string | null>(null);
+  readonly host = signal<UserProfile | null>(null);
 
   readonly mode = signal<RoomMode>('RACE');
 
   readonly search = signal('');
-  readonly curatedList = signal<string | null>('blind-75');
   readonly difficulty = signal<Difficulty | undefined>(undefined);
-  readonly selectedTags = signal<string[]>([]);
 
   readonly difficultyOptions: SegmentOption<Difficulty>[] = [
     { label: 'Easy', value: 'EASY' },
@@ -102,50 +91,19 @@ export class CreateRoomModalComponent {
     { label: 'Hard', value: 'HARD' },
   ];
 
-  readonly tags = toSignal(this.problemsApi.getTags().pipe(catchError(() => of([]))), { initialValue: [] });
-  readonly listOptions = toSignal(
-    this.problemsApi.getLists().pipe(
-      map(lists => lists.map((l): SelectOption => ({ label: l.name, value: l.slug }))),
-      catchError(() => of([] as SelectOption[])),
-    ),
-    { initialValue: [] as SelectOption[] },
-  );
-
-  private readonly problemQuery = computed(() => ({
+  private readonly problemQuery = computed<ProblemsQuery>(() => ({
     search: this.search().trim() || undefined,
-    list: this.curatedList() || undefined,
     difficulty: this.difficulty(),
-    tags: this.selectedTags(),
     limit: 50,
   }));
 
   readonly loadingProblems = signal(true);
-  readonly problemsError = signal<string | null>(null);
-  readonly results = toSignal(
-    toObservable(this.problemQuery).pipe(
-      tap(() => this.loadingProblems.set(true)),
-      debounceTime(250),
-      switchMap(query => this.problemsApi.getProblems(query).pipe(
-        map(res => {
-          this.problemsError.set(null);
-          return res.problems;
-        }),
-        catchError(() => {
-          this.problemsError.set('Could not load problems. Try again in a moment.');
-          return of([] as ProblemSummary[]);
-        }),
-      )),
-      tap(() => this.loadingProblems.set(false)),
-    ),
-    { initialValue: [] as ProblemSummary[] },
-  );
+  readonly results = signal<ProblemSummary[]>([]);
 
   readonly staged = signal<ProblemSummary[]>([]);
   private readonly stagedIds = computed(() => new Set(this.staged().map(p => p.id)));
   readonly unstagedResults = computed(() => this.results().filter(p => !this.stagedIds().has(p.id)));
   readonly stagingFull = computed(() => this.staged().length >= MAX_STAGED_PROBLEMS);
-  readonly totalPoints = computed(() => this.staged().reduce((sum, p) => sum + p.points, 0));
-  readonly estimatedMinutes = computed(() => this.staged().reduce((sum, p) => sum + p.targetMinutes, 0));
 
   readonly headcount = signal<number>(4);
   readonly hiddenTestCases = signal(true);
@@ -164,27 +122,52 @@ export class CreateRoomModalComponent {
   });
 
   readonly submitting = signal(false);
-  readonly submitError = signal<string | null>(null);
   readonly createdRoom = signal<Room | null>(null);
   readonly copied = signal<'code' | 'link' | null>(null);
 
   readonly canSubmit = computed(() =>
-    !!this.roomName().trim() &&
+    !!this.roomName()?.trim() &&
     this.staged().length > 0 &&
     !this.headcountError() &&
     !this.submitting()
   );
 
-  rerollName(): void {
-    this.roomName.set(randomRoomName());
+  constructor() {
+    const data = this.container?.config?.data as CreateRoomModalData | undefined;
+    if (data?.initialProblem) {
+      this.staged.set([data.initialProblem]);
+    }
+
+    this.loadInitialData();
+
+    toObservable(this.problemQuery).pipe(
+      debounceTime(250),
+    ).subscribe(query => {
+      this.fetchProblems(query);
+    });
   }
 
-  isTagSelected(slug: string): boolean {
-    return this.selectedTags().includes(slug);
+  private async loadInitialData(): Promise<void> {
+    try {
+      const profileRes = await this.usersApi.getProfile().catch(() => null);
+      if (profileRes?.user) {
+        this.host.set(profileRes.user);
+      }
+    } catch {
+      // safe fallback
+    }
   }
 
-  setTagSelected(slug: string, selected: boolean): void {
-    this.selectedTags.update(tags => selected ? [...tags, slug] : tags.filter(t => t !== slug));
+  private async fetchProblems(query: ProblemsQuery): Promise<void> {
+    this.loadingProblems.set(true);
+    try {
+      const res = await this.problemsApi.getProblems(query);
+      this.results.set(res.problems);
+    } catch {
+      this.results.set([]);
+    } finally {
+      this.loadingProblems.set(false);
+    }
   }
 
   isStaged(problem: ProblemSummary): boolean {
@@ -221,34 +204,27 @@ export class CreateRoomModalComponent {
     return difficulty.charAt(0) + difficulty.slice(1).toLowerCase();
   }
 
-  tagNames(problem: ProblemSummary): string {
-    return problem.tags.map(t => t.name).join(', ');
-  }
-
-  create(): void {
+  async create(): Promise<void> {
     if (!this.canSubmit()) {
       return;
     }
     this.submitting.set(true);
-    this.submitError.set(null);
 
-    this.roomsApi.createRoom({
-      name: this.roomName().trim(),
-      mode: this.mode(),
-      problemIds: this.staged().map(p => p.id),
-      maxParticipants: Number(this.headcount()),
-      hiddenTestCases: this.hiddenTestCases(),
-      bufferVisibility: (this.mode() === 'COOP' ? 'OPEN' : this.bufferVisibility() ?? 'OBSCURED') as BufferVisibility,
-    }).subscribe({
-      next: room => {
-        this.submitting.set(false);
-        this.createdRoom.set(room);
-      },
-      error: (err: HttpErrorResponse) => {
-        this.submitting.set(false);
-        this.submitError.set((err.error as ApiError | null)?.message ?? 'Could not create the room. Please try again.');
-      },
-    });
+    try {
+      const room = await this.roomsApi.createRoom({
+        name: this.roomName()?.trim() || '',
+        mode: this.mode(),
+        problemIds: this.staged().map(p => p.id),
+        maxParticipants: Number(this.headcount()),
+        hiddenTestCases: this.hiddenTestCases(),
+        bufferVisibility: (this.mode() === 'COOP' ? 'OPEN' : this.bufferVisibility() ?? 'OBSCURED') as BufferVisibility,
+      });
+      this.createdRoom.set(room);
+    } catch {
+      // Error toasted globally by apiErrorInterceptor
+    } finally {
+      this.submitting.set(false);
+    }
   }
 
   inviteLink(room: Room): string {

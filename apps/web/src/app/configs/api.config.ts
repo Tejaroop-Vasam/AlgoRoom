@@ -1,8 +1,9 @@
-import { InjectionToken } from '@angular/core';
+import { Provider } from '@angular/core';
+import { API_BASE_URL } from '../services/api/api-client';
 
-export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL', {
-  providedIn: 'root',
-  factory: () => 'http://localhost:3000',
-});
+export const API_BASE_URL_PROVIDER: Provider = {
+  provide: API_BASE_URL,
+  useValue: 'http://localhost:3000',
+};
 
-export const USE_MOCK_API = true;
+export { API_BASE_URL };
