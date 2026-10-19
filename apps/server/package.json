@@ -4,7 +4,7 @@
   "description": "Eligible.ai NestJS Server",
   "private": true,
   "scripts": {
-             "build": "nest build",
+    "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -27,6 +27,8 @@
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.4.7",
+    "@wasm-fmt/clang-format": "^23.1.1",
+    "@wasm-fmt/ruff_fmt": "^0.15.20",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
@@ -36,6 +38,7 @@
     "google-auth-library": "^9.15.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.13.1",
+    "prettier": "^3.9.10",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },

@@ -10,8 +10,14 @@
     <app-button [variant]="activeSection() === 'chips' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('chips')">Chips</app-button>
     <app-button [variant]="activeSection() === 'controls' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('controls')">Controls</app-button>
     <app-button [variant]="activeSection() === 'cards' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('cards')">Cards</app-button>
+    <app-button [variant]="activeSection() === 'accordions' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('accordions')">Accordions</app-button>
+    <app-button [variant]="activeSection() === 'dividers' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('dividers')">Dividers</app-button>
     <app-button [variant]="activeSection() === 'editor' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('editor')">Editor</app-button>
+    <app-button [variant]="activeSection() === 'split-pane' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('split-pane')">Split Pane</app-button>
+    <app-button [variant]="activeSection() === 'console' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('console')">Console</app-button>
     <app-button [variant]="activeSection() === 'live-grid' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('live-grid')">Live Grid</app-button>
+    <app-button [variant]="activeSection() === 'loader' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('loader')">Loader</app-button>
+    <app-button [variant]="activeSection() === 'workspace' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('workspace')">Workspace</app-button>
   </div>
 
   @if (activeSection() === 'all' || activeSection() === 'inputs' || activeSection() === 'buttons' || activeSection() === 'badges' || activeSection() === 'icons' || activeSection() === 'modals' || activeSection() === 'toasts') {
@@ -384,6 +390,117 @@
     </div>
   }
 
+  @if (activeSection() === 'all' || activeSection() === 'accordions') {
+    <div class="flex flex-col gap-6 mt-6">
+      <div class="flex flex-col gap-1">
+        <h3 class="text-base font-medium text-white">Accordion Variations</h3>
+        <p class="text-xs text-muted">Powered by Angular CDK Accordion with single-expand, multi-expand, icons, subtitles, and badges.</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 items-start">
+        <!-- Variation 1: Single Expand Accordion (LeetCode Problem Hints style) -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Single-Expand Accordion</span>
+            <span class="text-xs text-muted">[multi]="false", icons, custom colors</span>
+          </div>
+          <app-accordion [multi]="false">
+            <app-accordion-item
+              title="Hint 1: Brute Force Approach"
+              subtitle="O(n²) time complexity consideration"
+              icon="lightbulb"
+              iconColor="var(--color-tertiary)"
+              badge="O(N²)"
+              badgeVariant="surface">
+              A naive approach searches every pair in the array and sums them together. While this works, it incurs an unacceptable runtime penalty for larger inputs.
+            </app-accordion-item>
+            <app-accordion-item
+              title="Hint 2: Hash Map Lookup"
+              subtitle="O(n) optimal solution"
+              icon="bolt"
+              iconColor="var(--color-secondary)"
+              badge="O(N)"
+              badgeVariant="secondary">
+              Can we iterate through the array once and store each visited value with its index in a hash map to look up complements in O(1) average time?
+            </app-accordion-item>
+            <app-accordion-item
+              title="Hint 3: Edge Cases & Duplicates"
+              icon="help_outline"
+              iconColor="var(--color-primary)">
+              Remember that elements cannot be reused twice to form the target sum. Watch out for identical values summing up to the target.
+            </app-accordion-item>
+          </app-accordion>
+        </div>
+
+        <!-- Variation 2: Multi-Expand & Disabled Accordion -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Multi-Expand with Disabled Item</span>
+            <span class="text-xs text-muted">[multi]="true", badges, disabled state</span>
+          </div>
+          <app-accordion [multi]="true">
+            <app-accordion-item
+              title="System Requirements & Isolation"
+              icon="shield"
+              badge="SECURE"
+              badgeVariant="primary">
+              All user code runs in isolated Alpine micro-sandboxes with `--network none`, `--memory 256m`, and CPU core execution caps.
+            </app-accordion-item>
+            <app-accordion-item
+              title="Queue & Telemetry Engine"
+              icon="speed"
+              badge="REALTIME"
+              badgeVariant="secondary">
+              Submissions are published to BullMQ queues and results multicast to participants via Socket.IO live gateways.
+            </app-accordion-item>
+            <app-accordion-item
+              title="Restricted Pro Sandbox (Locked)"
+              icon="lock"
+              [disabled]="true"
+              badge="LOCKED"
+              badgeVariant="error">
+              This sandbox tier requires an enterprise license key.
+            </app-accordion-item>
+          </app-accordion>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (activeSection() === 'all' || activeSection() === 'dividers') {
+    <div class="flex flex-col gap-6 mt-6">
+      <div class="flex flex-col gap-1">
+        <h3 class="text-base font-medium text-white">Divider Variations</h3>
+        <p class="text-xs text-muted">Horizontal, vertical, labeled, and variant styles for layout separation.</p>
+      </div>
+
+      <div class="flex flex-col gap-6 max-w-2xl">
+        <div class="flex flex-col gap-2">
+          <span class="text-xs font-medium text-white">Standard Horizontal Divider</span>
+          <app-divider></app-divider>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <span class="text-xs font-medium text-white">Horizontal Divider with Label</span>
+          <app-divider label="OR CONTINUE WITH"></app-divider>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <span class="text-xs font-medium text-white">Vertical Divider in Flex Row</span>
+          <div class="flex items-center gap-4 p-4 rounded-lg bg-surface-container text-xs text-on-surface">
+            <span>Room #9021</span>
+            <app-divider orientation="vertical"></app-divider>
+            <span>Race Mode</span>
+            <app-divider orientation="vertical"></app-divider>
+            <span>Java 17 (OpenJDK)</span>
+            <app-divider orientation="vertical"></app-divider>
+            <span class="text-secondary font-medium">3 Players Online</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
   @if (activeSection() === 'all' || activeSection() === 'editor') {
     <div class="flex flex-col gap-6 mt-6">
       <div class="flex flex-col gap-1">
@@ -450,6 +567,124 @@
             [minHeight]="'8rem'">
           </app-code-editor>
         </div>
+
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Full Featured Editor</span>
+            <span class="text-xs text-muted">[showReset]="true", [showFullscreen]="true", C++</span>
+          </div>
+          <app-code-editor
+            language="cpp"
+            [showReset]="true"
+            [showFullscreen]="true"
+            [(code)]="workspaceCode"
+            [minHeight]="'12rem'"
+            [availableLanguages]="['cpp', 'java', 'python', 'javascript']">
+          </app-code-editor>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Python Editor</span>
+            <span class="text-xs text-muted">Python syntax with formatting & shortcuts</span>
+          </div>
+          <app-code-editor
+            language="python"
+            [code]="pythonCode()"
+            [minHeight]="'11rem'">
+          </app-code-editor>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (activeSection() === 'all' || activeSection() === 'split-pane') {
+    <div class="flex flex-col gap-6 mt-6">
+      <div class="flex flex-col gap-1">
+        <h3 class="text-base font-medium text-white">Split Pane Variations</h3>
+        <p class="text-xs text-muted">Draggable, resizable dual-pane container supporting horizontal and vertical directions.</p>
+      </div>
+
+      <div class="flex flex-col gap-6">
+        <!-- Horizontal Split Pane Demo -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Horizontal Split (Left / Right)</span>
+            <span class="text-xs text-muted">Drag the center divider to adjust panel widths</span>
+          </div>
+          <div class="w-full rounded-xl border border-surface-highest overflow-hidden" style="height: 14rem;">
+            <app-split-pane direction="horizontal" [(split)]="splitHorizontal">
+              <div pane-1 class="w-full h-full p-4 bg-surface-container flex flex-col justify-center items-center text-center gap-1">
+                <span class="text-sm font-semibold text-white">Pane 1 (Left)</span>
+                <span class="text-xs text-outline font-mono">{{ splitHorizontal() }}% width</span>
+              </div>
+              <div pane-2 class="w-full h-full p-4 bg-surface-container-high flex flex-col justify-center items-center text-center gap-1">
+                <span class="text-sm font-semibold text-white">Pane 2 (Right)</span>
+                <span class="text-xs text-outline font-mono">{{ 100 - splitHorizontal() }}% width</span>
+              </div>
+            </app-split-pane>
+          </div>
+        </div>
+
+        <!-- Vertical Split Pane Demo -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Vertical Split (Top / Bottom)</span>
+            <span class="text-xs text-muted">Drag the horizontal divider to adjust panel heights</span>
+          </div>
+          <div class="w-full rounded-xl border border-surface-highest overflow-hidden" style="height: 16rem;">
+            <app-split-pane direction="vertical" [(split)]="splitVertical">
+              <div pane-1 class="w-full h-full p-4 bg-surface-container flex flex-col justify-center items-center text-center gap-1">
+                <span class="text-sm font-semibold text-white">Pane 1 (Top)</span>
+                <span class="text-xs text-outline font-mono">{{ splitVertical() }}% height</span>
+              </div>
+              <div pane-2 class="w-full h-full p-4 bg-surface-container-high flex flex-col justify-center items-center text-center gap-1">
+                <span class="text-sm font-semibold text-white">Pane 2 (Bottom)</span>
+                <span class="text-xs text-outline font-mono">{{ 100 - splitVertical() }}% height</span>
+              </div>
+            </app-split-pane>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (activeSection() === 'all' || activeSection() === 'console') {
+    <div class="flex flex-col gap-6 mt-6">
+      <div class="flex flex-col gap-1">
+        <h3 class="text-base font-medium text-white">Testcase &amp; Console Variations</h3>
+        <p class="text-xs text-muted">Standalone testcase argument editor and execution result evaluation viewer.</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 items-start">
+        <!-- Interactive Testcase Tab View -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Testcase Tab (Argument Inputs)</span>
+            <span class="text-xs text-muted">Multiple test cases, dynamic parameter inputs, add custom case</span>
+          </div>
+          <div class="w-full rounded-xl overflow-hidden" style="height: 18rem;">
+            <app-testcase-console
+              [isRunning]="false"
+              [isSubmitting]="false"
+              activeTab="testcase">
+            </app-testcase-console>
+          </div>
+        </div>
+
+        <!-- Test Result Tab View (Failure Diff Comparison) -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-white">Test Result Tab (Wrong Answer Diff)</span>
+            <span class="text-xs text-muted">Failure status, runtime, memory, diff of actual vs expected</span>
+          </div>
+          <div class="w-full rounded-xl overflow-hidden" style="height: 18rem;">
+            <app-testcase-console
+              [testResult]="sampleConsoleResult"
+              activeTab="result">
+            </app-testcase-console>
+          </div>
+        </div>
       </div>
     </div>
   }
@@ -505,6 +740,108 @@
               [competitors]="compactCompetitors">
             </app-live-grid>
           </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (activeSection() === 'all' || activeSection() === 'workspace') {
+    <div class="flex flex-col gap-4 mt-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold text-white m-0 tracking-tight">Workspace </h2>
+          <p class="text-xs text-muted m-0 mt-1">
+            Composed of SplitPaneComponent, ProblemPanelComponent (feature), enhanced CodeEditorComponent, and TestcaseConsoleComponent.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-outline font-mono">
+            Shortcuts: <kbd class="px-1.5 py-0.5 rounded bg-surface-container-high border border-surface-highest text-white text-xs">{{ modKey() }}</kbd> + <kbd class="px-1.5 py-0.5 rounded bg-surface-container-high border border-surface-highest text-white text-xs">Enter</kbd> (Run) &bull; <kbd class="px-1.5 py-0.5 rounded bg-surface-container-high border border-surface-highest text-white text-xs">{{ modKey() }}</kbd> + <kbd class="px-1.5 py-0.5 rounded bg-surface-container-high border border-surface-highest text-white text-xs">Shift</kbd> + <kbd class="px-1.5 py-0.5 rounded bg-surface-container-high border border-surface-highest text-white text-xs">Enter</kbd> (Submit)
+          </span>
+          <span class="text-xs text-outline font-mono">• Drag gutter to resize</span>
+        </div>
+      </div>
+
+      <!-- Full LeetCode Workspace Demo -->
+      <div
+        class="w-full rounded-2xl border border-surface-highest overflow-hidden bg-surface-container-lowest"
+        style="height: 48rem;"
+        [appRunShortcuts]="activeSection() === 'workspace'"
+        (run)="onShortcutRunWorkspace()"
+        (submit)="onSubmitWorkspace()">
+        <app-split-pane direction="horizontal" [split]="46">
+          <!-- Left Pane: Problem Description -->
+          <div pane-1 class="w-full h-full p-2">
+            <app-problem-panel [problem]="sampleProblem"></app-problem-panel>
+          </div>
+
+          <!-- Right Pane: Editor & Testcase Console -->
+          <div pane-2 class="w-full h-full p-2">
+            <app-split-pane direction="vertical" [split]="60">
+              <!-- Top Right Pane: Code Editor (Enhanced app-code-editor) -->
+              <div pane-1 class="w-full h-full pb-1">
+                <app-code-editor
+                  [showReset]="true"
+                  [showFullscreen]="true"
+                  [(code)]="workspaceCode"
+                  [(language)]="workspaceLanguage"
+                  (reset)="onResetWorkspace()"
+                  (run)="onShortcutRunWorkspace()"
+                  (submit)="onSubmitWorkspace()"
+                  minHeight="100%"
+                  class="flex-1 h-full block">
+                </app-code-editor>
+              </div>
+
+              <!-- Bottom Right Pane: Testcase & Console -->
+              <div pane-2 class="w-full h-full pt-1">
+                <app-testcase-console
+                  [testResult]="workspaceResult()"
+                  [isRunning]="isWorkspaceRunning()"
+                  [isSubmitting]="isWorkspaceSubmitting()"
+                  (runClicked)="onRunWorkspace($event)"
+                  (submitClicked)="onSubmitWorkspace()">
+                </app-testcase-console>
+              </div>
+            </app-split-pane>
+          </div>
+        </app-split-pane>
+      </div>
+    </div>
+  }
+
+  @if (activeSection() === 'all' || activeSection() === 'loader') {
+    <div class="flex flex-col gap-4 mt-8 pb-8">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold text-white m-0 tracking-tight">Global API Loader (Interceptor-driven)</h2>
+          <p class="text-xs text-muted m-0 mt-1">
+            Global LoaderComponent automatically activates on any in-flight HTTP API request via loadingInterceptor.
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <app-button variant="primary" icon="play_arrow" (clicked)="triggerGlobalLoader()">Simulate API Loading (2.5s)</app-button>
+        </div>
+      </div>
+
+      <div class="d-grid grid-cols-2 gap-4">
+        <div class="p-4 rounded-xl border border-surface-highest bg-surface-container-low flex flex-col gap-3">
+          <span class="text-xs font-semibold uppercase tracking-wider text-outline">Top Progress Bar & Pill Status</span>
+          <p class="text-xs text-on-surface-variant m-0">
+            Current Active State: <span class="font-mono font-bold text-white">{{ loadingService.isLoading() ? 'ACTIVE (In Flight)' : 'IDLE' }}</span>
+          </p>
+          <div class="p-3 rounded-lg bg-surface border border-surface-highest flex items-center justify-between">
+            <span class="text-xs font-mono text-outline">HTTP requests in progress</span>
+            <app-badge [label]="loadingService.isLoading() ? 'Fetching...' : 'Ready'" [variant]="loadingService.isLoading() ? 'primary' : 'secondary'" size="sm"></app-badge>
+          </div>
+          <app-loader></app-loader>
+        </div>
+
+        <div class="p-4 rounded-xl border border-surface-highest bg-surface-container-low flex flex-col gap-3">
+          <span class="text-xs font-semibold uppercase tracking-wider text-outline">Rule 9 Architecture</span>
+          <p class="text-xs text-on-surface-variant m-0">
+            Individual components never declare local isLoading signals or manual try/finally flags for API calls. The interceptor and shared LoadingService manage the lifecycle universally.
+          </p>
         </div>
       </div>
     </div>

@@ -15,6 +15,7 @@ import {
   SupportedLanguage,
   TestCaseEvaluationResult,
 } from './interfaces/runner.interface';
+import { FormatLanguage, FormatResultDto } from './dto/format-code.dto';
 
 const execFileAsync = promisify(execFile);
 
@@ -339,6 +340,54 @@ echo "SUCCESS" > /outputs/batch.status
       throw new InternalServerErrorException(err.message || 'Execution failed');
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
+    }
+  }
+
+  async formatCode(options: {
+    language: FormatLanguage;
+    code: string;
+  }): Promise<FormatResultDto> {
+    const { language, code } = options;
+    if (!code || !code.trim()) {
+      return { code: code || '', formatted: true };
+    }
+
+    try {
+      switch (language) {
+        case FormatLanguage.PYTHON: {
+          const { format } = await import('@wasm-fmt/ruff_fmt');
+          const formatted = format(code);
+          return { code: formatted, formatted: true };
+        }
+
+        case FormatLanguage.CPP: {
+          // @ts-ignore
+          const { format } = await import('@wasm-fmt/clang-format');
+          const formatted = format(code, 'solution.cpp');
+          return { code: formatted, formatted: true };
+        }
+
+        case FormatLanguage.JAVA: {
+          // @ts-ignore
+          const { format } = await import('@wasm-fmt/clang-format');
+          const formatted = format(code, 'Solution.java');
+          return { code: formatted, formatted: true };
+        }
+
+        case FormatLanguage.JAVASCRIPT:
+        case FormatLanguage.TYPESCRIPT: {
+          const prettier = await import('prettier');
+          const formatted = await prettier.format(code, {
+            parser: language === FormatLanguage.TYPESCRIPT ? 'typescript' : 'babel',
+          });
+          return { code: formatted, formatted: true };
+        }
+
+        default:
+          return { code, formatted: false, error: `Unsupported language for formatting: ${language}` };
+      }
+    } catch (err: any) {
+      return { code, formatted: false, error: err.message || 'Formatting failed' };
     }
   }
 }

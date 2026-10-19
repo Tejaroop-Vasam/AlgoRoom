@@ -32,6 +32,7 @@ import {
   UserProfile,
   UsersApiService,
 } from '../../services/api';
+import { LoadingService } from '../../services/loading.service';
 import {
   MAX_PARTICIPANTS,
   MAX_STAGED_PROBLEMS,
@@ -72,6 +73,7 @@ export class CreateRoomModalComponent {
   private readonly problemsApi = inject(ProblemsApiService);
   private readonly roomsApi = inject(RoomsApiService);
   private readonly usersApi = inject(UsersApiService);
+  private readonly loadingService = inject(LoadingService);
 
   readonly maxStaged = MAX_STAGED_PROBLEMS;
   readonly minParticipants = MIN_PARTICIPANTS;
@@ -97,7 +99,7 @@ export class CreateRoomModalComponent {
     limit: 50,
   }));
 
-  readonly loadingProblems = signal(true);
+  readonly loadingProblems = this.loadingService.isLoading;
   readonly results = signal<ProblemSummary[]>([]);
 
   readonly staged = signal<ProblemSummary[]>([]);
@@ -121,7 +123,7 @@ export class CreateRoomModalComponent {
       : `Between ${MIN_PARTICIPANTS} and ${MAX_PARTICIPANTS} players`;
   });
 
-  readonly submitting = signal(false);
+  readonly submitting = this.loadingService.isLoading;
   readonly createdRoom = signal<Room | null>(null);
   readonly copied = signal<'code' | 'link' | null>(null);
 
@@ -159,14 +161,11 @@ export class CreateRoomModalComponent {
   }
 
   private async fetchProblems(query: ProblemsQuery): Promise<void> {
-    this.loadingProblems.set(true);
     try {
       const res = await this.problemsApi.getProblems(query);
       this.results.set(res.problems);
     } catch {
       this.results.set([]);
-    } finally {
-      this.loadingProblems.set(false);
     }
   }
 
@@ -208,7 +207,6 @@ export class CreateRoomModalComponent {
     if (!this.canSubmit()) {
       return;
     }
-    this.submitting.set(true);
 
     try {
       const room = await this.roomsApi.createRoom({
@@ -222,8 +220,6 @@ export class CreateRoomModalComponent {
       this.createdRoom.set(room);
     } catch {
       // Error toasted globally by apiErrorInterceptor
-    } finally {
-      this.submitting.set(false);
     }
   }
 

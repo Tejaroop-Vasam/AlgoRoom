@@ -11,6 +11,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/component-test/component-test.component').then(m => m.ComponentTest),
   },
   {
+    path: 'problem/:id',
+    loadComponent: () =>
+      import('./features/problem-workspace/problem-workspace.component').then(
+        m => m.ProblemWorkspaceComponent,
+      ),
+  },
+  {
     path: '**',
     redirectTo: '',
   },

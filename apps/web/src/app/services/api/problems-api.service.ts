@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
-import { ProblemsControllerClient } from './api-client';
+import { ProblemDetailResponseDto, ProblemsControllerClient } from './api-client';
 import { Difficulty, ProblemsListResponse, ProblemsQuery } from './api.types';
 
 @Injectable({
@@ -34,7 +34,7 @@ export class ProblemsApiService {
     };
   }
 
-  getProblem(id: number): Promise<unknown> {
+  getProblem(id: number): Promise<ProblemDetailResponseDto> {
     return firstValueFrom(this.problemsClient.getProblem(id));
   }
 }

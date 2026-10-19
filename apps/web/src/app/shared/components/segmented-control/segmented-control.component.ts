@@ -2,7 +2,7 @@ import { Component, input, model } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IconComponent } from '../icon/icon.component';
 
-export interface SegmentOption<T = string> {
+export interface SegmentOption<T = any> {
   label: string;
   value: T;
   icon?: string;
@@ -19,16 +19,19 @@ export type SegmentedControlSize = 'sm' | 'md';
   styleUrl: './segmented-control.component.css',
   host: {
     '[class.d-flex]': 'fullWidth()',
-    '[class.d-inline-flex]': '!fullWidth()'
-  }
+    '[class.d-inline-flex]': '!fullWidth()',
+    '[class.w-full]': 'fullWidth()',
+    'class': 'flex-col',
+  },
 })
-export class SegmentedControlComponent<T = string> {
+export class SegmentedControlComponent<T = any> {
   readonly options = input<SegmentOption<T>[]>([]);
   readonly size = input<SegmentedControlSize>('md');
   readonly fullWidth = input<boolean>(false);
   readonly disabled = input<boolean>(false);
   readonly allowDeselect = input<boolean>(false);
   readonly ariaLabel = input<string | undefined>(undefined);
+  readonly headerClass = input<string>('');
 
   readonly value = model<T | undefined>(undefined);
 

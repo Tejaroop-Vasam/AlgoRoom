@@ -1,30 +1,39 @@
-<div
-  role="radiogroup"
-  [attr.aria-label]="ariaLabel() || null"
-  class="segmented d-flex items-stretch gap-1 p-1 rounded-md bg-surface-container-lowest border border-surface-high"
-  [class.w-full]="fullWidth()">
-  @for (option of options(); track option.value) {
-    <button
-      type="button"
-      role="radio"
-      [attr.aria-checked]="value() === option.value"
-      [disabled]="disabled() || option.disabled"
-      (click)="select(option)"
-      class="segment d-flex items-center justify-center gap-1 border-0 rounded-sm font-mono cursor-pointer transition"
-      [class.flex-1]="fullWidth()"
-      [class.segment-active]="value() === option.value"
-      [class.px-3]="size() === 'sm'"
-      [class.py-1]="size() === 'sm'"
-      [class.text-xs]="size() === 'sm'"
-      [class.px-4]="size() === 'md'"
-      [class.py-2]="size() === 'md'"
-      [class.text-sm]="size() === 'md'"
-      [class.opacity-50]="disabled() || option.disabled"
-      [class.cursor-not-allowed]="disabled() || option.disabled">
-      @if (option.icon) {
-        <app-icon [name]="option.icon" size="sm"></app-icon>
+<div class="segmented-header flex items-center justify-between" [class.w-full]="fullWidth()" [ngClass]="headerClass()">
+  <div class="flex items-center gap-2 select-none" [class.w-full]="fullWidth()">
+    <div
+      role="radiogroup"
+      [attr.aria-label]="ariaLabel() || null"
+      class="segmented d-flex items-stretch gap-1 p-1 rounded-md bg-surface-container-lowest border border-surface-high"
+      [class.w-full]="fullWidth()">
+      @for (option of options(); track option.value) {
+        <button
+          type="button"
+          role="radio"
+          [attr.aria-checked]="value() === option.value"
+          [disabled]="disabled() || option.disabled"
+          (click)="select(option)"
+          class="segment d-flex items-center justify-center gap-1 border-0 rounded-sm font-mono cursor-pointer transition"
+          [class.flex-1]="fullWidth()"
+          [class.segment-active]="value() === option.value"
+          [class.px-3]="size() === 'sm'"
+          [class.py-1]="size() === 'sm'"
+          [class.text-xs]="size() === 'sm'"
+          [class.px-4]="size() === 'md'"
+          [class.py-2]="size() === 'md'"
+          [class.text-sm]="size() === 'md'"
+          [class.opacity-50]="disabled() || option.disabled"
+          [class.cursor-not-allowed]="disabled() || option.disabled">
+          @if (option.icon) {
+            <app-icon [name]="option.icon" size="sm"></app-icon>
+          }
+          {{ option.label }}
+        </button>
       }
-      {{ option.label }}
-    </button>
-  }
+    </div>
+
+    <ng-content select="[trailing]"></ng-content>
+  </div>
+  <ng-content select="[header-end]"></ng-content>
 </div>
+
+<ng-content></ng-content>

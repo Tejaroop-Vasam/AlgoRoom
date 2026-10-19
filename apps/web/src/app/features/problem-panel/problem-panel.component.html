@@ -1,0 +1,190 @@
+<app-segmented-control
+  size="sm"
+  [options]="problemTabOptions"
+  [(value)]="activeTab"
+  headerClass="px-3 py-2 border-b border-surface-highest bg-surface-container select-none"
+  class="flex-1 flex flex-col min-h-0 w-full">
+
+  <div header-end class="flex items-center gap-1 text-outline">
+    <button
+      type="button"
+      class="p-1 rounded bg-transparent border-0 text-outline hover-text-white cursor-pointer"
+      title="Fullscreen panel">
+      <app-icon name="fullscreen" size="xs"></app-icon>
+    </button>
+  </div>
+
+  <!-- Tab Content Area -->
+  <div class="flex-1 overflow-y-auto p-5 text-on-surface flex flex-col gap-5 min-h-0">
+  @if (activeTab() === 'description') {
+    @if (problem(); as p) {
+      <!-- Problem Header -->
+      <div class="flex flex-col gap-3">
+        <h1 class="text-xl font-bold text-white tracking-tight m-0">
+          {{ p.id }}. {{ p.title }}
+        </h1>
+
+        <!-- Metadata Pills Bar -->
+        <div class="flex flex-wrap items-center gap-2">
+          <app-badge
+            [label]="formattedDifficulty()"
+            [variant]="difficultyBadgeVariant()"
+            shape="pill"
+            size="sm">
+          </app-badge>
+
+          @if (p.topics?.length) {
+            <app-chip
+              label="Topics"
+              icon="sell"
+              size="sm"
+              variant="surface"
+              [selectable]="true"
+              [(selected)]="showTopics">
+            </app-chip>
+          }
+
+          @if (p.companies?.length) {
+            <app-chip
+              label="Companies"
+              icon="lock"
+              size="sm"
+              variant="surface"
+              [selectable]="true"
+              [(selected)]="showCompanies">
+            </app-chip>
+          }
+        </div>
+
+        <!-- Expandable Topics -->
+        @if (showTopics() && p.topics?.length) {
+          <div class="flex flex-wrap gap-1.5 p-3 rounded-lg bg-surface-container border border-surface-highest">
+            @for (topic of p.topics; track topic) {
+              <span class="px-2 py-0.5 rounded text-xs bg-surface-container-high text-on-surface font-mono">
+                {{ topic }}
+              </span>
+            }
+          </div>
+        }
+
+        <!-- Expandable Companies -->
+        @if (showCompanies() && p.companies?.length) {
+          <div class="flex flex-wrap gap-1.5 p-3 rounded-lg bg-surface-container border border-surface-highest">
+            @for (company of p.companies; track company) {
+              <span class="px-2 py-0.5 rounded text-xs bg-surface-container-high text-on-surface font-mono">
+                {{ company }}
+              </span>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Problem Statement Description -->
+      <div class="text-sm leading-relaxed text-on-surface space-y-3 font-sans">
+        <p class="m-0 leading-6">{{ p.description }}</p>
+      </div>
+
+      <!-- Examples Section -->
+      @if (p.examples?.length) {
+        <div class="flex flex-col gap-4 mt-2">
+          @for (eg of p.examples; track $index) {
+            <div class="flex flex-col gap-1.5">
+              <span class="text-xs font-semibold text-white uppercase tracking-wider">Example {{ $index + 1 }}:</span>
+              <div class="p-3.5 rounded-lg bg-surface-container border-l-2 border-surface-bright flex flex-col gap-1.5 font-mono text-xs text-on-surface">
+                <div><span class="text-outline font-semibold">Input: </span>{{ eg.input }}</div>
+                <div><span class="text-outline font-semibold">Output: </span>{{ eg.output }}</div>
+                @if (eg.explanation) {
+                  <div><span class="text-outline font-semibold">Explanation: </span><span class="font-sans text-xs text-on-surface-variant">{{ eg.explanation }}</span></div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Constraints Section -->
+      @if (p.constraints?.length) {
+        <div class="flex flex-col gap-2 mt-2">
+          <span class="text-xs font-semibold text-white uppercase tracking-wider">Constraints:</span>
+          <ul class="m-0 pl-5 flex flex-col gap-1 text-xs font-mono text-on-surface">
+            @for (constraint of p.constraints; track constraint) {
+              <li>{{ constraint }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Hints Accordion (Using Angular CDK Accordion Component) -->
+      @if (p.hints?.length) {
+        <div class="flex flex-col gap-2 mt-2">
+          <span class="text-xs font-semibold text-white uppercase tracking-wider">Hints:</span>
+          <app-accordion [multi]="false">
+            @for (hint of p.hints; track $index) {
+              <app-accordion-item
+                [title]="'Hint ' + ($index + 1)"
+                icon="lightbulb"
+                iconColor="var(--color-tertiary)">
+                {{ hint }}
+              </app-accordion-item>
+            }
+          </app-accordion>
+        </div>
+      }
+    } @else {
+      <div class="flex flex-col items-center justify-center p-12 text-outline gap-2">
+        <app-icon name="description" size="xl"></app-icon>
+        <span class="text-sm">No problem selected</span>
+      </div>
+    }
+  } @else if (activeTab() === 'submissions') {
+    <div class="flex flex-col gap-3 py-4 text-sm text-on-surface-variant">
+      <h2 class="text-base font-semibold text-white m-0">Your Past Submissions</h2>
+      <p class="leading-relaxed">No submissions recorded for this session yet.</p>
+    </div>
+  }
+</div>
+</app-segmented-control>
+
+<!-- Panel Footer Reaction Bar -->
+<div class="flex items-center justify-between px-4 py-2 border-t border-surface-highest bg-surface-container select-none text-xs text-outline">
+  <div class="flex items-center gap-3">
+    <button
+      type="button"
+      (click)="toggleLike()"
+      class="flex items-center gap-1.5 bg-transparent border-0 cursor-pointer text-outline hover-text-white transition-colors"
+      [class.text-primary]="isLiked()">
+      <app-icon name="thumb_up" size="xs"></app-icon>
+      <span>{{ likeCount() }}</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="toggleDislike()"
+      class="flex items-center gap-1.5 bg-transparent border-0 cursor-pointer text-outline hover-text-white transition-colors"
+      [class.text-error]="isDisliked()">
+      <app-icon name="thumb_down" size="xs"></app-icon>
+    </button>
+
+    <span class="flex items-center gap-1.5 cursor-pointer hover-text-white">
+      <app-icon name="chat_bubble_outline" size="xs"></app-icon>
+      <span>{{ problem()?.commentsCount ?? '2.1K' }}</span>
+    </span>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <button
+      type="button"
+      (click)="toggleStar()"
+      class="bg-transparent border-0 cursor-pointer text-outline hover-text-white transition-colors"
+      [class.text-tertiary]="isStarred()">
+      <app-icon [name]="isStarred() ? 'star' : 'star_border'" size="xs"></app-icon>
+    </button>
+
+    <button
+      type="button"
+      class="bg-transparent border-0 cursor-pointer text-outline hover-text-white transition-colors"
+      title="Share problem">
+      <app-icon name="share" size="xs"></app-icon>
+    </button>
+  </div>
+</div>

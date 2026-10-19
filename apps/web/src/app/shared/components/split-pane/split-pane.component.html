@@ -1,0 +1,26 @@
+<div
+  class="relative overflow-hidden flex flex-col min-w-0 min-h-0"
+  [ngStyle]="pane1Style()">
+  <ng-content select="[pane-1]"></ng-content>
+</div>
+
+<div
+  class="gutter flex items-center justify-center flex-shrink-0 relative transition-colors duration-150 hover-bg-primary"
+  [class.bg-surface-container-highest]="!isDragging()"
+  [class.bg-primary]="isDragging()"
+  [ngStyle]="gutterStyle()"
+  (mousedown)="onGutterMouseDown($event)">
+  <div
+    class="rounded-full bg-outline-variant"
+    [class.w-1]="direction() === 'horizontal'"
+    [class.h-4]="direction() === 'horizontal'"
+    [class.h-1]="direction() === 'vertical'"
+    [class.w-4]="direction() === 'vertical'">
+  </div>
+</div>
+
+<div
+  class="relative overflow-hidden flex flex-col min-w-0 min-h-0 flex-1"
+  [ngStyle]="pane2Style()">
+  <ng-content select="[pane-2]"></ng-content>
+</div>
