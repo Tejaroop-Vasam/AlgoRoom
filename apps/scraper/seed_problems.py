@@ -10,8 +10,6 @@ import psycopg
 from psycopg.types.json import Jsonb
 import requests
 from dotenv import load_dotenv
-
-# Path resolution: find .env from scraper dir, server dir, or project root
 SCRAPER_DIR = Path(__file__).resolve().parent
 APPS_DIR = SCRAPER_DIR.parent
 PROJECT_ROOT = APPS_DIR.parent
@@ -21,7 +19,6 @@ for env_candidate in [SCRAPER_DIR / '.env', APPS_DIR / 'server' / '.env', PROJEC
         load_dotenv(env_candidate)
         break
 
-# Dataset caching
 DATA_DIR = SCRAPER_DIR / 'data'
 SERVER_DATA_DIR = APPS_DIR / 'server' / 'data'
 
@@ -64,7 +61,6 @@ def init_r2_client():
             aws_secret_access_key=secret_key,
             region_name="auto",
         )
-        # Verify connection
         s3.head_bucket(Bucket=bucket_name)
         print(f"Connected to Cloudflare R2 bucket: '{bucket_name}'")
         return s3, bucket_name
@@ -225,7 +221,6 @@ def main():
                     if parsed and parsed.get("input"):
                         sample_test_cases.append(parsed)
 
-                # Prepare full test cases for R2
                 full_test_cases = [
                     {
                         "id": stc["id"],
@@ -237,7 +232,6 @@ def main():
                     for stc in sample_test_cases
                 ]
 
-                # Upload to R2 if configured
                 test_cases_r2_key = None
                 if s3_client and r2_bucket and full_test_cases:
                     r2_key = f"problems/{problem_slug}/testcases.json"

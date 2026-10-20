@@ -233,9 +233,7 @@ export class CodeEditorComponent {
           this.notifyFormatted();
           return;
         }
-      } catch {
-        // Fall back to client-side format if API errors
-      }
+      } catch {}
     }
 
     const action = this.editor.getAction('editor.action.formatDocument');
