@@ -155,9 +155,7 @@ export class CreateRoomModalComponent {
       if (profileRes?.user) {
         this.host.set(profileRes.user);
       }
-    } catch {
-      // safe fallback
-    }
+    } catch {}
   }
 
   private async fetchProblems(query: ProblemsQuery): Promise<void> {
@@ -218,9 +216,7 @@ export class CreateRoomModalComponent {
         bufferVisibility: (this.mode() === 'COOP' ? 'OPEN' : this.bufferVisibility() ?? 'OBSCURED') as BufferVisibility,
       });
       this.createdRoom.set(room);
-    } catch {
-      // Error toasted globally by apiErrorInterceptor
-    }
+    } catch {}
   }
 
   inviteLink(room: Room): string {

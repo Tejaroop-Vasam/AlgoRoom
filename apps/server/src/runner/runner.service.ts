@@ -113,15 +113,12 @@ export class RunnerService {
       await fs.mkdir(outputsDir, { recursive: true, mode: 0o777 });
       await fs.chmod(outputsDir, 0o777);
 
-      // 1. Write user source code
       await fs.writeFile(path.join(workspaceDir, langConfig.filename), code ?? '', 'utf8');
 
-      // 2. Write all testcase inputs
       for (let i = 0; i < testCases.length; i++) {
         await fs.writeFile(path.join(inputsDir, `${i}.in`), testCases[i].input ?? '', 'utf8');
       }
 
-      // 3. Build single-container execution harness
       const runCommand = langConfig.buildRunCommand(timeoutSec);
       const compileSection = langConfig.compileCommand
         ? `${langConfig.compileCommand} > /outputs/compile.out 2> /outputs/compile.err
@@ -132,10 +129,8 @@ fi`
         : '';
 
       const harnessScript = `#!/bin/bash
-# Phase 1: Compile once (if needed)
 ${compileSection}
 
-# Phase 2: Execute all test cases sequentially against compiled binary
 for (( i=0; i<${testCases.length}; i++ )); do
   START=$(date +%s%3N)
   ${runCommand} < "/workspace/inputs/\${i}.in" > "/outputs/\${i}.out" 2> "/outputs/\${i}.err"
@@ -155,7 +150,6 @@ echo "SUCCESS" > /outputs/batch.status
         encoding: 'utf8',
       });
 
-      // 4. Run single Docker container for the whole batch
       const dockerArgs = [
         'run',
         '--rm',
@@ -200,7 +194,6 @@ echo "SUCCESS" > /outputs/batch.status
           },
         });
       } catch (err: any) {
-        // If container timed out on the host or failed to launch
         const isHostTimeout = err.killed || err.code === 'ETIMEDOUT';
         if (isHostTimeout) {
           const results: TestCaseEvaluationResult[] = testCases.map((tc, idx) => ({
@@ -221,7 +214,6 @@ echo "SUCCESS" > /outputs/batch.status
           };
         }
 
-        // If batch status was written, we continue to parse outputs below
         const hasStatusFile = await fs
           .access(path.join(outputsDir, 'batch.status'))
           .then(() => true)
@@ -232,7 +224,6 @@ echo "SUCCESS" > /outputs/batch.status
         }
       }
 
-      // 5. Check compilation status
       let batchStatus = 'SUCCESS';
       try {
         batchStatus = (await fs.readFile(path.join(outputsDir, 'batch.status'), 'utf8')).trim();
@@ -264,7 +255,6 @@ echo "SUCCESS" > /outputs/batch.status
         };
       }
 
-      // 6. Parse results for each testcase
       const results: TestCaseEvaluationResult[] = [];
       let passedCount = 0;
 

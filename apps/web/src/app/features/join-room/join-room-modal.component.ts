@@ -59,9 +59,7 @@ export class JoinRoomModalComponent implements OnInit {
     try {
       const preview = await this.roomsApi.getRoomPreview(this.normalizedCode());
       this.preview.set(preview);
-    } catch {
-      // Error toasted globally by apiErrorInterceptor
-    }
+    } catch {}
   }
 
   async join(): Promise<void> {
@@ -72,9 +70,7 @@ export class JoinRoomModalComponent implements OnInit {
     try {
       const joined = await this.roomsApi.joinRoom(room.code);
       this.joinedRoom.set(joined);
-    } catch {
-      // Error toasted globally by apiErrorInterceptor
-    }
+    } catch {}
   }
 
   submit(): void {

@@ -33,7 +33,6 @@ export class RunShortcutsDirective {
 
     if (!isPrimaryModifierPressed(event)) return;
 
-    // Check target element: avoid firing inside simple input elements unless allowed
     const target = event.target as HTMLElement | null;
     const tagName = target?.tagName?.toLowerCase();
     const isTextInput = tagName === 'input' && !target?.classList.contains('monaco-editor');
