@@ -23,8 +23,8 @@ export class RoomSettingsDto {
 }
 
 export class RoomDto {
-  @ApiProperty({ example: 'room-1729060000000' })
-  id: string;
+  @ApiProperty({ example: 1 })
+  id: number;
 
   @ApiProperty({ example: 'ABCDEF' })
   code: string;
@@ -38,17 +38,11 @@ export class RoomDto {
   @ApiProperty({ example: 'LOBBY', enum: ['LOBBY', 'IN_PROGRESS', 'FINISHED'] })
   status: 'LOBBY' | 'IN_PROGRESS' | 'FINISHED';
 
-  @ApiProperty({ type: RoomParticipantDto })
-  host: RoomParticipantDto;
-
   @ApiProperty({ type: [RoomParticipantDto] })
   participants: RoomParticipantDto[];
 
   @ApiProperty({ type: [Number], example: [1, 2] })
   problemIds: number[];
-
-  @ApiProperty({ type: RoomSettingsDto })
-  settings: RoomSettingsDto;
 
   @ApiProperty()
   createdAt: string;
