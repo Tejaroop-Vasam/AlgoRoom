@@ -78,10 +78,13 @@ jobs:
     steps:
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          PROD_ENV_FILE: ${{ secrets.PROD_ENV_FILE }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: PROD_ENV_FILE
           script: |
             set -e
             echo "Navigating to project directory..."
@@ -89,6 +92,14 @@ jobs:
 
             echo "Pulling latest changes from main..."
             git pull origin main
+
+            echo "Writing production .env file from GitHub Secrets..."
+            cd apps/server
+            if [ -n "$PROD_ENV_FILE" ]; then
+              printf "%s\n" "$PROD_ENV_FILE" > .env
+            elif [ ! -f .env ] && [ -f .env.example ]; then
+              cp .env.example .env
+            fi
 
             echo "Rebuilding and restarting backend container..."
             cd apps/server
