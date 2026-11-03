@@ -5,8 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "build:pages": "ng build --base-href /AlgoRoom/ && node -e \"const fs=require('fs'); fs.copyFileSync('dist/web/browser/index.html', 'dist/web/browser/404.html'); fs.writeFileSync('dist/web/browser/.nojekyll', '');\"",
-    "deploy": "npm run build:pages && gh-pages -d dist/web/browser --dotfiles --nojekyll",
+    "build:pages": "ng build --base-href /AlgoRoom/ && cp dist/web/browser/index.html dist/web/browser/404.html",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "api:generate": "nswag run nswag.json"

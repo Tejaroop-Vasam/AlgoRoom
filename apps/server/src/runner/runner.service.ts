@@ -102,7 +102,7 @@ export class RunnerService {
     }
 
     const timeoutSec = Math.max(1, Math.ceil(timeLimitMs / 1000));
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'eligible-batch-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'algoroom-batch-'));
     const workspaceDir = path.join(tempDir, 'workspace');
     const inputsDir = path.join(workspaceDir, 'inputs');
     const outputsDir = path.join(tempDir, 'outputs');
