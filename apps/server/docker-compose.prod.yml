@@ -1,12 +1,12 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: eligible-postgres
+    container_name: algoroom-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-strongpassword}
-      POSTGRES_DB: ${DB_DATABASE:-eligible}
+      POSTGRES_DB: ${DB_DATABASE:-algoroom}
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -16,14 +16,14 @@ services:
     build:
       context: ../..
       dockerfile: apps/server/Dockerfile
-    container_name: eligible-backend
+    container_name: algoroom-backend
     restart: unless-stopped
     depends_on:
       - postgres
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-strongpassword}@postgres:5432/${DB_DATABASE:-eligible}
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-strongpassword}@postgres:5432/${DB_DATABASE:-algoroom}
       PORT: 3000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -33,7 +33,7 @@ services:
 
   caddy:
     image: caddy:alpine
-    container_name: eligible-caddy
+    container_name: algoroom-caddy
     restart: unless-stopped
     ports:
       - "80:80"

@@ -1,7 +1,7 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "Eligible.ai NestJS Server",
+  "description": "AlgoRoom NestJS Server",
   "private": true,
   "scripts": {
     "build": "nest build",
