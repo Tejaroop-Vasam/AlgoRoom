@@ -48,7 +48,7 @@ jobs:
         run: npm run build:pages --prefix apps/web
 
       - name: Upload Frontend Pages Artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:
           path: apps/web/dist/web/browser
@@ -57,7 +57,7 @@ jobs:
   deploy-frontend:
     name: Deploy to GitHub Pages
     needs: ci-build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -73,7 +73,7 @@ jobs:
   deploy-backend:
     name: Deploy Backend to EC2
     needs: ci-build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to EC2 via SSH
