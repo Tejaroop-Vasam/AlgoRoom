@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://algoroom-api.duckdns.org',
+  apiUrl: 'http://localhost:3000',
 };
 
