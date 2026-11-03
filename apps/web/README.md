@@ -31,19 +31,14 @@ The web client provides the interactive interface for real-time room sessions, p
 
 ---
 
-## 📐 Project Rules & Styling Standards
+## Code & Styling Standards
 
-All frontend code strictly conforms to the project guidelines in [AGENTS.md](file:///Users/tejaroopvasam/Desktop/Eligible.ai/AGENTS.md):
+The frontend follows modular and consistent standards:
 
-1. **No Spec / Test Files**: Never generate `*.spec.ts` files or test suites.
-2. **Component File Separation**: Every component must have distinct dedicated files:
-   - `*.component.ts` (Logic)
-   - `*.component.html` (Template)
-   - `*.component.css` (Styles - kept empty or minimal)
-3. **Utility-First Styling**:
+1. **Component Structure**: Every component maintains separate dedicated files for logic (`*.component.ts`), template (`*.component.html`), and component styles (`*.component.css`).
+2. **Utility-First Styling**:
    - Styling is applied using modular utility classes defined in `src/styles/utilities/` and exported via `src/styles/utilities.css` (`flex.css`, `spacing.css`, `sizing.css`, `typography.css`, `borders.css`, `effects.css`, `colors.css`).
-   - All spacing, typography, and sizing strictly uses `rem` units (no `px`).
-   - Component CSS files remain empty by default.
+   - Sizing and spacing leverage consistent `rem` units across layouts.
 
 ---
 

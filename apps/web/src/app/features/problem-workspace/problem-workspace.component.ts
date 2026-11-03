@@ -134,7 +134,6 @@ export class ProblemWorkspaceComponent implements OnInit {
       this.testResult.set(result);
       this.toast[toastType](toastMessage);
     } catch {
-      // Handled globally by error interceptor
     } finally {
       this.isRunning.set(false);
     }
@@ -158,7 +157,6 @@ export class ProblemWorkspaceComponent implements OnInit {
       this.testResult.set(result);
       this.toast[toastType](toastMessage);
     } catch {
-      // Handled globally by error interceptor
     } finally {
       this.isSubmitting.set(false);
     }

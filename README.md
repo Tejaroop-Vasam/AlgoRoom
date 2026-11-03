@@ -166,7 +166,7 @@ Detailed story specifications and acceptance criteria are documented in [docs/re
 ├── apps/
 │   ├── web/                     # Angular frontend application
 │   │   ├── src/app/             # Features: room, race, coop, problem, shared
-│   │   └── src/styles/          # Utility-first CSS classes (AGENTS.md)
+│   │   └── src/styles/          # Utility-first CSS classes
 │   └── api/                     # NestJS backend modular monolith
 │       ├── src/
 │       │   ├── auth/            # Auth & JWT strategy

@@ -99,8 +99,7 @@
                 </div>
               </ng-template>
 
-              <!-- 1. By passing ng-template -->
-              <ng-template #templateModal let-close="close">
+               <ng-template #templateModal let-close="close">
                 <div class="flex flex-col gap-4">
                   <p class="text-sm text-muted">
                     This modal content is rendered from an <strong>ng-template</strong> passed directly into modalService.open(templateModal).
@@ -398,7 +397,6 @@
       </div>
 
       <div class="grid grid-cols-2 gap-6 items-start">
-        <!-- Variation 1: Single Expand Accordion (LeetCode Problem Hints style) -->
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
             <span class="text-xs font-medium text-white">Single-Expand Accordion</span>
@@ -432,7 +430,6 @@
           </app-accordion>
         </div>
 
-        <!-- Variation 2: Multi-Expand & Disabled Accordion -->
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
             <span class="text-xs font-medium text-white">Multi-Expand with Disabled Item</span>
@@ -606,7 +603,6 @@
       </div>
 
       <div class="flex flex-col gap-6">
-        <!-- Horizontal Split Pane Demo -->
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
             <span class="text-xs font-medium text-white">Horizontal Split (Left / Right)</span>
@@ -626,7 +622,6 @@
           </div>
         </div>
 
-        <!-- Vertical Split Pane Demo -->
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
             <span class="text-xs font-medium text-white">Vertical Split (Top / Bottom)</span>
@@ -657,7 +652,6 @@
       </div>
 
       <div class="grid grid-cols-2 gap-6 items-start">
-        <!-- Interactive Testcase Tab View -->
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
             <span class="text-xs font-medium text-white">Testcase Tab (Argument Inputs)</span>
@@ -672,7 +666,6 @@
           </div>
         </div>
 
-        <!-- Test Result Tab View (Failure Diff Comparison) -->
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
             <span class="text-xs font-medium text-white">Test Result Tab (Wrong Answer Diff)</span>
@@ -697,7 +690,6 @@
       </div>
 
       <div class="flex flex-col gap-6">
-        <!-- Variation 1: Standard Race with Full Telemetry -->
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
             <span class="text-xs font-medium text-white">Standard Race Mode (Full Telemetry)</span>
@@ -712,7 +704,6 @@
           </div>
         </div>
 
-        <!-- Variation 2: 1v1 Sprint Duel -->
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
             <span class="text-xs font-medium text-white">1v1 Duel Sprint</span>
@@ -727,7 +718,6 @@
           </div>
         </div>
 
-        <!-- Variation 3: Compact Mode -->
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
             <span class="text-xs font-medium text-white">Compact Leaderboard</span>
@@ -762,7 +752,6 @@
         </div>
       </div>
 
-      <!-- Full LeetCode Workspace Demo -->
       <div
         class="w-full rounded-2xl border border-surface-highest overflow-hidden bg-surface-container-lowest"
         style="height: 48rem;"
@@ -770,15 +759,12 @@
         (run)="onShortcutRunWorkspace()"
         (submit)="onSubmitWorkspace()">
         <app-split-pane direction="horizontal" [split]="46">
-          <!-- Left Pane: Problem Description -->
           <div pane-1 class="w-full h-full p-2">
             <app-problem-panel [problem]="sampleProblem"></app-problem-panel>
           </div>
 
-          <!-- Right Pane: Editor & Testcase Console -->
           <div pane-2 class="w-full h-full p-2">
             <app-split-pane direction="vertical" [split]="60">
-              <!-- Top Right Pane: Code Editor (Enhanced app-code-editor) -->
               <div pane-1 class="w-full h-full pb-1">
                 <app-code-editor
                   [showReset]="true"
@@ -793,7 +779,6 @@
                 </app-code-editor>
               </div>
 
-              <!-- Bottom Right Pane: Testcase & Console -->
               <div pane-2 class="w-full h-full pt-1">
                 <app-testcase-console
                   [testResult]="workspaceResult()"

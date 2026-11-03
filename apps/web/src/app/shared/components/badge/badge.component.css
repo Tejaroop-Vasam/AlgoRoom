@@ -1,8 +1,6 @@
 :host {
   display: inline-flex;
 }
-
-/* Square badges use a tinted fill of their variant color (e.g. difficulty tags) */
 .badge-tinted {
   --badge-tint: var(--color-on-surface);
   background-color: color-mix(in srgb, var(--badge-tint) 14%, transparent);
