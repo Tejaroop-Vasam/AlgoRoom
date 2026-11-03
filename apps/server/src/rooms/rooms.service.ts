@@ -29,7 +29,7 @@ export class RoomsService {
     const code = await this.generateUniqueCode();
 
     return await this.drizzle.db.transaction(async (tx) => {
-      const [newRoom] = await tx
+      const insertedRooms = await tx
         .insert(rooms)
         .values({
           code,
@@ -41,8 +41,14 @@ export class RoomsService {
           hiddenTestCases: dto.hiddenTestCases,
           bufferVisibility: dto.bufferVisibility,
         })
-        .returning();
-
+        .returning({
+          id: rooms.id,
+          code: rooms.code,
+        });
+      const newRoom = insertedRooms[0];
+      if (!newRoom) {
+        throw new BadRequestException('Failed to create room instance.');
+      }
       await tx.insert(roomParticipants).values({
         roomId: newRoom.id,
         userId: user.id,
@@ -50,7 +56,7 @@ export class RoomsService {
         isHost: true,
       });
 
-      return this.getByCode(code);
+      return this.getByCode(code, tx);
     });
   }
 
@@ -78,8 +84,8 @@ export class RoomsService {
     };
   }
 
-  async getByCode(code: string) {
-    const room = await this.drizzle.db.query.rooms.findFirst({
+  async getByCode(code: string, dbClient: any = this.drizzle.db) {
+    const room = await dbClient.query.rooms.findFirst({
       where: eq(rooms.code, code.toUpperCase()),
       with: { participants: true },
     });

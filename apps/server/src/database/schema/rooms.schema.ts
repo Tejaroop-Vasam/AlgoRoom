@@ -1,36 +1,17 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { relations } from 'drizzle-orm/relations';
+import { baseEntity } from './common.schema';
 import {
   pgTable,
   varchar,
   integer,
   boolean,
-  timestamp,
   pgEnum,
 } from 'drizzle-orm/pg-core';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-
-export const primaryKeyId = {
-  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-};
-
-export const id = primaryKeyId;
-
-export const timestamps = {
-  created_at: timestamp('created_at', { withTimezone: true })
-    .default(sql`current_timestamp`)
-    .notNull(),
-  updated_at: timestamp('updated_at', { withTimezone: true })
-    .default(sql`current_timestamp`)
-    .notNull(),
-};
-
-export const baseEntity = {
-  ...primaryKeyId,
-  ...timestamps,
-};
+import schema from './index';
 
 export const roomModeEnum = pgEnum('room_mode', ['RACE', 'COOP']);
 export const roomStatusEnum = pgEnum('room_status', ['LOBBY', 'IN_PROGRESS', 'FINISHED']);
@@ -71,7 +52,7 @@ export const roomParticipantsRelations = relations(roomParticipants, ({ one }) =
   }),
 }));
 
-export const schema = {
+export const roomSchema = {
   rooms,
   roomParticipants,
   roomsRelations,
@@ -86,8 +67,12 @@ export class DrizzleService implements OnModuleInit {
   public db: NodePgDatabase<typeof schema>;
 
   async onModuleInit() {
+    const dbUrl =
+      process.env.DATABASE_URL ||
+      `postgresql://${process.env.DB_USER || 'akhil'}:${process.env.DB_PASSWORD || 'akhil'}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_DBPORT || process.env.DB_PORT || 5432}/${process.env.DB_DATABASE || 'postgres'}`;
+
     const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: dbUrl,
     });
     this.db = drizzle(pool, { schema });
   }
