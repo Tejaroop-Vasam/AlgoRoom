@@ -11,10 +11,27 @@ async function bootstrap() {
 
   const clientUrl = configService.get<string>('CLIENT_URL');
   const allowedOrigins = Array.from(
-    new Set([clientUrl, 'http://localhost:4200', 'http://127.0.0.1:4200'].filter(Boolean) as string[]),
+    new Set(
+      [
+        clientUrl,
+        'https://tejaroop-vasam.github.io',
+        'http://localhost:4200',
+        'http://127.0.0.1:4200',
+      ].filter(Boolean) as string[],
+    ),
   );
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.github.io') ||
+        origin === 'https://tejaroop-vasam.github.io'
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Allow all during dev/launch
+    },
     credentials: true,
   });
 
