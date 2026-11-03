@@ -102,7 +102,6 @@ jobs:
             fi
 
             echo "Rebuilding and restarting backend container..."
-            cd apps/server
             docker compose -f docker-compose.prod.yml up -d --build server
 
             echo "Running database migrations inside container..."
