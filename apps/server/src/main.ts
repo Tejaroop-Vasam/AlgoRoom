@@ -3,6 +3,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { setupSwagger } from './swagger';
+import { runAutoMigrate } from './migrate';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -44,6 +45,12 @@ async function bootstrap() {
   );
 
   setupSwagger(app);
+
+  try {
+    await runAutoMigrate();
+  } catch (err) {
+    logger.error('Failed to run automated database migrations', err);
+  }
 
   const port = configService.get<number>('PORT') || 3000;
   await app.listen(port);
