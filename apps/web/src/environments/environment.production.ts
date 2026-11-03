@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.algoroom.site',
+  apiUrl:'https://algoroom-api.duckdns.org',
 };
