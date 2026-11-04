@@ -382,6 +382,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Create a new room instance",
         "tags": [
           "Rooms"
@@ -444,6 +449,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Join a room by code",
         "tags": [
           "Rooms"
@@ -912,6 +922,14 @@
             "type": "string",
             "description": "Room name"
           },
+          "username": {
+            "type": "string",
+            "description": "Host username"
+          },
+          "hostName": {
+            "type": "string",
+            "description": "Host display name alias"
+          },
           "mode": {
             "type": "string",
             "enum": [
@@ -921,7 +939,7 @@
             "description": "Room mode"
           },
           "problemIds": {
-            "description": "List of problem IDs",
+            "description": "List of problem IDs (1 to 5 problems)",
             "type": "array",
             "items": {
               "type": "number"
@@ -930,7 +948,9 @@
           "maxParticipants": {
             "type": "number",
             "description": "Max participants",
-            "default": 4
+            "default": 4,
+            "minimum": 2,
+            "maximum": 8
           },
           "hiddenTestCases": {
             "type": "boolean",
@@ -978,39 +998,12 @@
           "isHost"
         ]
       },
-      "RoomSettingsDto": {
-        "type": "object",
-        "properties": {
-          "maxParticipants": {
-            "type": "number",
-            "example": 4
-          },
-          "hiddenTestCases": {
-            "type": "boolean",
-            "example": true
-          },
-          "bufferVisibility": {
-            "type": "string",
-            "example": "OBSCURED",
-            "enum": [
-              "OBSCURED",
-              "HOST_ONLY",
-              "OPEN"
-            ]
-          }
-        },
-        "required": [
-          "maxParticipants",
-          "hiddenTestCases",
-          "bufferVisibility"
-        ]
-      },
       "RoomDto": {
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "example": "room-1729060000000"
+            "type": "number",
+            "example": 1
           },
           "code": {
             "type": "string",
@@ -1037,9 +1030,6 @@
               "FINISHED"
             ]
           },
-          "host": {
-            "$ref": "#/components/schemas/RoomParticipantDto"
-          },
           "participants": {
             "type": "array",
             "items": {
@@ -1056,9 +1046,6 @@
               "type": "number"
             }
           },
-          "settings": {
-            "$ref": "#/components/schemas/RoomSettingsDto"
-          },
           "createdAt": {
             "type": "string"
           }
@@ -1069,10 +1056,8 @@
           "name",
           "mode",
           "status",
-          "host",
           "participants",
           "problemIds",
-          "settings",
           "createdAt"
         ]
       },

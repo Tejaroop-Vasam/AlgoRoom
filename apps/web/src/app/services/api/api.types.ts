@@ -48,6 +48,7 @@ export interface CreateRoomRequest extends RoomSettings {
   name: string;
   mode: RoomMode;
   problemIds: number[];
+  hostName?: string;
 }
 
 export interface RoomParticipant {

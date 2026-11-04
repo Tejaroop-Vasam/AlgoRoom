@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import {
   WebSocketGateway,
   SubscribeMessage,
@@ -8,69 +8,106 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { RoomsService } from './rooms.service';
-import { WsJwtGuard, AuthenticatedSocket } from './guards/ws-jwt.guard';
-import { JwtService } from '@nestjs/jwt';
+
+export interface RoomSocket extends Socket {
+  user: {
+    id: string;
+    username: string;
+  };
+}
 
 @WebSocketGateway({
   cors: { origin: '*' },
   namespace: 'rooms',
 })
 export class RoomsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  private readonly logger = new Logger(RoomsGateway.name);
+
   @WebSocketServer()
   server: Server;
 
-  constructor(
-    private readonly roomsService: RoomsService,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly roomsService: RoomsService) {}
 
-  async handleConnection(client: AuthenticatedSocket) {
+  async handleConnection(client: RoomSocket) {
     try {
-      const token =
-        client.handshake.auth?.token ||
-        client.handshake.headers?.authorization?.split(' ')[1] ||
-        (client.handshake.query?.token as string);
+      const username =
+        client.handshake.auth?.username ||
+        (client.handshake.query?.username as string) ;
 
-      if (!token) {
-        client.disconnect();
-        return;
+      const userId =
+        client.handshake.auth?.userId ||
+        (client.handshake.query?.userId as string) ||
+        client.id;
+
+      client.user = { id: userId, username };
+
+      const roomCode =
+        client.handshake.auth?.roomCode ||
+        (client.handshake.query?.roomCode as string);
+
+      this.logger.log(`Client connected: ${client.id} (user: ${username}, room: ${roomCode || 'none'})`);
+
+      if (roomCode) {
+        await client.join(roomCode);
+        const updatedRoom = await this.roomsService.associateSocket(roomCode, client.id, username, userId);
+        if (updatedRoom) {
+          client.emit('roomJoined', updatedRoom);
+          this.server.to(roomCode).emit('roomStateUpdated', updatedRoom);
+        }
       }
-
-      const payload = await this.jwtService.verifyAsync(token);
-      client.user = { id: payload.sub, username: payload.username };
-    } catch {
-      client.disconnect();
+    } catch (err: any) {
+      this.logger.error(`Error in handleConnection for socket ${client.id}: ${err?.message}`);
     }
   }
 
-  async handleDisconnect(client: AuthenticatedSocket) {
+  async handleDisconnect(client: RoomSocket) {
+    this.logger.log(`Client disconnected: ${client.id}`);
     const result = await this.roomsService.removeParticipantBySocketId(client.id);
     if (result) {
       this.server.to(result.roomCode).emit('roomStateUpdated', result.room);
     }
   }
 
-  @UseGuards(WsJwtGuard)
-  @SubscribeMessage('joinLobby')
-  async handleJoinLobby(
-    @ConnectedSocket() client: AuthenticatedSocket,
-    @MessageBody() payload: { code: string },
+  @SubscribeMessage('joinRoom')
+  async handleJoinRoom(
+    @ConnectedSocket() client: RoomSocket,
+    @MessageBody() payload: { roomCode: string; username?: string; userId?: string },
   ) {
-    try {
-      const room = await this.roomsService.join(payload.code, client.user, client.id);
-      client.join(room.code);
-      this.server.to(room.code).emit('roomStateUpdated', room);
-    } catch (error) {
-      client.emit('error', { message: error });
+    const roomCode = payload?.roomCode;
+    if (!roomCode) return;
+
+    const username = payload.username || client.user?.username;
+    const userId = payload.userId || client.user?.id || client.id;
+    client.user = { id: userId, username };
+
+    await client.join(roomCode);
+    const updatedRoom = await this.roomsService.associateSocket(roomCode, client.id, username, userId);
+    if (updatedRoom) {
+      client.emit('roomJoined', updatedRoom);
+      this.server.to(roomCode).emit('roomStateUpdated', updatedRoom);
     }
   }
 
-  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('leaveRoom')
+  async handleLeaveRoom(
+    @ConnectedSocket() client: RoomSocket,
+    @MessageBody() payload: { roomCode: string },
+  ) {
+    const roomCode = payload?.roomCode;
+    if (!roomCode) return;
+
+    await client.leave(roomCode);
+    const updatedRoom = await this.roomsService.leaveRoom(roomCode, client.id);
+    if (updatedRoom) {
+      this.server.to(roomCode).emit('roomStateUpdated', updatedRoom);
+    }
+  }
+
   @SubscribeMessage('crdtUpdate')
   handleCrdtUpdate(
-    @ConnectedSocket() client: AuthenticatedSocket,
+    @ConnectedSocket() client: RoomSocket,
     @MessageBody() payload: { roomCode: string; changes: any },
   ) {
     client.to(payload.roomCode).emit('crdtSync', {
@@ -79,10 +116,9 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  @UseGuards(WsJwtGuard)
   @SubscribeMessage('telemetryUpdate')
   handleTelemetry(
-    @ConnectedSocket() client: AuthenticatedSocket,
+    @ConnectedSocket() client: RoomSocket,
     @MessageBody() payload: { roomCode: string; telemetry: any },
   ) {
     client.to(payload.roomCode).emit('telemetryStream', {

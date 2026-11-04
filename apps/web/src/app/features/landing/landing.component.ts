@@ -10,6 +10,7 @@ import {
 } from '../../shared';
 import { CreateRoomModalComponent } from '../create-room/create-room-modal.component';
 import { JoinRoomModalComponent, JoinRoomModalData } from '../join-room/join-room-modal.component';
+import { Room } from '../../services/api';
 
 interface ModeFeature {
   label: string;
@@ -111,22 +112,36 @@ export class LandingComponent implements OnInit {
   }
 
   openCreateRoom(): void {
-    this.modalService.open(CreateRoomModalComponent, {
+    const ref = this.modalService.open<CreateRoomModalComponent, Room>(CreateRoomModalComponent, {
       title: 'Create Room',
       showEscHint: true,
       width: '60rem',
       maxWidth: '95vw',
     });
+    ref.afterClosed().subscribe((room) => {
+      if (room?.problemIds?.length) {
+        this.router.navigate(['/problem', room.problemIds[0]], {
+          queryParams: { room: room.code },
+        });
+      }
+    });
   }
 
   openJoinRoom(code?: string): void {
-    this.modalService.open(JoinRoomModalComponent, {
+    const ref = this.modalService.open<JoinRoomModalComponent, Room>(JoinRoomModalComponent, {
       title: 'Join with Code',
       description: 'Enter the room code your host shared with you',
       icon: 'key',
       showEscHint: true,
       width: '28rem',
       data: { code } satisfies JoinRoomModalData,
+    });
+    ref.afterClosed().subscribe((room) => {
+      if (room?.problemIds?.length) {
+        this.router.navigate(['/problem', room.problemIds[0]], {
+          queryParams: { room: room.code },
+        });
+      }
     });
   }
 }

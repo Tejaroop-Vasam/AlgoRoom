@@ -1088,9 +1088,11 @@ export interface FormatResultDto {
 export interface CreateRoomDto {
     /** Room name */
     name: string;
+    /** Host display name alias */
+    hostName?: string;
     /** Room mode */
     mode: CreateRoomDtoMode;
-    /** List of problem IDs */
+    /** List of problem IDs (1 to 5 problems) */
     problemIds: number[];
     /** Max participants */
     maxParticipants: number;
@@ -1110,24 +1112,14 @@ export interface RoomParticipantDto {
     [key: string]: any;
 }
 
-export interface RoomSettingsDto {
-    maxParticipants: number;
-    hiddenTestCases: boolean;
-    bufferVisibility: RoomSettingsDtoBufferVisibility;
-
-    [key: string]: any;
-}
-
 export interface RoomDto {
-    id: string;
+    id: number;
     code: string;
     name: string;
     mode: RoomDtoMode;
     status: RoomDtoStatus;
-    host: RoomParticipantDto;
     participants: RoomParticipantDto[];
     problemIds: number[];
-    settings: RoomSettingsDto;
     createdAt: string;
 
     [key: string]: any;
@@ -1159,8 +1151,6 @@ export type TestCaseEvaluationResultDtoVerdict = "ACCEPTED" | "WRONG_ANSWER" | "
 export type CreateRoomDtoMode = "RACE" | "COOP";
 
 export type CreateRoomDtoBufferVisibility = "OBSCURED" | "HOST_ONLY" | "OPEN";
-
-export type RoomSettingsDtoBufferVisibility = "OBSCURED" | "HOST_ONLY" | "OPEN";
 
 export type RoomDtoMode = "RACE" | "COOP";
 

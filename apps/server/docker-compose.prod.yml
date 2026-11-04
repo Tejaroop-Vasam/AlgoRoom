@@ -12,6 +12,16 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
 
+  redis:
+    image: redis:7-alpine
+    container_name: algoroom-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+
   server:
     build:
       context: ../..
@@ -20,10 +30,12 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
+      - redis
     env_file:
       - .env
     environment:
       DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-strongpassword}@postgres:5432/${DB_DATABASE:-algoroom}
+      REDIS_URL: redis://redis:6379
       PORT: 3000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -45,5 +57,6 @@ services:
 
 volumes:
   pgdata:
+  redis_data:
   caddy_data:
   caddy_config:

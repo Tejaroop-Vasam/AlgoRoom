@@ -1,11 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
-import { DrizzleService, rooms, roomParticipants } from '../database/schema/rooms.schema';
+import { randomUUID } from 'crypto';
 import { CreateRoomDto } from './dto/create-room.dto';
+import { Room, RoomParticipant } from './interfaces/room.interface';
+import { RedisCacheService } from '../cache/redis-cache.service';
+
+const ROOM_TTL_SECONDS = 7200; // 2 hours
 
 @Injectable()
 export class RoomsService {
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(private readonly cache: RedisCacheService) {}
 
   private generateCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -15,136 +18,198 @@ export class RoomsService {
   private async generateUniqueCode(): Promise<string> {
     let code: string;
     let exists = true;
+    let attempts = 0;
     do {
       code = this.generateCode();
-      const existing = await this.drizzle.db.query.rooms.findFirst({
-        where: eq(rooms.code, code),
-      });
-      exists = !!existing;
-    } while (exists);
+      exists = await this.cache.exists(`room:${code}`);
+      attempts++;
+    } while (exists && attempts < 10);
     return code;
   }
 
-  async create(dto: CreateRoomDto, user: { id: string; username: string }) {
+  async create(dto: CreateRoomDto): Promise<Room> {
     const code = await this.generateUniqueCode();
+    const hostId = randomUUID();
+    const hostUsername = (dto.hostName || (dto as any).username || 'Host').trim();
 
-    return await this.drizzle.db.transaction(async (tx) => {
-      const insertedRooms = await tx
-        .insert(rooms)
-        .values({
-          code,
-          name: dto.name,
-          mode: dto.mode,
-          hostId: user.id,
-          problemIds: dto.problemIds,
-          maxParticipants: dto.maxParticipants,
-          hiddenTestCases: dto.hiddenTestCases,
-          bufferVisibility: dto.bufferVisibility,
-        })
-        .returning({
-          id: rooms.id,
-          code: rooms.code,
-        });
-      const newRoom = insertedRooms[0];
-      if (!newRoom) {
-        throw new BadRequestException('Failed to create room instance.');
-      }
-      await tx.insert(roomParticipants).values({
-        roomId: newRoom.id,
-        userId: user.id,
-        username: user.username,
-        isHost: true,
-      });
-
-      return this.getByCode(code, tx);
-    });
-  }
-
-  async getPreview(code: string) {
-    const room = await this.drizzle.db.query.rooms.findFirst({
-      where: eq(rooms.code, code.toUpperCase()),
-      with: { participants: true },
-    });
-
-    if (!room) {
-      throw new NotFoundException(`Room with code "${code}" not found.`);
-    }
-
-    const host = room.participants.find((p) => p.isHost);
-
-    return {
-      code: room.code,
-      name: room.name,
-      mode: room.mode,
-      status: room.status,
-      hostName: host ? host.username : 'Unknown',
-      participantCount: room.participants.length,
-      maxParticipants: room.maxParticipants,
-      problemCount: room.problemIds.length,
+    const hostParticipant: RoomParticipant = {
+      id: hostId,
+      username: hostUsername,
+      isHost: true,
     };
+
+    const room: Room = {
+      id: randomUUID(),
+      code,
+      name: dto.name,
+      mode: dto.mode,
+      status: 'LOBBY',
+      host: hostParticipant,
+      participants: [hostParticipant],
+      problemIds: dto.problemIds || [],
+      settings: {
+        maxParticipants: dto.maxParticipants || 4,
+        hiddenTestCases: dto.hiddenTestCases ?? true,
+        bufferVisibility: dto.bufferVisibility || (dto.mode === 'COOP' ? 'OPEN' : 'OBSCURED'),
+      },
+      createdAt: new Date().toISOString(),
+    };
+
+    await this.cache.set(`room:${code}`, room, ROOM_TTL_SECONDS);
+    return room;
   }
 
-  async getByCode(code: string, dbClient: any = this.drizzle.db) {
-    const room = await dbClient.query.rooms.findFirst({
-      where: eq(rooms.code, code.toUpperCase()),
-      with: { participants: true },
-    });
-
+  async getByCode(code: string): Promise<Room> {
+    const room = await this.cache.get<Room>(`room:${code.toUpperCase()}`);
     if (!room) {
       throw new NotFoundException(`Room with code "${code}" not found.`);
     }
     return room;
   }
 
-  async join(code: string, user: { id: string; username: string }, socketId?: string) {
+  async getPreview(code: string) {
     const room = await this.getByCode(code);
+    return {
+      code: room.code,
+      name: room.name,
+      mode: room.mode,
+      status: room.status,
+      hostName: room.host?.username,
+      participantCount: room.participants?.length || 1,
+      maxParticipants: room.settings?.maxParticipants || 4,
+      problemCount: room.problemIds?.length || 0,
+    };
+  }
 
-    if (room.participants.length >= room.maxParticipants) {
+  async join(
+    code: string,
+    userOrName?: string | { id?: string; username?: string },
+    socketId?: string,
+  ): Promise<Room> {
+    const room = await this.getByCode(code);
+    const maxParticipants = room.settings?.maxParticipants || 4;
+    if (room.participants.length >= maxParticipants) {
       throw new BadRequestException('This room is full.');
     }
 
-    const existingParticipant = room.participants.find((p) => p.userId === user.id);
+    const resolvedUsername = (
+      typeof userOrName === 'string'
+        ? userOrName
+        : userOrName?.username || 'Player'
+    ).trim() || 'Player';
 
-    if (existingParticipant) {
-      await this.drizzle.db
-        .update(roomParticipants)
-        .set({ socketId, updated_at: new Date() })
-        .where(eq(roomParticipants.id, existingParticipant.id));
+    const userId = (typeof userOrName === 'object' && userOrName?.id) ? userOrName.id : randomUUID();
+
+    const existing = room.participants.find(
+      (p) =>
+        (p.id && p.id === userId) ||
+        (p.username && p.username.toLowerCase() === resolvedUsername.toLowerCase()),
+    );
+
+    if (existing) {
+      if (socketId) existing.socketId = socketId;
     } else {
-      await this.drizzle.db.insert(roomParticipants).values({
-        roomId: room.id,
-        userId: user.id,
-        username: user.username,
+      room.participants.push({
+        id: userId,
+        username: resolvedUsername,
         isHost: false,
         socketId,
       });
     }
 
-    return this.getByCode(code);
+    await this.cache.set(`room:${room.code}`, room, ROOM_TTL_SECONDS);
+    if (socketId) {
+      await this.cache.set(`socket:${socketId}`, room.code, ROOM_TTL_SECONDS);
+    }
+
+    return room;
   }
 
-  async removeParticipantBySocketId(socketId: string) {
-    const participant = await this.drizzle.db.query.roomParticipants.findFirst({
-      where: eq(roomParticipants.socketId, socketId),
-      with: { room: true },
-    });
-
-    if (!participant) return null;
-
-    await this.drizzle.db
-      .delete(roomParticipants)
-      .where(eq(roomParticipants.id, participant.id));
-
-    const remainingParticipants = await this.drizzle.db.query.roomParticipants.findMany({
-      where: eq(roomParticipants.roomId, participant.roomId),
-    });
-
-    if (remainingParticipants.length === 0) {
-      await this.drizzle.db.delete(rooms).where(eq(rooms.id, participant.roomId));
+  async associateSocket(
+    roomCode: string,
+    socketId: string,
+    username?: string,
+    userId?: string,
+  ): Promise<Room | null> {
+    let room: Room;
+    try {
+      room = await this.getByCode(roomCode);
+    } catch {
       return null;
     }
 
-    const updatedRoom = await this.getByCode(participant.room.code);
-    return { roomCode: participant.room.code, room: updatedRoom };
+    const cleanUsername = username?.trim().toLowerCase();
+    let participant = room.participants.find(
+      (p) => (userId && p.id === userId) || (cleanUsername && p.username.toLowerCase() === cleanUsername),
+    );
+
+    if (participant) {
+      participant.socketId = socketId;
+    } else if (username) {
+      participant = {
+        id: userId || randomUUID(),
+        username: username.trim(),
+        isHost: room.participants.length === 0,
+        socketId,
+      };
+      room.participants.push(participant);
+      if (participant.isHost) {
+        room.host = participant;
+      }
+    }
+
+    await this.cache.set(`room:${room.code}`, room, ROOM_TTL_SECONDS);
+    await this.cache.set(`socket:${socketId}`, room.code, ROOM_TTL_SECONDS);
+
+    return room;
+  }
+
+  async removeParticipantBySocketId(socketId: string): Promise<{ roomCode: string; room: Room } | null> {
+    const roomCode = await this.cache.get<string>(`socket:${socketId}`);
+    if (!roomCode) return null;
+
+    let room: Room;
+    try {
+      room = await this.getByCode(roomCode);
+    } catch {
+      await this.cache.del(`socket:${socketId}`);
+      return null;
+    }
+
+    await this.cache.del(`socket:${socketId}`);
+
+    const participant = room.participants.find((p) => p.socketId === socketId);
+    if (participant) {
+      participant.socketId = undefined;
+    }
+
+    await this.cache.set(`room:${room.code}`, room, ROOM_TTL_SECONDS);
+    return { roomCode: room.code, room };
+  }
+
+  async leaveRoom(code: string, userIdOrSocketId: string): Promise<Room | null> {
+    let room: Room;
+    try {
+      room = await this.getByCode(code);
+    } catch {
+      return null;
+    }
+
+    room.participants = room.participants.filter(
+      (p) => p.socketId !== userIdOrSocketId && p.id !== userIdOrSocketId,
+    );
+
+    if (room.participants.length === 0) {
+      await this.cache.del(`room:${room.code}`);
+      return null;
+    }
+
+    if (!room.participants.some((p) => p.isHost)) {
+      room.participants[0].isHost = true;
+      room.host = room.participants[0];
+    }
+
+    await this.cache.set(`room:${room.code}`, room, ROOM_TTL_SECONDS);
+    return room;
   }
 }

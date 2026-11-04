@@ -3,6 +3,7 @@ import { BadgeComponent, ButtonComponent, ChipComponent, IconComponent, InputCom
 import { ModalContainerComponent } from '../../shared/components/modal/modal-container.component';
 import { Room, RoomPreview, RoomsApiService } from '../../services/api';
 import { LoadingService } from '../../services/loading.service';
+import { RoomSocketService } from '../../services/room-socket.service';
 
 export interface JoinRoomModalData {
   code?: string;
@@ -15,6 +16,7 @@ const ROOM_CODE_LENGTH = 6;
   standalone: true,
   imports: [BadgeComponent, ButtonComponent, ChipComponent, IconComponent, InputComponent],
   templateUrl: './join-room-modal.component.html',
+  styleUrl: './join-room-modal.component.css',
   host: {
     class: 'd-block',
   },
@@ -23,13 +25,16 @@ export class JoinRoomModalComponent implements OnInit {
   private readonly container = inject(ModalContainerComponent, { optional: true });
   private readonly roomsApi = inject(RoomsApiService);
   private readonly loadingService = inject(LoadingService);
+  private readonly roomSocket = inject(RoomSocketService);
 
   readonly code = signal('');
+  readonly username = signal<string>(typeof localStorage !== 'undefined' ? localStorage.getItem('algoroom_username') || '' : '');
   readonly normalizedCode = computed(() => this.code().replace(/[^a-z0-9]/gi, '').toUpperCase());
   readonly codeComplete = computed(() => this.normalizedCode().length === ROOM_CODE_LENGTH);
 
   readonly preview = signal<RoomPreview | null>(null);
   readonly joinedRoom = signal<Room | null>(null);
+  readonly activeRoom = computed(() => this.roomSocket.currentRoom() || this.joinedRoom());
   readonly loading = this.loadingService.isLoading;
 
   readonly roomFull = computed(() => {
@@ -59,17 +64,24 @@ export class JoinRoomModalComponent implements OnInit {
     try {
       const preview = await this.roomsApi.getRoomPreview(this.normalizedCode());
       this.preview.set(preview);
-    } catch {}
+    } catch {
+      this.preview.set(null);
+    }
   }
 
   async join(): Promise<void> {
     const room = this.preview();
-    if (!room || this.loading() || this.roomFull()) {
+    const uname = this.username().trim();
+    if (!room || this.loading() || this.roomFull() || !uname) {
       return;
     }
     try {
-      const joined = await this.roomsApi.joinRoom(room.code);
+      const joined = await this.roomsApi.joinRoom(room.code, uname);
       this.joinedRoom.set(joined);
+      const participant = joined.participants?.find(
+        p => p.username?.toLowerCase() === uname.toLowerCase(),
+      );
+      this.roomSocket.connect(joined.code, uname, participant?.id);
     } catch {}
   }
 
@@ -82,6 +94,6 @@ export class JoinRoomModalComponent implements OnInit {
   }
 
   close(): void {
-    this.container?.close(this.joinedRoom());
+    this.container?.close(this.activeRoom() || this.joinedRoom());
   }
 }
