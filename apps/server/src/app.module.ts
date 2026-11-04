@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { CacheModule } from './cache/cache.module';
 import { DatabaseModule } from './database/database.module';
 import { StorageModule } from './storage/storage.module';
 import { UsersModule } from './users/users.module';
@@ -13,6 +14,7 @@ import { RoomsModule } from './rooms/rooms.module';
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
+    CacheModule,
     DatabaseModule,
     StorageModule,
     UsersModule,

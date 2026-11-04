@@ -4,6 +4,7 @@ import {
   IsBoolean,
   IsEnum,
   IsNumber,
+  IsOptional,
   IsString,
   Min,
   Max,
@@ -15,6 +16,11 @@ export class CreateRoomDto {
   @ApiProperty({ description: 'Room name' })
   @IsString()
   name: string;
+
+  @ApiProperty({ description: 'Host display name alias', required: false })
+  @IsOptional()
+  @IsString()
+  hostName?: string;
 
   @ApiProperty({ enum: ['RACE', 'COOP'], description: 'Room mode' })
   @IsEnum(['RACE', 'COOP'])

@@ -1,4 +1,4 @@
-@if (createdRoom(); as room) {
+@if (activeRoom(); as room) {
   <div class="flex flex-col items-center text-center gap-4 py-6">
     <div class="w-14 h-14 rounded-full flex items-center justify-center bg-secondary-container text-on-secondary">
       <app-icon name="check" size="xl" [weight]="600"></app-icon>
@@ -31,8 +31,8 @@
   </div>
 } @else {
   <div class="max-h-dialog overflow-y-auto flex flex-col gap-6 pr-2">
-    <div class="d-grid grid-cols-1 lg-grid-cols-3 gap-4">
-      <div class="flex flex-col gap-2 min-w-0 lg-col-span-2">
+    <div class="grid grid-cols-3 gap-4">
+      <div class="flex flex-col gap-2 min-w-0 col-span-2">
         <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Room Instance Name</span>
         <div class="flex items-start gap-2">
           <div class="flex-1 min-w-0">
@@ -48,25 +48,21 @@
       </div>
 
       <div class="flex flex-col gap-2 min-w-0">
-        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Session Host</span>
-        <div class="h-14 flex items-center gap-2 px-3 rounded-md bg-surface-container-low border border-surface-high">
-          @if (host(); as user) {
-            <app-avatar [name]="user.username" size="sm"></app-avatar>
-            <span class="text-sm font-semibold text-white truncate">{{ user.username }}</span>
-            <app-icon name="verified" size="sm" color="var(--color-primary)" ariaLabel="Verified"></app-icon>
-            <span class="ml-auto"><app-chip label="Owner" size="sm"></app-chip></span>
-          } @else {
-            <app-icon name="progress_activity" size="sm" [spin]="true" class="text-muted"></app-icon>
-            <span class="text-sm text-muted">Loading profile…</span>
-          }
-        </div>
+        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Host Name</span>
+        <app-input
+          prefixIcon="person"
+          placeholder="Enter host name"
+          [required]="true"
+          [(value)]="hostName"
+          [errorMessage]="'Host name is required'">
+        </app-input>
       </div>
     </div>
 
     <div class="flex flex-col gap-2">
       <div class="flex items-center justify-between gap-2">
       </div>
-      <div role="radiogroup" aria-label="Room mode" class="d-grid grid-cols-1 lg-grid-cols-2 gap-3">
+      <div role="radiogroup" aria-label="Room mode" class="grid grid-cols-2 gap-3">
         <app-option-card
           icon="sports_score"
           title="Race Mode"
@@ -197,8 +193,8 @@
       }
     </div>
 
-    <div class="d-grid grid-cols-1 lg-grid-cols-3 gap-4 p-3 rounded-lg bg-surface-container-low border border-surface-high">
-      <div class="flex flex-col gap-2">
+    <div class="p-3 rounded-lg bg-surface-container-low border border-surface-high">
+      <div class="flex flex-col gap-2 max-w-sm">
         <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Lobby Headcount</span>
         <app-input
           type="number"
@@ -212,27 +208,6 @@
         @if (headcountError()) {
           <p class="-mt-4 pl-4 text-xs text-error m-0">{{ headcountError() }}</p>
         }
-      </div>
-
-      <div class="flex flex-col gap-2">
-        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Test Suite Engine</span>
-        <div class="h-14 flex items-center justify-between gap-3 px-3 rounded-md bg-surface-container-lowest border border-surface-high">
-          <div class="flex flex-col min-w-0">
-            <span class="text-sm text-on-surface">Hidden test cases</span>
-            <span class="text-xs text-muted truncate">{{ hiddenTestCases() ? 'Graded on full suite' : 'Samples only' }}</span>
-          </div>
-          <app-toggle-switch ariaLabel="Hidden test cases" [(checked)]="hiddenTestCases"></app-toggle-switch>
-        </div>
-      </div>
-
-      <div class="flex flex-col gap-2">
-        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Buffer Security</span>
-        <app-select
-          [options]="bufferOptions"
-          [disabled]="mode() === 'COOP'"
-          [hint]="mode() === 'COOP' ? 'Co-op rooms share one buffer' : ''"
-          [(value)]="bufferVisibility">
-        </app-select>
       </div>
     </div>
   </div>

@@ -4,11 +4,8 @@ import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { RoomDto, RoomPreviewDto } from './dto/room-response.dto';
 import { GetUser } from './decorators/get-user.decorator';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Rooms')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('rooms')
 export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
@@ -17,14 +14,9 @@ export class RoomsController {
   @ApiOperation({ summary: 'Create a new room instance' })
   @ApiResponse({ status: 201, description: 'Room created successfully', type: RoomDto })
   async createRoom(
-    @GetUser() user: any,
     @Body() dto: CreateRoomDto,
   ) {
-    const formattedUser = {
-      id: user.id || user.sub || user.userId,
-      username: user.username || user.email || user.name || `User_${(user.id || user.sub || '').slice(0, 6)}`,
-    };
-    return this.roomsService.create(dto, formattedUser);
+    return this.roomsService.create(dto);
   }
 
   @Get(':code')
@@ -38,13 +30,9 @@ export class RoomsController {
   @ApiOperation({ summary: 'Join a room by code' })
   @ApiResponse({ status: 200, description: 'Joined room details', type: RoomDto })
   async joinRoom(
-    @GetUser() user: any,
     @Param('code') code: string,
+    @Body() body?: { username?: string },
   ) {
-    const formattedUser = {
-      id: user.id || user.sub || user.userId,
-      username: user.username || user.email || user.name || `User_${(user.id || user.sub || '').slice(0, 6)}`,
-    };
-    return this.roomsService.join(code, formattedUser);
+    return this.roomsService.join(code, body?.username);
   }
 }
