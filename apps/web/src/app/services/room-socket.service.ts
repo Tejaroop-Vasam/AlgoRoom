@@ -51,7 +51,7 @@ export class RoomSocketService implements OnDestroy {
         username,
         userId,
       },
-      transports: ['websocket', 'polling'],
+      transports: [ 'polling','websocket'],
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 10,
