@@ -101,6 +101,11 @@ jobs:
               cp .env.example .env
             fi
 
+            echo "Building code runner sandbox images..."
+            docker build -t algoroom-runner-cpp:latest ../../infrastructure/docker/runners/cpp
+            docker build -t algoroom-runner-python:latest ../../infrastructure/docker/runners/python
+            docker build -t algoroom-runner-java:latest ../../infrastructure/docker/runners/java
+
             echo "Rebuilding and restarting backend container..."
             docker compose -f docker-compose.prod.yml up -d --build server
 

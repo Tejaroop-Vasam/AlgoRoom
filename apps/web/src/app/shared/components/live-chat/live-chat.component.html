@@ -1,0 +1,95 @@
+@if (showVoiceStream() && activeParticipants().length > 0) {
+  <div class="flex items-center justify-between mb-3">
+    <span class="text-2xs font-bold uppercase tracking-wider text-heading">
+      {{ voiceStreamTitle() }} ({{ activeParticipants().length }} CONNECTED)
+    </span>
+    <span class="w-2 h-2 rounded-full bg-secondary"></span>
+  </div>
+
+  <div class="flex items-stretch gap-2.5 w-full mb-4">
+    @for (p of activeParticipants(); track p.id) {
+      <div
+        class="flex-1 min-w-0 flex flex-col items-center justify-between pt-3 pb-2 px-1.5 rounded-xl bg-surface-container-low cursor-pointer transition-opacity hover:opacity-90"
+        (click)="participantClick.emit(p)">
+        <app-avatar
+          [name]="p.name"
+          [src]="p.avatarSrc"
+          [variant]="p.avatarVariant || 'primary'"
+          [size]="p.avatarSize || 'lg'">
+        </app-avatar>
+        <span class="text-xs font-medium text-heading text-center truncate w-full mt-2 mb-2">
+          {{ p.name }}
+        </span>
+        <div
+          class="w-full h-1 rounded-full"
+          style="max-width: 85%;"
+          [style.background-color]="p.barColor || '#4338ca'">
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="border-b border-surface-variant mb-4"></div>
+}
+
+<div class="flex items-center justify-between mb-3">
+  <div class="flex items-center gap-2">
+    <app-icon name="chat" size="md" class="text-heading"></app-icon>
+    <h3 class="text-base font-bold text-heading m-0">{{ title() }}</h3>
+  </div>
+  <div class="flex items-center gap-1.5 text-xs font-semibold text-secondary">
+    <span class="w-2 h-2 rounded-full bg-secondary"></span>
+    <span>{{ displayedActiveCount() }} Active</span>
+  </div>
+</div>
+
+<div class="flex-1 overflow-y-auto flex flex-col gap-3.5 pr-1.5 mb-3" #scrollContainer>
+  @if (allMessages().length === 0) {
+    <div class="flex-1 flex flex-col items-center justify-center text-muted text-xs p-6 gap-2">
+      <app-icon name="chat" size="lg" class="opacity-50"></app-icon>
+      <span>No messages yet.</span>
+    </div>
+  } @else {
+    @for (msg of allMessages(); track msg.id) {
+      <div class="flex flex-col gap-1.5">
+        <div class="flex items-center justify-between px-0.5">
+          <span class="text-xs font-bold" [style.color]="msg.authorColor || '#6366f1'">
+            {{ msg.author }}
+          </span>
+          <span class="text-2xs text-muted">{{ msg.timestamp }}</span>
+        </div>
+        <div class="p-3 rounded-xl bg-surface-container-low text-xs leading-relaxed text-on-surface break-words">
+          <span>{{ msg.text }}</span>
+        </div>
+      </div>
+    }
+  }
+
+  @if (typingUser()) {
+    <div class="flex items-center gap-2 pt-1 text-xs italic text-muted">
+      <app-icon name="more_horiz" size="sm"></app-icon>
+      <span>{{ typingUser() }}</span>
+    </div>
+  }
+</div>
+
+<div class="pt-3 border-t border-surface-variant flex flex-col gap-2 mt-auto">
+  <form class="flex items-center gap-2" (submit)="$event.preventDefault(); onSend()">
+    <input
+      type="text"
+      class="flex-1 px-3.5 py-2.5 rounded-xl bg-surface-container-low border border-surface-variant text-xs text-on-surface placeholder:text-muted focus:outline-none focus:border-primary"
+      [placeholder]="placeholder()"
+      [value]="inputText()"
+      (input)="onInputChange($event)"
+    />
+    <button
+      type="submit"
+      class="px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-semibold cursor-pointer border-0 hover:opacity-90 transition-opacity disabled:opacity-50"
+      [disabled]="!inputText().trim()">
+      Send
+    </button>
+  </form>
+  <div class="flex items-center justify-end text-2xs text-muted px-1">
+    <span class="text-primary font-medium">Auto-synced</span>
+  </div>
+</div>

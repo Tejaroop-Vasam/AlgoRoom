@@ -29,6 +29,9 @@ import {
   RunShortcutsDirective,
   getPlatformModifierKey,
   LoaderComponent,
+  LiveChatComponent,
+  ChatParticipant,
+  ChatMessage,
   LoadingService,
 } from '../../shared';
 import { ProblemPanelComponent, ProblemData } from '../problem-panel/problem-panel.component';
@@ -51,6 +54,7 @@ export type ComponentSection =
   | 'split-pane'
   | 'console'
   | 'live-grid'
+  | 'live-chat'
   | 'loader'
   | 'workspace';
 
@@ -62,6 +66,7 @@ export type ComponentSection =
     IconComponent,
     CodeEditorComponent,
     LiveGridComponent,
+    LiveChatComponent,
     ChipComponent,
     SegmentedControlComponent,
     SelectComponent,
@@ -294,6 +299,20 @@ export class ComponentTest {
       time: '18m 30s',
       progressPercent: 30,
     },
+  ];
+
+  readonly demoChatParticipants: ChatParticipant[] = [
+    { id: '1', name: 'Teja', avatarVariant: 'primary', barColor: '#4f46e5' },
+    { id: '2', name: 'Rahul', avatarVariant: 'secondary', barColor: '#059669' },
+    { id: '3', name: 'Ananya', avatarVariant: 'tertiary', barColor: '#d97706' },
+    { id: '4', name: 'Karthik', avatarVariant: 'surface', barColor: '#64748b' },
+  ];
+
+  readonly demoChatMessages: ChatMessage[] = [
+    { id: '1', author: 'Teja', authorColor: '#6366f1', text: 'Should we use a custom comparator or a Node object for the PriorityQueue?', timestamp: '18:32' },
+    { id: '2', author: 'Rahul', authorColor: '#059669', text: "`int[]` is cleaner for speed. Let's do `(a, b) -> a[1] - b[1]`.", timestamp: '18:33' },
+    { id: '3', author: 'Ananya', authorColor: '#d97706', text: 'Added! Remember to check if `d > dist[u]` to skip stale entries.', timestamp: '18:34' },
+    { id: '4', author: 'Karthik', authorColor: '#334155', text: 'Running test suite now with max constraint graph. Looks completely green!', timestamp: '18:35' },
   ];
 
   readonly pythonCode = signal(`def fibonacci(n: int) -> list[int]:

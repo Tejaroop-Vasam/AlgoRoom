@@ -57,8 +57,6 @@ export class ProblemPanelComponent {
     { label: 'Submissions', value: 'submissions', icon: 'history' },
   ];
 
-  readonly showTopics = signal<boolean>(false);
-  readonly showCompanies = signal<boolean>(false);
 
   readonly isLiked = signal<boolean>(false);
   readonly isDisliked = signal<boolean>(false);
@@ -85,29 +83,8 @@ export class ProblemPanelComponent {
     this.activeTab.set(tab);
   }
 
-  toggleTopics(): void {
-    this.showTopics.update(v => !v);
-  }
+ 
 
-  toggleCompanies(): void {
-    this.showCompanies.update(v => !v);
-  }
+ 
 
-  toggleLike(): void {
-    this.isLiked.update(v => !v);
-    if (this.isLiked()) {
-      this.isDisliked.set(false);
-    }
-  }
-
-  toggleDislike(): void {
-    this.isDisliked.update(v => !v);
-    if (this.isDisliked()) {
-      this.isLiked.set(false);
-    }
-  }
-
-  toggleStar(): void {
-    this.isStarred.update(v => !v);
-  }
 }

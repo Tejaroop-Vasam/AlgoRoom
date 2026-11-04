@@ -17,6 +17,7 @@
     "db:stop": "brew services stop postgresql@15",
     "db:studio": "npm --prefix apps/server run db:studio",
     "scraper:seed": "apps/scraper/.venv/bin/python3 apps/scraper/seed_problems.py",
+    "runners:build": "docker build -t algoroom-runner-cpp:latest infrastructure/docker/runners/cpp && docker build -t algoroom-runner-python:latest infrastructure/docker/runners/python && docker build -t algoroom-runner-java:latest infrastructure/docker/runners/java",
     "swagger:export": "npm --prefix apps/server run swagger:export",
     "api:generate": "npm --prefix apps/web run api:generate",
     "api:sync": "npm run swagger:export && npm run api:generate"
