@@ -29,49 +29,7 @@
             shape="pill"
             size="sm">
           </app-badge>
-
-          @if (p.topics?.length) {
-            <app-chip
-              label="Topics"
-              icon="sell"
-              size="sm"
-              variant="surface"
-              [selectable]="true"
-              [(selected)]="showTopics">
-            </app-chip>
-          }
-
-          @if (p.companies?.length) {
-            <app-chip
-              label="Companies"
-              icon="lock"
-              size="sm"
-              variant="surface"
-              [selectable]="true"
-              [(selected)]="showCompanies">
-            </app-chip>
-          }
         </div>
-
-        @if (showTopics() && p.topics?.length) {
-          <div class="flex flex-wrap gap-1.5 p-3 rounded-lg bg-surface-container border border-surface-highest">
-            @for (topic of p.topics; track topic) {
-              <span class="px-2 py-0.5 rounded text-xs bg-surface-container-high text-on-surface font-mono">
-                {{ topic }}
-              </span>
-            }
-          </div>
-        }
-
-        @if (showCompanies() && p.companies?.length) {
-          <div class="flex flex-wrap gap-1.5 p-3 rounded-lg bg-surface-container border border-surface-highest">
-            @for (company of p.companies; track company) {
-              <span class="px-2 py-0.5 rounded text-xs bg-surface-container-high text-on-surface font-mono">
-                {{ company }}
-              </span>
-            }
-          </div>
-        }
       </div>
 
       <div class="text-sm leading-relaxed text-on-surface space-y-3 font-sans">
@@ -136,45 +94,4 @@
 </div>
 </app-segmented-control>
 
-<div class="flex items-center justify-between px-4 py-2 border-t border-surface-highest bg-surface-container select-none text-xs text-outline">
-  <div class="flex items-center gap-3">
-    <button
-      type="button"
-      (click)="toggleLike()"
-      class="flex items-center gap-1.5 bg-transparent border-0 cursor-pointer text-outline hover-text-white transition-colors"
-      [class.text-primary]="isLiked()">
-      <app-icon name="thumb_up" size="xs"></app-icon>
-      <span>{{ likeCount() }}</span>
-    </button>
 
-    <button
-      type="button"
-      (click)="toggleDislike()"
-      class="flex items-center gap-1.5 bg-transparent border-0 cursor-pointer text-outline hover-text-white transition-colors"
-      [class.text-error]="isDisliked()">
-      <app-icon name="thumb_down" size="xs"></app-icon>
-    </button>
-
-    <span class="flex items-center gap-1.5 cursor-pointer hover-text-white">
-      <app-icon name="chat_bubble_outline" size="xs"></app-icon>
-      <span>{{ problem()?.commentsCount ?? '2.1K' }}</span>
-    </span>
-  </div>
-
-  <div class="flex items-center gap-3">
-    <button
-      type="button"
-      (click)="toggleStar()"
-      class="bg-transparent border-0 cursor-pointer text-outline hover-text-white transition-colors"
-      [class.text-tertiary]="isStarred()">
-      <app-icon [name]="isStarred() ? 'star' : 'star_border'" size="xs"></app-icon>
-    </button>
-
-    <button
-      type="button"
-      class="bg-transparent border-0 cursor-pointer text-outline hover-text-white transition-colors"
-      title="Share problem">
-      <app-icon name="share" size="xs"></app-icon>
-    </button>
-  </div>
-</div>

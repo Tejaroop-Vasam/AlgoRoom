@@ -16,6 +16,7 @@
     <app-button [variant]="activeSection() === 'split-pane' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('split-pane')">Split Pane</app-button>
     <app-button [variant]="activeSection() === 'console' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('console')">Console</app-button>
     <app-button [variant]="activeSection() === 'live-grid' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('live-grid')">Live Grid</app-button>
+    <app-button [variant]="activeSection() === 'live-chat' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('live-chat')">Live Chat</app-button>
     <app-button [variant]="activeSection() === 'loader' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('loader')">Loader</app-button>
     <app-button [variant]="activeSection() === 'workspace' ? 'primary' : 'ghost'" size="sm" (clicked)="setSection('workspace')">Workspace</app-button>
   </div>
@@ -731,6 +732,24 @@
             </app-live-grid>
           </div>
         </div>
+      </div>
+    </div>
+  }
+
+  @if (activeSection() === 'all' || activeSection() === 'live-chat') {
+    <div class="flex flex-col gap-4 mt-6">
+      <div>
+        <h2 class="text-xl font-bold text-white m-0 tracking-tight">Live Chat & Discussion</h2>
+        <p class="text-xs text-muted m-0 mt-1">
+          Reusable live chat component featuring room voice stream cards, markdown code tokens, live typing indicator, and auto-sync.
+        </p>
+      </div>
+      <div class="max-w-md" style="height: 40rem;">
+        <app-live-chat
+          [participants]="demoChatParticipants"
+          [messages]="demoChatMessages"
+          typingUser="Rahul is typing an algorithmic note...">
+        </app-live-chat>
       </div>
     </div>
   }
