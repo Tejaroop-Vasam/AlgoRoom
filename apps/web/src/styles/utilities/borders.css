@@ -17,3 +17,4 @@
 .border-l-2 { border-left-width: 0.125rem; border-left-style: solid; }
 .border-l-4 { border-left-width: 0.25rem; border-left-style: solid; }
 .border-r { border-right-width: 0.0625rem; border-right-style: solid; }
+.border-dashed { border-style: dashed; }

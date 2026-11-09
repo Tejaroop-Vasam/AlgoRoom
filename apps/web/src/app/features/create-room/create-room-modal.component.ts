@@ -15,6 +15,7 @@ import {
   SegmentOption,
   SegmentedControlComponent,
 } from '../../shared';
+import { Router } from '@angular/router';
 import { ModalContainerComponent } from '../../shared/components/modal/modal-container.component';
 import {
   BufferVisibility,
@@ -67,6 +68,7 @@ export class CreateRoomModalComponent {
   private readonly roomsApi = inject(RoomsApiService);
   private readonly loadingService = inject(LoadingService);
   private readonly roomSocket = inject(RoomSocketService);
+  private readonly router = inject(Router);
 
   readonly maxStaged = MAX_STAGED_PROBLEMS;
   readonly minParticipants = MIN_PARTICIPANTS;
@@ -213,6 +215,11 @@ export class CreateRoomModalComponent {
     } catch {
       this.copied.set(null);
     }
+  }
+
+  enterLobby(code: string): void {
+    this.close();
+    this.router.navigate(['/room', code]);
   }
 
   close(): void {

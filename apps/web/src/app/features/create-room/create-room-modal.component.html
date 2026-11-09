@@ -27,7 +27,7 @@
       <app-chip [label]="room.participants.length + ' / ' + room.settings.maxParticipants + ' players'" icon="group"></app-chip>
     </div>
 
-    <app-button variant="primary" (clicked)="close()">Done</app-button>
+    <app-button variant="primary" icon="arrow_forward" (clicked)="enterLobby(room.code)">Enter Lobby</app-button>
   </div>
 } @else {
   <div class="max-h-dialog overflow-y-auto flex flex-col gap-6 pr-2">

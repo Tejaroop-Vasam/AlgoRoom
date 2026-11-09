@@ -1,5 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { BadgeComponent, ButtonComponent, ChipComponent, IconComponent, InputComponent } from '../../shared';
+import { Router } from '@angular/router';
 import { ModalContainerComponent } from '../../shared/components/modal/modal-container.component';
 import { Room, RoomPreview, RoomsApiService } from '../../services/api';
 import { LoadingService } from '../../services/loading.service';
@@ -26,6 +27,7 @@ export class JoinRoomModalComponent implements OnInit {
   private readonly roomsApi = inject(RoomsApiService);
   private readonly loadingService = inject(LoadingService);
   private readonly roomSocket = inject(RoomSocketService);
+  private readonly router = inject(Router);
 
   readonly code = signal('');
   readonly username = signal<string>(typeof localStorage !== 'undefined' ? localStorage.getItem('algoroom_username') || '' : '');
@@ -91,6 +93,11 @@ export class JoinRoomModalComponent implements OnInit {
     } else {
       this.lookup();
     }
+  }
+
+  enterLobby(code: string): void {
+    this.close();
+    this.router.navigate(['/room', code]);
   }
 
   close(): void {

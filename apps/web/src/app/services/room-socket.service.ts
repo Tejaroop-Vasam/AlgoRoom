@@ -14,6 +14,14 @@ export interface TelemetryPayload {
   telemetry: any;
 }
 
+export interface RoomSession {
+  roomCode: string;
+  username: string;
+  userId?: string;
+}
+
+const SESSION_STORAGE_KEY = 'algoroom-room-session';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -24,12 +32,14 @@ export class RoomSocketService implements OnDestroy {
   readonly connected = signal<boolean>(false);
   readonly socketId = signal<string | null>(null);
   readonly currentRoom = signal<Room | null>(null);
+  readonly session = signal<RoomSession | null>(null);
 
   readonly crdt$ = new Subject<CrdtPayload>();
   readonly telemetry$ = new Subject<TelemetryPayload>();
 
   connect(roomCode: string, username: string, userId?: string): Socket {
     const cleanCode = roomCode.trim().toUpperCase();
+    this.saveSession({ roomCode: cleanCode, username, userId });
 
     if (this.socket && this.currentRoomCode === cleanCode) {
       this.socket.emit('joinRoom', { roomCode: cleanCode, username, userId });
@@ -104,6 +114,36 @@ export class RoomSocketService implements OnDestroy {
       roomCode: this.currentRoomCode,
       telemetry,
     });
+  }
+
+  restoreSession(roomCode: string): RoomSession | null {
+    const cleanCode = roomCode.trim().toUpperCase();
+    const active = this.session();
+    if (active?.roomCode === cleanCode) {
+      return active;
+    }
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY) ?? 'null') as RoomSession | null;
+      return saved?.roomCode === cleanCode ? saved : null;
+    } catch {
+      return null;
+    }
+  }
+
+  leave(): void {
+    this.disconnect();
+    this.currentRoom.set(null);
+    this.session.set(null);
+    try {
+      sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch {}
+  }
+
+  private saveSession(session: RoomSession): void {
+    this.session.set(session);
+    try {
+      sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+    } catch {}
   }
 
   disconnect(): void {
