@@ -1,0 +1,240 @@
+<div class="w-full max-w-1440 mx-auto px-4 py-6 font-sans flex flex-col gap-6">
+  @if (room(); as room) {
+    <section class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-xl bg-surface-container-lowest border border-surface-high">
+      <div class="flex flex-wrap items-center gap-3 min-w-0">
+        <span
+          class="d-inline-block w-2-5 h-2-5 rounded-full shrink-0"
+          [class.bg-secondary]="connected()"
+          [class.bg-tertiary]="!connected()"
+          [attr.aria-label]="connected() ? 'Connected' : 'Reconnecting'"
+          role="img">
+        </span>
+        <h1 class="text-xl font-bold text-white m-0 truncate">{{ room.name }}</h1>
+        <app-badge [label]="room.status" variant="primary" shape="square" size="sm"></app-badge>
+
+        <div class="flex items-center gap-2 px-3 py-1 rounded-md bg-surface-container-low border border-surface-high font-mono text-xs">
+          <span class="text-muted">CODE</span>
+          <span class="font-bold tracking-wider text-on-surface">{{ room.code }}</span>
+          <button
+            type="button"
+            class="p-1 border-0 bg-transparent cursor-pointer hover-underline focus-ring font-mono text-xs font-bold text-primary"
+            (click)="copyInviteLink()">
+            {{ copied() ? 'COPIED' : 'COPY LINK' }}
+          </button>
+        </div>
+
+        <app-badge
+          [label]="room.mode === 'RACE' ? 'RACE MODE' : 'CO-OP MODE'"
+          [icon]="room.mode === 'RACE' ? 'sports_score' : 'handshake'"
+          [variant]="room.mode === 'RACE' ? 'tertiary' : 'secondary'"
+          shape="square"
+          size="sm">
+        </app-badge>
+      </div>
+
+      @if (host(); as host) {
+        <div class="flex items-center gap-2 px-2 py-1 rounded-md bg-surface-container-low border border-surface-high">
+          <app-icon name="workspace_premium" size="sm" color="var(--color-tertiary)"></app-icon>
+          <span class="text-sm font-semibold text-on-surface">&#64;{{ host.username }}</span>
+          <app-badge label="HOST" variant="primary" shape="square" size="sm"></app-badge>
+        </div>
+      }
+    </section>
+
+    <div class="d-grid grid-cols-1 lg-grid-cols-3 gap-6 items-start">
+      <div class="flex flex-col gap-6 min-w-0">
+        <section class="flex flex-col gap-3 p-4 rounded-xl bg-surface-container-lowest border border-surface-high">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <app-icon name="playlist_play" size="md" color="var(--color-primary)"></app-icon>
+              <h2 class="text-xs font-bold uppercase tracking-wider text-on-surface m-0">Match Problem Sequence</h2>
+            </div>
+            <div class="flex items-center gap-1">
+              <app-badge [label]="problems().length + (problems().length === 1 ? ' Challenge' : ' Challenges')" variant="primary" shape="square" size="sm"></app-badge>
+              <app-badge [label]="totalPoints() + ' Pts'" variant="surface" shape="square" size="sm"></app-badge>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-md bg-surface-container-low font-mono text-xs">
+            <span class="text-muted">
+              Format:
+              <span class="font-bold text-primary">{{ room.mode === 'RACE' ? 'Sequential Race (Auto-Unlock)' : 'Shared Buffer (Team Solve)' }}</span>
+            </span>
+            <span class="flex items-center gap-1 text-muted">
+              <span class="d-inline-block w-2 h-2 rounded-full bg-secondary"></span>
+              @for (problem of problems(); track problem.id; let last = $last) {
+                #{{ problem.position }}@if (!last) { &rarr; }
+              }
+            </span>
+          </div>
+
+          <ol class="list-none m-0 p-0 flex flex-col gap-2">
+            @for (problem of problems(); track problem.id; let first = $first) {
+              <li
+                class="flex flex-col gap-2 p-3 rounded-md border"
+                [class.bg-surface-container]="first"
+                [class.border-primary]="first"
+                [class.bg-surface-container-low]="!first"
+                [class.border-surface-high]="!first">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span
+                    class="flex items-center justify-center w-6 h-6 rounded-full shrink-0 font-mono text-xs font-bold"
+                    [class.bg-primary-container]="first"
+                    [class.text-on-primary]="first"
+                    [class.bg-surface-container-high]="!first"
+                    [class.text-on-surface-variant]="!first">
+                    {{ problem.position }}
+                  </span>
+                  <span class="text-base font-semibold text-white truncate">{{ problem.title }}</span>
+                  @if (problem.difficulty) {
+                    <app-badge [label]="problem.difficulty" [variant]="difficultyVariant(problem.difficulty)" shape="square" size="sm"></app-badge>
+                  } @else if (!problem.loaded) {
+                    <app-icon name="progress_activity" size="sm" [spin]="true" class="text-muted"></app-icon>
+                  }
+                  <app-badge [label]="problem.stage" [variant]="first ? 'secondary' : 'surface'" shape="square" size="sm"></app-badge>
+                  <span class="ml-auto shrink-0">
+                    @if (first) {
+                      <app-icon name="play_circle" size="md" color="var(--color-secondary)" ariaLabel="Unlocked first"></app-icon>
+                    } @else {
+                      <app-icon name="lock" size="md" color="var(--color-outline)" ariaLabel="Unlocks after the previous problem"></app-icon>
+                    }
+                  </span>
+                </div>
+
+                <div class="pl-8 font-mono text-xs text-muted">
+                  {{ problem.points }} pts · <span class="text-primary">{{ problem.complexity }}</span>
+                </div>
+
+                <div class="pl-8 flex flex-wrap items-center gap-1">
+                  @for (tag of problem.tags; track tag) {
+                    <span class="px-2 rounded-xs bg-surface-container-high font-mono text-2xs text-on-surface-variant">#{{ tag }}</span>
+                  }
+                  <span class="ml-auto font-mono text-2xs text-muted">
+                    {{ problem.publicTestCount ?? '–' }} Public · {{ problem.hiddenTestCount }} Hidden Vectors
+                  </span>
+                </div>
+              </li>
+            }
+          </ol>
+
+          <div class="flex items-center gap-2" title="Editing the playlist after creation is coming soon">
+            <div class="flex-1">
+              <app-button variant="surface" size="sm" icon="queue_music" iconPosition="start" [fullWidth]="true" [disabled]="true">
+                Edit Playlist Sequence
+              </app-button>
+            </div>
+            <app-button variant="surface" size="sm" icon="tune" iconPosition="start" [disabled]="true">Settings</app-button>
+          </div>
+        </section>
+
+        <section class="flex flex-col gap-3 p-4 rounded-xl bg-surface-container-lowest border border-surface-high">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-on-surface-variant m-0">Session Rules &amp; Mechanics</h2>
+          <ul class="list-none m-0 p-0 flex flex-col gap-2">
+            @for (rule of sessionRules(); track rule) {
+              <li class="flex items-center gap-2 text-sm text-on-surface">
+                <app-icon name="check_circle" size="sm" color="var(--color-secondary)"></app-icon>
+                {{ rule }}
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+
+      <div class="flex flex-col gap-4 min-w-0 lg-col-span-2">
+        <section class="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-surface-container-lowest border border-surface-high">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-surface-container-high shrink-0">
+              <app-icon name="groups" size="lg" color="var(--color-secondary)"></app-icon>
+            </div>
+            <div class="flex flex-col gap-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <h2 class="text-xl font-bold text-white m-0">Participants Roster</h2>
+                <app-badge [label]="players().length + ' / ' + maxPlayers() + ' JOINED'" variant="secondary" shape="square" size="sm"></app-badge>
+              </div>
+              <span class="text-sm text-on-surface-variant">
+                {{ players().length < maxPlayers() ? 'Share the room code to fill the remaining slots.' : 'Lobby is full. The host may launch the arena.' }}
+              </span>
+            </div>
+          </div>
+          <span class="flex items-center gap-1 font-mono text-xs" [class.text-secondary]="connected()" [class.text-tertiary]="!connected()">
+            <span class="d-inline-block w-2 h-2 rounded-full" [class.bg-secondary]="connected()" [class.bg-tertiary]="!connected()"></span>
+            {{ connected() ? 'Live Sync' : 'Reconnecting…' }}
+          </span>
+        </section>
+
+        <div class="d-grid grid-cols-1 lg-grid-cols-2 gap-4">
+          @for (player of players(); track player.id) {
+            <article
+              class="relative flex flex-col gap-3 p-4 rounded-xl bg-surface-container-lowest border"
+              [class.border-primary]="player.isSelf"
+              [class.border-surface-high]="!player.isSelf">
+              @if (player.isHost) {
+                <span class="absolute top-0 right-0 m-2">
+                  <app-badge label="HOST" icon="workspace_premium" variant="primary" shape="square" size="sm"></app-badge>
+                </span>
+              }
+              <div class="flex items-center gap-3">
+                <span class="relative d-inline-flex shrink-0">
+                  <app-avatar [name]="player.username" size="lg" [variant]="player.isHost ? 'primary' : 'surface'"></app-avatar>
+                  <span class="absolute bottom-0 right-0 w-2-5 h-2-5 rounded-full bg-secondary border-2 border-surface-high" aria-label="Online" role="img"></span>
+                </span>
+                <div class="flex flex-col min-w-0">
+                  <span class="text-sm font-semibold text-white truncate">
+                    {{ player.username }}
+                    @if (player.isSelf) {
+                      <span class="text-xs font-normal text-muted">(You)</span>
+                    }
+                  </span>
+                  <span class="font-mono text-xs text-muted">{{ player.elo }} ELO</span>
+                  <span class="text-xs font-semibold text-primary">{{ player.language }}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 px-3 py-2 rounded-md bg-surface-container-low font-mono text-xs font-bold text-muted">
+                <app-icon name="hourglass_empty" size="sm"></app-icon>
+                AWAITING READY CHECK
+              </div>
+            </article>
+          }
+          @for (slot of openSlots(); track $index) {
+            <div class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-surface-high text-muted">
+              <app-icon name="person_add" size="lg"></app-icon>
+              <span class="text-xs">Waiting for player…</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <section class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-xl bg-surface-container-lowest border border-surface-high">
+      <div class="flex flex-wrap items-center gap-2 text-sm">
+        <span class="d-inline-block w-2-5 h-2-5 rounded-full bg-tertiary"></span>
+        <span class="font-semibold text-on-surface">Match Status:</span>
+        <span class="font-mono text-xs font-bold text-tertiary">Awaiting Launch</span>
+        <span class="font-mono text-xs text-muted">
+          · {{ problems().length }} Problems Staged ({{ totalPoints() }} pts) · {{ players().length }} {{ players().length === 1 ? 'Player' : 'Players' }} Joined
+        </span>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <app-button variant="surface" icon="logout" iconPosition="start" (clicked)="leaveRoom()">Leave Room</app-button>
+        <span title="Ready checks and race launch are coming soon">
+          @if (isHost()) {
+            <app-button variant="primary" icon="rocket_launch" iconPosition="start" [disabled]="true">
+              Launch Arena Race
+              <app-kbd [keys]="['⌘', '↵']"></app-kbd>
+            </app-button>
+          } @else {
+            <app-button variant="primary" icon="hourglass_top" iconPosition="start" [disabled]="true">
+              Waiting for {{ host()?.username ?? 'host' }} to launch
+            </app-button>
+          }
+        </span>
+      </div>
+    </section>
+  } @else {
+    <div class="flex flex-col items-center justify-center gap-3 py-20 text-center">
+      <app-icon name="progress_activity" size="xl" [spin]="true" class="text-primary"></app-icon>
+      <p class="text-sm text-on-surface-variant m-0">Connecting to room <span class="font-mono font-bold">{{ roomCode }}</span>…</p>
+      <app-button variant="ghost" size="sm" icon="arrow_back" iconPosition="start" (clicked)="leaveRoom()">Back to home</app-button>
+    </div>
+  }
+</div>
