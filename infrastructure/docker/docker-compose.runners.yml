@@ -11,8 +11,8 @@ services:
       dockerfile: Dockerfile
     image: algo-room-runner-cpp:latest
 
-  runner-python:
+  runner-javascript:
     build:
-      context: ./runners/python
+      context: ./runners/javascript
       dockerfile: Dockerfile
-    image: algo-room-runner-python:latest
+    image: algo-room-runner-javascript:latest

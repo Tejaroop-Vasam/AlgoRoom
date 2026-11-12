@@ -1,35 +1,3 @@
-@if (activeRoom(); as room) {
-  <div class="flex flex-col items-center text-center gap-4 py-6">
-    <div class="w-14 h-14 rounded-full flex items-center justify-center bg-secondary-container text-on-secondary">
-      <app-icon name="check" size="xl" [weight]="600"></app-icon>
-    </div>
-    <div class="flex flex-col gap-1">
-      <h3 class="text-xl font-bold text-white m-0">{{ room.name }} is live</h3>
-      <p class="text-sm text-on-surface-variant m-0">Share the code below. Players land in your lobby until you start the round.</p>
-    </div>
-
-    <div class="flex items-center gap-3 px-5 py-3 rounded-lg bg-surface-container-low border border-surface-high">
-      <span class="font-mono text-3xl font-bold tracking-wider text-primary">{{ room.code }}</span>
-    </div>
-
-    <div class="flex flex-wrap justify-center gap-2">
-      <app-button size="sm" variant="surface" [icon]="copied() === 'code' ? 'check' : 'content_copy'" iconPosition="start" (clicked)="copy('code', room)">
-        {{ copied() === 'code' ? 'Copied' : 'Copy code' }}
-      </app-button>
-      <app-button size="sm" variant="surface" [icon]="copied() === 'link' ? 'check' : 'link'" iconPosition="start" (clicked)="copy('link', room)">
-        {{ copied() === 'link' ? 'Copied' : 'Copy invite link' }}
-      </app-button>
-    </div>
-
-    <div class="flex flex-wrap justify-center gap-2">
-      <app-chip [label]="room.mode === 'RACE' ? 'Race Mode' : 'Co-op Mode'" [icon]="room.mode === 'RACE' ? 'sports_score' : 'handshake'"></app-chip>
-      <app-chip [label]="room.problemIds.length + ' problems'" icon="list"></app-chip>
-      <app-chip [label]="room.participants.length + ' / ' + room.settings.maxParticipants + ' players'" icon="group"></app-chip>
-    </div>
-
-    <app-button variant="primary" icon="arrow_forward" (clicked)="enterLobby(room.code)">Enter Lobby</app-button>
-  </div>
-} @else {
   <div class="max-h-dialog overflow-y-auto flex flex-col gap-6 pr-2">
     <div class="grid grid-cols-3 gap-4">
       <div class="flex flex-col gap-2 min-w-0 col-span-2">
@@ -236,4 +204,3 @@
       </app-button>
     </div>
   </div>
-}

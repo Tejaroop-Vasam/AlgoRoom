@@ -1,4 +1,4 @@
-export type SupportedLanguage = 'python' | 'cpp' | 'java';
+export type SupportedLanguage = 'cpp' | 'java' | 'javascript';
 
 export type ExecutionStatus =
   | 'SUCCESS'

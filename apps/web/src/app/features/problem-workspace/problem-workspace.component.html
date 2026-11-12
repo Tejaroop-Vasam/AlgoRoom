@@ -15,6 +15,7 @@
             <app-code-editor
               [showReset]="true"
               [showFullscreen]="true"
+              [availableLanguages]="availableLanguages"
               [(code)]="code"
               [(language)]="language"
               (languageChange)="onLanguageChange($event)"

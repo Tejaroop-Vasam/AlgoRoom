@@ -119,10 +119,8 @@ export class LandingComponent implements OnInit {
       maxWidth: '95vw',
     });
     ref.afterClosed().subscribe((room) => {
-      if (room?.problemIds?.length) {
-        this.router.navigate(['/problem', room.problemIds[0]], {
-          queryParams: { room: room.code },
-        });
+      if (room?.code) {
+        this.router.navigate(['/room', room.code]);
       }
     });
   }
@@ -137,10 +135,14 @@ export class LandingComponent implements OnInit {
       data: { code } satisfies JoinRoomModalData,
     });
     ref.afterClosed().subscribe((room) => {
-      if (room?.problemIds?.length) {
-        this.router.navigate(['/problem', room.problemIds[0]], {
-          queryParams: { room: room.code },
-        });
+      if (room?.code) {
+        if (room.status === 'IN_PROGRESS' && room.problemIds?.length) {
+          this.router.navigate(['/problem', room.problemIds[0]], {
+            queryParams: { room: room.code },
+          });
+        } else {
+          this.router.navigate(['/room', room.code]);
+        }
       }
     });
   }

@@ -105,6 +105,21 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('launchRoom')
+  async handleLaunchRoom(
+    @ConnectedSocket() client: RoomSocket,
+    @MessageBody() payload: { roomCode: string },
+  ) {
+    const roomCode = payload?.roomCode?.trim().toUpperCase();
+    if (!roomCode) return;
+
+    const updatedRoom = await this.roomsService.launchRoom(roomCode, client.id);
+    if (updatedRoom) {
+      this.server.to(roomCode).emit('roomStateUpdated', updatedRoom);
+      this.server.to(roomCode).emit('roomLaunched', updatedRoom);
+    }
+  }
+
   @SubscribeMessage('crdtUpdate')
   handleCrdtUpdate(
     @ConnectedSocket() client: RoomSocket,

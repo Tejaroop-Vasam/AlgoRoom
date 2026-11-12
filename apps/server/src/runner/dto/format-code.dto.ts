@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export enum FormatLanguage {
-  PYTHON = 'python',
   CPP = 'cpp',
   JAVA = 'java',
   JAVASCRIPT = 'javascript',
@@ -14,7 +13,7 @@ export class FormatCodeDto {
     enum: FormatLanguage,
     enumName: 'FormatLanguage',
     description: 'Programming language to format',
-    example: FormatLanguage.PYTHON,
+    example: FormatLanguage.JAVA,
   })
   @IsEnum(FormatLanguage)
   @IsNotEmpty()

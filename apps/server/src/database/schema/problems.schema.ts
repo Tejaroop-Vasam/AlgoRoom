@@ -23,9 +23,9 @@ export interface LanguageTemplate {
 }
 
 export type ProblemCodeTemplates = {
-  python?: LanguageTemplate;
   cpp?: LanguageTemplate;
   java?: LanguageTemplate;
+  javascript?: LanguageTemplate;
   [lang: string]: LanguageTemplate | undefined;
 };
 

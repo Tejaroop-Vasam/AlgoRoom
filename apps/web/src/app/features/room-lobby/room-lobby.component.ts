@@ -11,30 +11,21 @@ import {
 } from '../../shared';
 import { Difficulty, ProblemsApiService, RoomParticipant } from '../../services/api';
 import { RoomSocketService } from '../../services/room-socket.service';
-import {
-  PLACEHOLDER_POINTS_BY_DIFFICULTY,
-  placeholderPlayerMeta,
-  placeholderProblemMeta,
-} from './room-lobby.placeholders';
 
 export interface LobbyProblem {
   id: number;
   position: number;
   title: string;
   difficulty: Difficulty | null;
-  points: number;
   publicTestCount: number | null;
-  complexity: string;
-  tags: string[];
-  hiddenTestCount: number;
+  timeLimitMs: number | null;
+  memoryLimitMb: number | null;
   stage: string;
   loaded: boolean;
 }
 
 export interface LobbyPlayer extends RoomParticipant {
   isSelf: boolean;
-  elo: number;
-  language: string;
 }
 
 @Component({
@@ -62,31 +53,37 @@ export class RoomLobbyComponent implements OnInit {
   });
 
   private readonly requestedProblemIds = new Set<number>();
-  private readonly problemDetails = signal<Record<number, { title: string; difficulty: Difficulty; publicTestCount: number }>>({});
+  private readonly problemDetails = signal<
+    Record<
+      number,
+      {
+        title: string;
+        difficulty: Difficulty;
+        publicTestCount: number;
+        timeLimitMs: number;
+        memoryLimitMb: number;
+      }
+    >
+  >({});
 
   readonly problems = computed<LobbyProblem[]>(() => {
     const ids = this.room()?.problemIds ?? [];
     const details = this.problemDetails();
     return ids.map((id, index) => {
       const detail = details[id];
-      const meta = placeholderProblemMeta(index);
       return {
         id,
         position: index + 1,
         title: detail?.title ?? `Problem #${id}`,
         difficulty: detail?.difficulty ?? null,
-        points: detail ? PLACEHOLDER_POINTS_BY_DIFFICULTY[detail.difficulty] : 0,
         publicTestCount: detail?.publicTestCount ?? null,
-        complexity: meta.complexity,
-        tags: meta.tags,
-        hiddenTestCount: meta.hiddenTestCount,
+        timeLimitMs: detail?.timeLimitMs ?? null,
+        memoryLimitMb: detail?.memoryLimitMb ?? null,
         stage: index === 0 ? 'Initial' : index === ids.length - 1 ? 'Final Round' : 'Queued',
         loaded: !!detail,
       };
     });
   });
-
-  readonly totalPoints = computed(() => this.problems().reduce((sum, p) => sum + p.points, 0));
 
   readonly players = computed<LobbyPlayer[]>(() => {
     const room = this.room();
@@ -96,20 +93,21 @@ export class RoomLobbyComponent implements OnInit {
     }
     return [...room.participants]
       .sort((a, b) => Number(b.isHost) - Number(a.isHost))
-      .map((p, index) => ({
+      .map((p) => ({
         ...p,
         isSelf: session?.userId
           ? p.id === session.userId
           : p.username?.toLowerCase() === session?.username.toLowerCase(),
-        ...placeholderPlayerMeta(index),
       }));
   });
 
   readonly maxPlayers = computed(() => this.room()?.settings?.maxParticipants ?? 0);
-  readonly openSlots = computed(() => Array.from({ length: Math.max(0, this.maxPlayers() - this.players().length) }));
-  readonly self = computed(() => this.players().find(p => p.isSelf) ?? null);
+  readonly openSlots = computed(() =>
+    Array.from({ length: Math.max(0, this.maxPlayers() - this.players().length) }),
+  );
+  readonly self = computed(() => this.players().find((p) => p.isSelf) ?? null);
   readonly isHost = computed(() => !!this.self()?.isHost);
-  readonly host = computed(() => this.players().find(p => p.isHost) ?? null);
+  readonly host = computed(() => this.players().find((p) => p.isHost) ?? null);
 
   readonly sessionRules = computed(() => {
     const room = this.room();
@@ -136,8 +134,15 @@ export class RoomLobbyComponent implements OnInit {
 
   constructor() {
     effect(() => {
-      const ids = this.room()?.problemIds ?? [];
-      ids.filter(id => !this.requestedProblemIds.has(id)).forEach(id => this.loadProblem(id));
+      const room = this.room();
+      const ids = room?.problemIds ?? [];
+      ids.filter((id) => !this.requestedProblemIds.has(id)).forEach((id) => this.loadProblem(id));
+
+      if (room?.status === 'IN_PROGRESS' && ids.length > 0) {
+        this.router.navigate(['/problem', ids[0]], {
+          queryParams: { room: room.code },
+        });
+      }
     });
   }
 
@@ -171,6 +176,13 @@ export class RoomLobbyComponent implements OnInit {
     }
   }
 
+  launchRoom(): void {
+    if (!this.isHost() || this.problems().length === 0) {
+      return;
+    }
+    this.roomSocket.launchRoom();
+  }
+
   leaveRoom(): void {
     this.roomSocket.leave();
     this.router.navigate(['/']);
@@ -180,12 +192,14 @@ export class RoomLobbyComponent implements OnInit {
     this.requestedProblemIds.add(id);
     try {
       const problem = await this.problemsApi.getProblem(id);
-      this.problemDetails.update(details => ({
+      this.problemDetails.update((details) => ({
         ...details,
         [id]: {
           title: problem.title,
           difficulty: problem.difficulty as Difficulty,
           publicTestCount: problem.sampleTestCases?.length ?? 0,
+          timeLimitMs: problem.timeLimitMs,
+          memoryLimitMb: problem.memoryLimitMb,
         },
       }));
     } catch {}
