@@ -48,7 +48,8 @@ export class ProblemWorkspaceComponent implements OnInit {
   readonly problemId = signal<number>(1);
   readonly problemDetail = signal<ProblemDetailResponseDto | null>(null);
 
-  readonly language = signal<string>('python');
+  readonly availableLanguages = ['cpp', 'java', 'javascript'];
+  readonly language = signal<string>('java');
   readonly code = signal<string>('');
   readonly starterCodes = signal<Record<string, string>>({});
 
@@ -76,9 +77,9 @@ export class ProblemWorkspaceComponent implements OnInit {
       const starters: Record<string, string> = (res.starterCodes as Record<string, string>) || {};
       this.starterCodes.set(starters);
 
-      const availableLangs = Object.keys(starters);
-      this.language.set( availableLangs[0]);
-      this.code.set(starters[this.language()] || '');
+      const defaultLang = this.availableLanguages.includes('java') ? 'java' : this.availableLanguages[0];
+      this.language.set(defaultLang);
+      this.code.set(starters[defaultLang] || '');
 
       const parsedCases: TestCaseItem[] = (res.sampleTestCases ?? []).map((stc, idx) => ({
         id: stc.id ?? idx + 1,
@@ -100,9 +101,7 @@ export class ProblemWorkspaceComponent implements OnInit {
   onLanguageChange(newLang: string): void {
     this.language.set(newLang);
     const starter = this.starterCodes()[newLang];
-    if (starter) {
-      this.code.set(starter);
-    }
+    this.code.set(starter ?? '');
   }
 
   resetCode(): void {

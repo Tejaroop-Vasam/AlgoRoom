@@ -112,9 +112,6 @@ export class CreateRoomModalComponent {
   });
 
   readonly submitting = this.loadingService.isLoading;
-  readonly createdRoom = signal<Room | null>(null);
-  readonly activeRoom = computed(() => this.roomSocket.currentRoom() || this.createdRoom());
-  readonly copied = signal<'code' | 'link' | null>(null);
 
   readonly canSubmit = computed(() =>
     !!this.roomName()?.trim() &&
@@ -197,32 +194,13 @@ export class CreateRoomModalComponent {
         hiddenTestCases: true,
         bufferVisibility: (this.mode() === 'COOP' ? 'OPEN' : 'OBSCURED') as BufferVisibility,
       });
-      this.createdRoom.set(room);
       this.roomSocket.connect(room.code, hostNameValue, room.host?.id);
+      this.container?.close(room);
+      this.router.navigate(['/room', room.code]);
     } catch {}
   }
 
-  inviteLink(room: Room): string {
-    const base = window.location.href.split('?')[0].split('#')[0].replace(/\/+$/, '');
-    return `${base}/?join=${room.code}`;
-  }
-
-  async copy(kind: 'code' | 'link', room: Room): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(kind === 'code' ? room.code : this.inviteLink(room));
-      this.copied.set(kind);
-      setTimeout(() => this.copied.set(null), 1500);
-    } catch {
-      this.copied.set(null);
-    }
-  }
-
-  enterLobby(code: string): void {
-    this.close();
-    this.router.navigate(['/room', code]);
-  }
-
   close(): void {
-    this.container?.close(this.activeRoom() || this.createdRoom());
+    this.container?.close();
   }
 }

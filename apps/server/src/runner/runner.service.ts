@@ -344,12 +344,6 @@ echo "SUCCESS" > /outputs/batch.status
 
     try {
       switch (language) {
-        case FormatLanguage.PYTHON: {
-          const { format } = await import('@wasm-fmt/ruff_fmt');
-          const formatted = format(code);
-          return { code: formatted, formatted: true };
-        }
-
         case FormatLanguage.CPP: {
           // @ts-ignore
           const { format } = await import('@wasm-fmt/clang-format');

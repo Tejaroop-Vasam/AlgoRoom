@@ -55,6 +55,7 @@ export interface RoomParticipant {
   id: string;
   username: string;
   isHost: boolean;
+  socketId?: string;
 }
 
 export interface Room {

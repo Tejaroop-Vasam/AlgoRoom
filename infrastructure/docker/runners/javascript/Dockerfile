@@ -1,7 +1,7 @@
-FROM python:3.11-alpine
+FROM alpine:3.19
 
-# Install coreutils for precise timeout command support (e.g., timeout 2.0s)
-RUN apk add --no-cache coreutils bash
+# Install Node.js, coreutils (for precise timeout command support), and bash
+RUN apk add --no-cache nodejs coreutils bash
 
 # Create an unprivileged user for secure execution
 RUN adduser -D -u 1001 -s /bin/sh runner
@@ -11,3 +11,4 @@ WORKDIR /workspace
 RUN chown -R runner:runner /workspace
 
 USER runner
+

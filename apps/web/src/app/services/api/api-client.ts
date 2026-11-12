@@ -1063,7 +1063,7 @@ export interface SubmissionEvaluationResultDto {
 }
 
 /** Programming language to format */
-export type FormatLanguage = "python" | "cpp" | "java" | "javascript" | "typescript";
+export type FormatLanguage = "cpp" | "java" | "javascript" | "typescript";
 
 export interface FormatCodeDto {
     /** Programming language to format */

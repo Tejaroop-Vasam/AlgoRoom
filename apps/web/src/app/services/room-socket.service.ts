@@ -85,6 +85,10 @@ export class RoomSocketService implements OnDestroy {
       this.currentRoom.set(room);
     });
 
+    this.socket.on('roomLaunched', (room: Room) => {
+      this.currentRoom.set(room);
+    });
+
     this.socket.on('crdtSync', (payload: CrdtPayload) => {
       this.crdt$.next(payload);
     });
@@ -114,6 +118,11 @@ export class RoomSocketService implements OnDestroy {
       roomCode: this.currentRoomCode,
       telemetry,
     });
+  }
+
+  launchRoom(): void {
+    if (!this.socket || !this.currentRoomCode) return;
+    this.socket.emit('launchRoom', { roomCode: this.currentRoomCode });
   }
 
   restoreSession(roomCode: string): RoomSession | null {

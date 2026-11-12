@@ -7,7 +7,6 @@ export const stitchDarkTheme: Monaco.editor.IStandaloneThemeData = {
   inherit: true,
   rules: [
     { token: 'keyword', foreground: '4edea3', fontStyle: 'bold' },
-    { token: 'keyword.python', foreground: '4edea3', fontStyle: 'bold' },
     { token: 'type', foreground: 'ffb95f' },
     { token: 'class', foreground: 'ffb95f' },
     { token: 'string', foreground: 'ffb95f' },
@@ -39,7 +38,6 @@ export const stitchLightTheme: Monaco.editor.IStandaloneThemeData = {
   inherit: true,
   rules: [
     { token: 'keyword', foreground: '006c4a', fontStyle: 'bold' },
-    { token: 'keyword.python', foreground: '006c4a', fontStyle: 'bold' },
     { token: 'type', foreground: '703a00' },
     { token: 'class', foreground: '703a00' },
     { token: 'string', foreground: '934e00' },
@@ -102,7 +100,6 @@ export const monacoConfig: NgxMonacoEditorConfig = {
     monaco.editor.defineTheme('stitch-light', stitchLightTheme);
 
     const lineFormatter = createLineFormatter();
-    monaco.languages.registerDocumentFormattingEditProvider('python', lineFormatter);
     monaco.languages.registerDocumentFormattingEditProvider('java', lineFormatter);
   },
 };

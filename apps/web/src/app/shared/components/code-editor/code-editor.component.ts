@@ -22,16 +22,22 @@ export class CodeEditorComponent {
   private readonly runnerApi = inject(RunnerApiService, { optional: true });
   private readonly themeService = inject(ThemeService, { optional: true });
 
+  private static readonly LANGUAGE_LABELS: Record<string, string> = {
+    cpp: 'C++',
+    java: 'Java',
+    javascript: 'JavaScript',
+  };
+
   readonly code = model<string>('');
   readonly fileName = input<string>('untitled');
   readonly language = model.required<string>();
-  readonly availableLanguages = input<string[]>(['python', 'java', 'javascript']);
+  readonly availableLanguages = input<string[]>(['cpp', 'java', 'javascript']);
 
   readonly languageOptions = computed<SelectOption<string>[]>(() =>
-    this.availableLanguages().map(lang => ({
-      label:lang,
+    this.availableLanguages().map((lang) => ({
+      label: CodeEditorComponent.LANGUAGE_LABELS[lang] ?? lang,
       value: lang,
-    }))
+    })),
   );
 
   readonly theme = input<'dark' | 'light' | 'stitch-dark' | 'stitch-light' | undefined>(undefined);

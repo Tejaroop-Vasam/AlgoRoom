@@ -82,7 +82,7 @@ export class RunnerController {
 
   @Post('format')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Format source code using backend formatters (Ruff, Clang-Format, Prettier)' })
+  @ApiOperation({ summary: 'Format source code using backend formatters (Clang-Format, Prettier)' })
   @ApiResponse({ status: 200, description: 'Formatted code result', type: FormatResultDto })
   async format(@Body() formatCodeDto: FormatCodeDto): Promise<FormatResultDto> {
     return this.runnerService.formatCode({

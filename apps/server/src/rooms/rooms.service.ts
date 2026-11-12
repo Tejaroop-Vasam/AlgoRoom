@@ -212,4 +212,22 @@ export class RoomsService {
     await this.cache.set(`room:${room.code}`, room, ROOM_TTL_SECONDS);
     return room;
   }
+
+  async launchRoom(code: string, requesterSocketId: string): Promise<Room | null> {
+    let room: Room;
+    try {
+      room = await this.getByCode(code);
+    } catch {
+      return null;
+    }
+
+    const requester = room.participants.find((p) => p.socketId === requesterSocketId);
+    if (!requester?.isHost) {
+      return null;
+    }
+
+    room.status = 'IN_PROGRESS';
+    await this.cache.set(`room:${room.code}`, room, ROOM_TTL_SECONDS);
+    return room;
+  }
 }

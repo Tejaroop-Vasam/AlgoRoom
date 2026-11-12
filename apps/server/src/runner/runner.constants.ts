@@ -1,13 +1,6 @@
 import { LanguageConfig, SupportedLanguage } from './interfaces/runner.interface';
 
 export const SUPPORTED_LANGUAGES: Record<SupportedLanguage, LanguageConfig> = {
-  python: {
-    id: 'python',
-    image: 'algoroom-runner-python:latest',
-    filename: 'solution.py',
-    buildRunCommand: (timeoutSec: number) =>
-      `timeout ${timeoutSec}s python3 /workspace/solution.py`,
-  },
   cpp: {
     id: 'cpp',
     image: 'algoroom-runner-cpp:latest',
@@ -22,6 +15,13 @@ export const SUPPORTED_LANGUAGES: Record<SupportedLanguage, LanguageConfig> = {
     filename: 'Solution.java',
     compileCommand: 'javac -d /tmp /workspace/Solution.java',
     buildRunCommand: (timeoutSec: number) =>
-      `timeout ${timeoutSec}s java -cp /tmp Solution`,
+      `timeout ${timeoutSec}s java -cp /tmp $([ -f /tmp/__Driver.class ] && echo __Driver || echo Solution)`,
+  },
+  javascript: {
+    id: 'javascript',
+    image: 'algoroom-runner-javascript:latest',
+    filename: 'solution.js',
+    buildRunCommand: (timeoutSec: number) =>
+      `timeout ${timeoutSec}s node /workspace/solution.js`,
   },
 };
