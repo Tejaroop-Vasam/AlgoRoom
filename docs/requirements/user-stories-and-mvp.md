@@ -4,8 +4,8 @@
 
 The platform is a real-time collaborative and competitive Data Structures & Algorithms (DSA) practice environment. It delivers two foundational experiences centered around a shared problem-solving session:
 
-- **🏁 Race Mode**: Compete while solving independently.
-- **🤝 Co-op Mode**: Collaborate while solving together.
+- **Race Mode**: Compete while solving independently.
+- **Co-op Mode**: Collaborate while solving together.
 
 ---
 
@@ -16,7 +16,7 @@ The platform is a real-time collaborative and competitive Data Structures & Algo
                             │
                  ┌──────────┴──────────┐
                  │                     │
-              🏁 RACE                🤝 CO-OP
+              RACE                   CO-OP
                  │                     │
           Individual editor      Shared editor
                  │                     │
@@ -58,7 +58,7 @@ The platform is a real-time collaborative and competitive Data Structures & Algo
 
 ---
 
-### Epic 3 — 🏁 Race Mode
+### Epic 3 — Race Mode
 
 #### Starting a Race
 | ID | User Story | Priority |
@@ -87,7 +87,7 @@ The platform is a real-time collaborative and competitive Data Structures & Algo
 
 ---
 
-### Epic 4 — 🤝 Co-op Mode
+### Epic 4 — Co-op Mode
 
 #### Creating the Session
 | ID | User Story | Priority |
@@ -113,7 +113,7 @@ The platform is a real-time collaborative and competitive Data Structures & Algo
 
 ---
 
-### Epic 5 — 👥 Room Presence & Progress
+### Epic 5 — Room Presence & Progress
 
 | ID | User Story | Priority |
 | :--- | :--- | :--- |
@@ -136,7 +136,7 @@ The platform is a real-time collaborative and competitive Data Structures & Algo
 
 ## MVP Scope Definition
 
-### 🟢 Must Have Scope (Core 20 Stories)
+### Must Have Scope (Core 20 Stories)
 The MVP focus is strictly constrained to the critical path that proves the value proposition:
 
 1. **Room & User Session**:
@@ -166,7 +166,7 @@ The MVP focus is strictly constrained to the critical path that proves the value
    - `US-26`: Execute shared code against test suite
    - `US-28`: In-room real-time team chat
 
-### 🟡 Later (Post-MVP Roadmap)
+### Later (Post-MVP Roadmap)
 The following features are deliberately postponed to maintain high delivery speed:
 - User authentication & persistent profiles
 - Friends list and direct invites

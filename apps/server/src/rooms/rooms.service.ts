@@ -4,7 +4,7 @@ import { CreateRoomDto } from './dto/create-room.dto';
 import { Room, RoomParticipant } from './interfaces/room.interface';
 import { RedisCacheService } from '../cache/redis-cache.service';
 
-const ROOM_TTL_SECONDS = 7200; // 2 hours
+const ROOM_TTL_SECONDS = 7200;
 
 @Injectable()
 export class RoomsService {
