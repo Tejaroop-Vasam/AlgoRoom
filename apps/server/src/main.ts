@@ -31,7 +31,7 @@ async function bootstrap() {
       ) {
         return callback(null, true);
       }
-      return callback(null, true); // Allow all during dev/launch
+      return callback(null, true);
     },
     credentials: true,
   });

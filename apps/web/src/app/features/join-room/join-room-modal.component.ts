@@ -17,7 +17,6 @@ const ROOM_CODE_LENGTH = 6;
   standalone: true,
   imports: [BadgeComponent, ButtonComponent, ChipComponent, IconComponent, InputComponent],
   templateUrl: './join-room-modal.component.html',
-  styleUrl: './join-room-modal.component.css',
   host: {
     class: 'd-block',
   },

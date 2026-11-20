@@ -33,7 +33,7 @@ The platform is designed around two foundational real-time experiences:
 
 ### Key Product Distinction
 
-| Feature | 🏁 Race Mode | Co-op Mode |
+| Feature | Race Mode | Co-op Mode |
 | :--- | :--- | :--- |
 | **Philosophy** | **Compete** while solving independently | **Collaborate** while solving together |
 | **Code Editor** | Isolated private Monaco editor per participant | Shared, real-time synchronized editor (Yjs + Monaco) |
@@ -127,7 +127,7 @@ The MVP focuses strictly on the 20 core user stories required to prove the produ
 - **Problems**:
   - `US-05`: Select DSA problem for the room
   - `US-06`: View problem description, constraints, and sample test cases
-- **🏁 Race Mode**:
+- **Race Mode**:
   - `US-08`: Room mode selection (Race)
   - `US-09`: Room creator starts race synchronized
   - `US-10`: 3-2-1 countdown overlay
@@ -139,7 +139,7 @@ The MVP focuses strictly on the 20 core user stories required to prove the produ
   - `US-16`: Instant alerts when an opponent solves
   - `US-17`: Authoritative synchronized countdown timer
   - `US-18`: Final race results and leaderboard screen
-- **🤝 Co-op Mode**:
+- **Co-op Mode**:
   - `US-21`: Room mode selection (Co-op)
   - `US-23`: Shared collaborative code editor
   - `US-24`: Real-time code synchronization across peers (Yjs)
@@ -192,7 +192,7 @@ Detailed story specifications and acceptance criteria are documented in [docs/re
 
 ---
 
-## 🛠️ Implementation Phases
+## Implementation Phases
 
 1. **Phase 1: Foundation** — NestJS monolith setup, PostgreSQL + Prisma, Users, Rooms, Problems CRUD.
 2. **Phase 2: Live Room Presence** — Socket.IO Gateway, room join/leave channels, Redis live presence.

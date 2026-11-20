@@ -4,7 +4,7 @@ The frontend client for the Real-Time DSA Practice Platform, built with Angular 
 
 ---
 
-## 🎯 Architecture & Features
+## Architecture & Features
 
 The web client provides the interactive interface for real-time room sessions, problem solving, competitive racing, and collaborative pair coding.
 
@@ -13,18 +13,18 @@ The web client provides the interactive interface for real-time room sessions, p
 - **Room Lobby (`/features/room`)**:
   - Username entry and session initialization.
   - Room creation and shareable join codes/links.
-  - Mode toggle: **🏁 Race Mode** vs. **🤝 Co-op Mode**.
+  - Mode toggle: **Race Mode** vs. **Co-op Mode**.
   - Problem selection and live participant roster via Socket.IO.
 - **Problem Viewer (`/features/problem`)**:
   - Problem statement, constraints, input/output specifications, and examples.
-- **🏁 Race Mode (`/features/race`)**:
+- **Race Mode (`/features/race`)**:
   - Synchronized 3-2-1 countdown overlay.
   - Dedicated individual Monaco editor instance.
   - Run code against sample test cases with assertion logs.
   - Solution submission dispatched to backend BullMQ queue.
   - Real-time opponent status cards (coding, testing, solved) and live solve alerts.
   - Synchronized timer and final race results modal.
-- **🤝 Co-op Mode (`/features/coop`)**:
+- **Co-op Mode (`/features/coop`)**:
   - Shared, real-time synchronized code editor buffer powered by **Yjs** (`y-monaco`).
   - Shared test execution with broadcast results to all peers.
   - Integrated real-time team discussion chat.
@@ -42,7 +42,7 @@ The frontend follows modular and consistent standards:
 
 ---
 
-## 🛠️ Development
+## Development
 
 ### Development Server
 

@@ -171,7 +171,7 @@ Socket.IO Gateway
 
 ---
 
-## 5. 🏁 Race Mode Architecture & Submission Pipeline
+## 5. Race Mode Architecture & Submission Pipeline
 
 In Race Mode, each participant solves independently in an isolated Monaco editor buffer. Code content is **never** shared across the wire during a race. The backend only broadcasts metadata.
 
@@ -185,9 +185,9 @@ In Race Mode, each participant solves independently in an isolated Monaco editor
    (Private)     (Private)    (Private)
 ```
 - Opponents see:
-  - `Rahul`: 🟡 Solving (Attempt 2)
-  - `Ankit`: 🟢 Solved (04:12)
-  - `Priya`: 🟡 Solving (Attempt 1)
+  - `Rahul`: Solving (Attempt 2)
+  - `Ankit`: Solved (04:12)
+  - `Priya`: Solving (Attempt 1)
 - Source code remains completely private until session conclusion.
 
 ### 5.2 Asynchronous BullMQ Execution Pipeline
@@ -257,7 +257,7 @@ Code is executed within isolated, ephemeral Docker containers with strict safety
 
 ---
 
-## 6. 🤝 Co-op Mode Architecture (Yjs + Monaco)
+## 6. Co-op Mode Architecture (Yjs + Monaco)
 
 Co-op mode is collaborative pair programming where all participants edit a shared codebase in real time.
 
