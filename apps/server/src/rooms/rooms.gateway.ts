@@ -32,14 +32,15 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.handshake.auth?.token ||
         client.handshake.headers?.authorization?.split(' ')[1] ||
         (client.handshake.query?.token as string);
-
       if (!token) {
         client.disconnect();
         return;
       }
-
       const payload = await this.jwtService.verifyAsync(token);
-      client.user = { id: payload.sub, username: payload.username };
+      client.user = {
+        id: payload.id || payload.sub,
+        username: payload.username || payload.email,
+      };
     } catch {
       client.disconnect();
     }
@@ -88,6 +89,26 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.to(payload.roomCode).emit('telemetryStream', {
       user: client.user,
       telemetry: payload.telemetry,
+    });
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('chatMessage')
+  handleChatMessage(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() payload: { roomCode: string; message: string },
+  ) {
+    if (!client.rooms.has(payload.roomCode)) {
+      client.emit('error', { message: 'You must join the room before sending messages.' });
+      return;
+    }
+    const text = payload.message?.trim();
+    if (!text) return;
+
+    this.server.to(payload.roomCode).emit('chatBroadcast', {
+      user: client.user,
+      message: text,
+      timestamp: new Date().toISOString(),
     });
   }
 }

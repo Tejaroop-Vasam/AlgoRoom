@@ -98,11 +98,6 @@ export class RoomsService {
 
   async join(code: string, user: { id: string; username: string }, socketId?: string) {
     const room = await this.getByCode(code);
-
-    if (room.participants.length >= room.maxParticipants) {
-      throw new BadRequestException('This room is full.');
-    }
-
     const existingParticipant = room.participants.find((p) => p.userId === user.id);
 
     if (existingParticipant) {
@@ -111,6 +106,10 @@ export class RoomsService {
         .set({ socketId, updated_at: new Date() })
         .where(eq(roomParticipants.id, existingParticipant.id));
     } else {
+      if (room.participants.length >= room.maxParticipants) {
+        throw new BadRequestException('This room is full.');
+      }
+
       await this.drizzle.db.insert(roomParticipants).values({
         roomId: room.id,
         userId: user.id,
@@ -119,7 +118,6 @@ export class RoomsService {
         socketId,
       });
     }
-
     return this.getByCode(code);
   }
 

@@ -1,5 +1,6 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
 
 export interface AuthenticatedSocket extends Socket {
@@ -15,21 +16,27 @@ export class WsJwtGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const client: AuthenticatedSocket = context.switchToWs().getClient();
+    if (client.user?.id) {
+      return true;
+    }
     const token =
       client.handshake.auth?.token ||
       client.handshake.headers?.authorization?.split(' ')[1] ||
       (client.handshake.query?.token as string);
 
     if (!token) {
-      throw new UnauthorizedException('Missing authentication token.');
+      throw new WsException('Missing authentication token.');
     }
 
     try {
       const payload = await this.jwtService.verifyAsync(token);
-      client.user = { id: payload.sub, username: payload.username };
+      client.user = {
+        id: payload.id || payload.sub,
+        username: payload.username || payload.email,
+      };
       return true;
-    } catch {
-      throw new UnauthorizedException('Invalid authentication token.');
+    } catch (err) {
+      throw new WsException(`Invalid token: ${err}`);
     }
   }
 }
