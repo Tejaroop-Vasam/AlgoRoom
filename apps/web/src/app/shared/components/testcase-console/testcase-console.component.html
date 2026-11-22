@@ -123,6 +123,7 @@
       size="sm"
       icon="play_arrow"
       iconPosition="start"
+      [disabled]="actionsDisabled()"
       [loading]="isRunning()"
       (clicked)="onRun()">
       Run
@@ -133,6 +134,7 @@
       size="sm"
       icon="cloud_upload"
       iconPosition="start"
+      [disabled]="actionsDisabled()"
       [loading]="isSubmitting()"
       (clicked)="onSubmit()">
       Submit

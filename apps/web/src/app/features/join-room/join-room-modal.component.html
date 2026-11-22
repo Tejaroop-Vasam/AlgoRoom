@@ -1,4 +1,4 @@
-@if (activeRoom(); as room) {
+@if (joinedRoom(); as room) {
   <div class="flex flex-col items-center text-center gap-4 py-4">
     <div class="w-14 h-14 rounded-full flex items-center justify-center bg-secondary-container text-on-secondary">
       <app-icon name="how_to_reg" size="xl"></app-icon>
@@ -12,7 +12,7 @@
         <app-chip [label]="player.username" [icon]="player.isHost ? 'star' : 'person'" size="sm"></app-chip>
       }
     </div>
-    <app-button variant="primary" icon="arrow_forward" (clicked)="enterLobby(room.code)">Enter Lobby</app-button>
+    <app-button variant="primary" (clicked)="close()">Open lobby</app-button>
   </div>
 } @else {
   <form class="flex flex-col gap-4" (submit)="$event.preventDefault(); submit()">
@@ -23,16 +23,6 @@
       hint="6 characters, shared by the room host"
       [value]="code()"
       (valueChange)="onCodeChange($event)">
-    </app-input>
-
-    <app-input
-      label="Your name"
-      placeholder="Enter your name"
-      prefixIcon="person"
-      [required]="true"
-      [value]="username()"
-      (valueChange)="username.set($event)"
-      hint="Display name for this lobby">
     </app-input>
 
     @if (preview(); as room) {
@@ -66,9 +56,9 @@
     <div class="flex items-center justify-end gap-2">
       <app-button variant="ghost" (clicked)="close()">Cancel</app-button>
       @if (preview()) {
-        <app-button type="submit" variant="primary" icon="login" [loading]="loading()" [disabled]="roomFull() || !username().trim()">Join Room</app-button>
+        <app-button type="submit" variant="primary" icon="login" [disabled]="loading() || roomFull()">Join Room</app-button>
       } @else {
-        <app-button type="submit" variant="primary" icon="search" [loading]="loading()" [disabled]="!codeComplete()">Find Room</app-button>
+        <app-button type="submit" variant="primary" icon="search" [disabled]="loading() || !codeComplete()">Find Room</app-button>
       }
     </div>
   </form>

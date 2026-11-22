@@ -5,9 +5,16 @@
         <span class="text-primary font-bold">[/]</span>
         <span class="font-sans text-base">AlgoRoom</span>
       </a>
+      <app-chip label="DSA ARENA" size="sm" variant="outline"></app-chip>
     </div>
 
     <div class="flex items-center gap-3">
+      @if (session.user(); as user) {
+        <span class="text-sm">{{ user.username }}</span>
+        <app-button size="sm" variant="ghost" (clicked)="signOut()">Sign out</app-button>
+      } @else {
+        <app-button size="sm" variant="ghost" (clicked)="signIn()">Sign in</app-button>
+      }
       <button
         type="button"
         (click)="themeService.toggleTheme()"

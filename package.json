@@ -4,27 +4,22 @@
   "description": "AlgoRoom - Collaborative & Competitive Real-Time DSA Practice Platform",
   "private": true,
   "scripts": {
-    "dev": "npm run db:start && concurrently -n \"server,web,studio\" -c \"blue,green,magenta\" --kill-others-on-fail \"npm run server:dev\" \"npm run web:dev\" \"npm run db:studio\"",
-    "dev:app": "npm run db:start && concurrently -n \"server,web\" -c \"blue,green\" --kill-others-on-fail \"npm run server:dev\" \"npm run web:dev\"",
-    "server:dev": "npm --prefix apps/server run dev",
-    "server:build": "npm --prefix apps/server run build",
+    "dev": "npm run dev:app",
+    "dev:app": "npm run server:dev && npm run web:dev",
+    "server:dev": "npm run runners:build && docker compose -f apps/server/docker-compose.prod.yml up -d --build --wait server",
+    "server:build": "docker compose -f apps/server/docker-compose.prod.yml build server runner",
     "web:dev": "npm --prefix apps/web run start",
     "web:build": "npm --prefix apps/web run build",
     "web:build:pages": "npm --prefix apps/web run build:pages",
-    "web:deploy": "npm --prefix apps/web run deploy",
-    "deploy": "npm run web:deploy",
-    "db:start": "brew services start postgresql@15",
-    "db:stop": "brew services stop postgresql@15",
-    "db:studio": "npm --prefix apps/server run db:studio",
+    "db:start": "docker compose -f apps/server/docker-compose.prod.yml up -d --wait postgres",
+    "db:stop": "docker compose -f apps/server/docker-compose.prod.yml stop postgres",
+    "db:migrate": "docker compose -f apps/server/docker-compose.prod.yml run --build --rm migrate",
     "scraper:seed": "apps/scraper/.venv/bin/python3 apps/scraper/seed_problems.py",
-    "runners:build": "docker build -t algoroom-runner-cpp:latest infrastructure/docker/runners/cpp && docker build -t algoroom-runner-java:latest infrastructure/docker/runners/java && docker build -t algoroom-runner-javascript:latest infrastructure/docker/runners/javascript",
-    "swagger:export": "npm --prefix apps/server run swagger:export",
+    "runners:build": "docker compose -f infrastructure/docker/docker-compose.runners.yml build",
+    "swagger:export": "cd apps/server && .venv/bin/python -m app.export_openapi",
     "api:generate": "npm --prefix apps/web run api:generate",
     "api:sync": "npm run swagger:export && npm run api:generate"
   },
   "author": "AlgoRoom",
-  "license": "MIT",
-  "devDependencies": {
-    "concurrently": "^10.0.6"
-  }
+  "license": "MIT"
 }

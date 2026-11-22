@@ -4,6 +4,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { debounceTime } from 'rxjs';
 import {
+  AvatarComponent,
   BadgeComponent,
   BadgeVariant,
   ButtonComponent,
@@ -14,8 +15,10 @@ import {
   OptionCardComponent,
   SegmentOption,
   SegmentedControlComponent,
+  SelectComponent,
+  SelectOption,
+  ToggleSwitchComponent,
 } from '../../shared';
-import { Router } from '@angular/router';
 import { ModalContainerComponent } from '../../shared/components/modal/modal-container.component';
 import {
   BufferVisibility,
@@ -27,8 +30,8 @@ import {
   RoomMode,
   RoomsApiService,
 } from '../../services/api';
+import { AuthSessionService } from '../../services/auth-session.service';
 import { LoadingService } from '../../services/loading.service';
-import { RoomSocketService } from '../../services/room-socket.service';
 import {
   MAX_PARTICIPANTS,
   MAX_STAGED_PROBLEMS,
@@ -47,6 +50,7 @@ export interface CreateRoomModalData {
     CdkDropList,
     CdkDrag,
     CdkDragHandle,
+    AvatarComponent,
     BadgeComponent,
     ButtonComponent,
     CheckboxComponent,
@@ -55,8 +59,11 @@ export interface CreateRoomModalData {
     InputComponent,
     OptionCardComponent,
     SegmentedControlComponent,
+    SelectComponent,
+    ToggleSwitchComponent,
   ],
   templateUrl: './create-room-modal.component.html',
+  styleUrl: './create-room-modal.component.css',
   host: {
     class: 'd-block',
   },
@@ -66,15 +73,16 @@ export class CreateRoomModalComponent {
   private readonly problemsApi = inject(ProblemsApiService);
   private readonly roomsApi = inject(RoomsApiService);
   private readonly loadingService = inject(LoadingService);
-  private readonly roomSocket = inject(RoomSocketService);
-  private readonly router = inject(Router);
+  private readonly session = inject(AuthSessionService);
 
   readonly maxStaged = MAX_STAGED_PROBLEMS;
   readonly minParticipants = MIN_PARTICIPANTS;
   readonly maxParticipants = MAX_PARTICIPANTS;
 
   readonly roomName = signal<string | null>(null);
-  readonly hostName = signal<string>(typeof localStorage !== 'undefined' ? localStorage.getItem('algoroom_username') || '' : '');
+  readonly hostName = computed(() =>
+    (this.session.accessToken() && this.session.user()?.username) || 'Guest'
+  );
 
   readonly mode = signal<RoomMode>('RACE');
 
@@ -102,6 +110,13 @@ export class CreateRoomModalComponent {
   readonly stagingFull = computed(() => this.staged().length >= MAX_STAGED_PROBLEMS);
 
   readonly headcount = signal<number>(4);
+  readonly hiddenTestCases = signal(true);
+  readonly bufferVisibility = signal<string | null>('OBSCURED');
+  readonly bufferOptions: SelectOption[] = [
+    { label: 'Obscured until round end', value: 'OBSCURED', icon: 'visibility_off' },
+    { label: 'Visible to host only', value: 'HOST_ONLY', icon: 'shield_person' },
+    { label: 'Open to all players', value: 'OPEN', icon: 'visibility' },
+  ];
 
   readonly headcountError = computed(() => {
     const n = Number(this.headcount());
@@ -111,10 +126,11 @@ export class CreateRoomModalComponent {
   });
 
   readonly submitting = this.loadingService.isLoading;
+  readonly createdRoom = signal<Room | null>(null);
+  readonly copied = signal<'code' | 'link' | null>(null);
 
   readonly canSubmit = computed(() =>
     !!this.roomName()?.trim() &&
-    !!this.hostName()?.trim() &&
     this.staged().length > 0 &&
     !this.headcountError() &&
     !this.submitting()
@@ -126,11 +142,18 @@ export class CreateRoomModalComponent {
       this.staged.set([data.initialProblem]);
     }
 
+    this.loadInitialData();
+
     toObservable(this.problemQuery).pipe(
       debounceTime(250),
     ).subscribe(query => {
       this.fetchProblems(query);
     });
+  }
+
+  private async loadInitialData(): Promise<void> {
+    try {
+    } catch {}
   }
 
   private async fetchProblems(query: ProblemsQuery): Promise<void> {
@@ -181,25 +204,34 @@ export class CreateRoomModalComponent {
       return;
     }
 
-    const hostNameValue = this.hostName().trim();
-
     try {
       const room = await this.roomsApi.createRoom({
         name: this.roomName()?.trim() || '',
-        hostName: hostNameValue,
         mode: this.mode(),
         problemIds: this.staged().map(p => p.id),
         maxParticipants: Number(this.headcount()),
-        hiddenTestCases: true,
-        bufferVisibility: (this.mode() === 'COOP' ? 'OPEN' : 'OBSCURED') as BufferVisibility,
+        hiddenTestCases: this.hiddenTestCases(),
+        bufferVisibility: (this.mode() === 'COOP' ? 'OPEN' : this.bufferVisibility() ?? 'OBSCURED') as BufferVisibility,
       });
-      this.roomSocket.connect(room.code, hostNameValue, room.host?.id);
-      this.container?.close(room);
-      this.router.navigate(['/room', room.code]);
+      this.createdRoom.set(room);
     } catch {}
   }
 
+  inviteLink(room: Room): string {
+    return new URL(`./?join=${room.code}`, document.baseURI).href;
+  }
+
+  async copy(kind: 'code' | 'link', room: Room): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(kind === 'code' ? room.code : this.inviteLink(room));
+      this.copied.set(kind);
+      setTimeout(() => this.copied.set(null), 1500);
+    } catch {
+      this.copied.set(null);
+    }
+  }
+
   close(): void {
-    this.container?.close();
+    this.container?.close(this.createdRoom());
   }
 }

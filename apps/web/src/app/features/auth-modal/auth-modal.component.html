@@ -1,0 +1,18 @@
+<form class="flex flex-col gap-4" (submit)="submit($event)">
+  @if (registering()) {
+    <app-input label="Username" [required]="true" [(value)]="username"></app-input>
+  }
+  <app-input label="Email" type="email" [required]="true" [(value)]="email"></app-input>
+  <app-input label="Password" type="password" [required]="true" [(value)]="password"></app-input>
+  @if (registering()) {
+    <p class="m-0 text-sm text-muted">Use at least 8 characters for your password.</p>
+  }
+  <div class="flex justify-between gap-3">
+    <app-button variant="ghost" [disabled]="loading()" (clicked)="toggleMode()">
+      {{ registering() ? 'Use an existing account' : 'Create an account' }}
+    </app-button>
+    <app-button type="submit" [disabled]="loading()">
+      {{ registering() ? 'Create account' : 'Sign in' }}
+    </app-button>
+  </div>
+</form>

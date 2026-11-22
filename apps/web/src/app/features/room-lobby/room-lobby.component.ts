@@ -1,207 +1,117 @@
-import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import {
-  AvatarComponent,
-  BadgeComponent,
-  BadgeVariant,
-  ButtonComponent,
-  IconComponent,
-  KbdComponent,
-  ToastService,
-} from '../../shared';
-import { Difficulty, ProblemsApiService, RoomParticipant } from '../../services/api';
-import { RoomSocketService } from '../../services/room-socket.service';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { io, Socket } from 'socket.io-client';
+import { environment } from '../../../environments/environment';
+import { AuthSessionService } from '../../services/auth-session.service';
+import { ProblemsApiService, Room } from '../../services/api';
+import { RoomHostSessionService } from '../../services/room-host-session.service';
+import { ButtonComponent } from '../../shared/components/button/button.component';
+import { ToastService } from '../../shared/components/toast/toast.service';
 
-export interface LobbyProblem {
-  id: number;
-  position: number;
-  title: string;
-  difficulty: Difficulty | null;
-  publicTestCount: number | null;
-  timeLimitMs: number | null;
-  memoryLimitMb: number | null;
-  stage: string;
-  loaded: boolean;
-}
-
-export interface LobbyPlayer extends RoomParticipant {
-  isSelf: boolean;
+interface ChatMessage {
+  user: { id: string; username: string };
+  message: string;
+  timestamp: string;
 }
 
 @Component({
   selector: 'app-room-lobby',
-  standalone: true,
-  imports: [AvatarComponent, BadgeComponent, ButtonComponent, IconComponent, KbdComponent],
+  imports: [RouterLink, ButtonComponent],
   templateUrl: './room-lobby.component.html',
-  host: {
-    class: 'd-block',
-  },
+  styleUrl: './room-lobby.component.css',
 })
-export class RoomLobbyComponent implements OnInit {
+export class RoomLobbyComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly roomSocket = inject(RoomSocketService);
-  private readonly problemsApi = inject(ProblemsApiService);
   private readonly toast = inject(ToastService);
+  private readonly problems = inject(ProblemsApiService);
+  private readonly session = inject(AuthSessionService);
+  private readonly hostSessions = inject(RoomHostSessionService);
+  private socket?: Socket;
 
-  readonly roomCode = (this.route.snapshot.paramMap.get('code') ?? '').toUpperCase();
-  readonly connected = this.roomSocket.connected;
-
-  readonly room = computed(() => {
-    const room = this.roomSocket.currentRoom();
-    return room?.code?.toUpperCase() === this.roomCode ? room : null;
-  });
-
-  private readonly requestedProblemIds = new Set<number>();
-  private readonly problemDetails = signal<
-    Record<
-      number,
-      {
-        title: string;
-        difficulty: Difficulty;
-        publicTestCount: number;
-        timeLimitMs: number;
-        memoryLimitMb: number;
-      }
-    >
-  >({});
-
-  readonly problems = computed<LobbyProblem[]>(() => {
-    const ids = this.room()?.problemIds ?? [];
-    const details = this.problemDetails();
-    return ids.map((id, index) => {
-      const detail = details[id];
-      return {
-        id,
-        position: index + 1,
-        title: detail?.title ?? `Problem #${id}`,
-        difficulty: detail?.difficulty ?? null,
-        publicTestCount: detail?.publicTestCount ?? null,
-        timeLimitMs: detail?.timeLimitMs ?? null,
-        memoryLimitMb: detail?.memoryLimitMb ?? null,
-        stage: index === 0 ? 'Initial' : index === ids.length - 1 ? 'Final Round' : 'Queued',
-        loaded: !!detail,
-      };
-    });
-  });
-
-  readonly players = computed<LobbyPlayer[]>(() => {
-    const room = this.room();
-    const session = this.roomSocket.session();
-    if (!room) {
-      return [];
-    }
-    return [...room.participants]
-      .sort((a, b) => Number(b.isHost) - Number(a.isHost))
-      .map((p) => ({
-        ...p,
-        isSelf: session?.userId
-          ? p.id === session.userId
-          : p.username?.toLowerCase() === session?.username.toLowerCase(),
-      }));
-  });
-
-  readonly maxPlayers = computed(() => this.room()?.settings?.maxParticipants ?? 0);
-  readonly openSlots = computed(() =>
-    Array.from({ length: Math.max(0, this.maxPlayers() - this.players().length) }),
-  );
-  readonly self = computed(() => this.players().find((p) => p.isSelf) ?? null);
-  readonly isHost = computed(() => !!this.self()?.isHost);
-  readonly host = computed(() => this.players().find((p) => p.isHost) ?? null);
-
-  readonly sessionRules = computed(() => {
-    const room = this.room();
-    if (!room) {
-      return [];
-    }
-    const settings = room.settings;
-    return [
-      room.mode === 'RACE'
-        ? 'Live telemetry enabled (typing velocity, compile tries)'
-        : 'Shared editor with live multi-cursor sync',
-      settings?.hiddenTestCases
-        ? 'Hidden test cases revealed immediately post-race'
-        : 'Graded on public sample test cases only',
-      settings?.bufferVisibility === 'OPEN'
-        ? 'Code buffers visible to all players'
-        : settings?.bufferVisibility === 'HOST_ONLY'
-          ? 'Code buffers visible to the host only'
-          : 'Code buffers obscured until the round ends',
-    ];
-  });
-
-  readonly copied = signal(false);
-
-  constructor() {
-    effect(() => {
-      const room = this.room();
-      const ids = room?.problemIds ?? [];
-      ids.filter((id) => !this.requestedProblemIds.has(id)).forEach((id) => this.loadProblem(id));
-
-      if (room?.status === 'IN_PROGRESS' && ids.length > 0) {
-        this.router.navigate(['/problem', ids[0]], {
-          queryParams: { room: room.code },
-        });
-      }
-    });
-  }
+  readonly code = (this.route.snapshot.paramMap.get('code') ?? '').toUpperCase();
+  readonly room = signal<Room | null>(null);
+  readonly connected = signal(false);
+  readonly messages = signal<ChatMessage[]>([]);
+  readonly titles = signal<Record<number, string>>({});
 
   ngOnInit(): void {
-    if (this.room()) {
-      return;
+    const socket = io(`${environment.apiUrl}/rooms`, {
+      auth: callback => {
+        const guest = this.hostSessions.get(this.code);
+        callback(guest ? { hostToken: guest.token } : { token: this.session.accessToken() });
+      },
+      transports: ['polling', 'websocket'],
+    });
+    this.socket = socket;
+    socket.on('connect', () => socket.emit('joinLobby', { code: this.code }));
+    socket.on('disconnect', () => this.connected.set(false));
+    socket.on('connect_error', (error: Error) => {
+      this.connected.set(false);
+      if (!socket.active) this.toast.error(error.message);
+    });
+    socket.on('error', (error: { message: string }) => this.toast.error(error.message));
+    socket.on('roomStateUpdated', (room: Room) => {
+      this.connected.set(true);
+      this.room.set(room);
+      this.loadTitles(room.problemIds);
+    });
+    socket.on('chatBroadcast', (message: ChatMessage) => {
+      this.messages.update(messages => [...messages.slice(-99), message]);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.socket?.disconnect();
+  }
+
+  sendChat(event: SubmitEvent, input: HTMLInputElement): void {
+    event.preventDefault();
+    const message = input.value.trim();
+    if (!message || !this.connected()) return;
+    this.socket?.emit('chatMessage', { message });
+    input.value = '';
+  }
+
+  launch(): void {
+    this.socket?.emit('launchRoom');
+  }
+
+  isHost(room: Room): boolean {
+    const participant = this.hostSessions.get(this.code)?.hostId ?? this.session.user()?.id;
+    return room.host.id === participant;
+  }
+
+  async leave(): Promise<void> {
+    if (this.connected() && this.socket) {
+      try {
+        const result = await this.socket.timeout(3000).emitWithAck('leaveRoom');
+        if (!result?.left) return;
+        this.hostSessions.end(this.code);
+      } catch {
+        this.toast.error('Could not leave the room. Try again.');
+        return;
+      }
     }
-    const session = this.roomSocket.restoreSession(this.roomCode);
-    if (session) {
-      this.roomSocket.connect(session.roomCode, session.username, session.userId);
-    } else {
-      this.router.navigate(['/'], { queryParams: { join: this.roomCode }, replaceUrl: true });
-    }
+    await this.router.navigate(['/']);
   }
 
-  difficultyVariant(difficulty: Difficulty | null): BadgeVariant {
-    return difficulty === 'EASY' ? 'secondary' : difficulty === 'HARD' ? 'error' : 'tertiary';
-  }
-
-  inviteLink(): string {
-    return new URL(`./?join=${this.roomCode}`, document.baseURI).href;
-  }
-
-  async copyInviteLink(): Promise<void> {
+  async copyInvite(): Promise<void> {
     try {
-      await navigator.clipboard.writeText(this.inviteLink());
-      this.copied.set(true);
-      setTimeout(() => this.copied.set(false), 1500);
+      await navigator.clipboard.writeText(new URL(`./?join=${this.code}`, document.baseURI).href);
+      this.toast.success('Invite link copied.');
     } catch {
-      this.toast.error('Could not copy the invite link');
+      this.toast.error('Could not copy the invite link.');
     }
   }
 
-  launchRoom(): void {
-    if (!this.isHost() || this.problems().length === 0) {
-      return;
+  private loadTitles(ids: number[]): void {
+    for (const id of ids) {
+      if (this.titles()[id]) continue;
+      this.titles.update(titles => ({ ...titles, [id]: `Problem #${id}` }));
+      void this.problems.getProblem(id).then(problem => {
+        this.titles.update(titles => ({ ...titles, [id]: problem.title }));
+      }).catch(() => {});
     }
-    this.roomSocket.launchRoom();
-  }
-
-  leaveRoom(): void {
-    this.roomSocket.leave();
-    this.router.navigate(['/']);
-  }
-
-  private async loadProblem(id: number): Promise<void> {
-    this.requestedProblemIds.add(id);
-    try {
-      const problem = await this.problemsApi.getProblem(id);
-      this.problemDetails.update((details) => ({
-        ...details,
-        [id]: {
-          title: problem.title,
-          difficulty: problem.difficulty as Difficulty,
-          publicTestCount: problem.sampleTestCases?.length ?? 0,
-          timeLimitMs: problem.timeLimitMs,
-          memoryLimitMb: problem.memoryLimitMb,
-        },
-      }));
-    } catch {}
   }
 }

@@ -1,5 +1,37 @@
+@if (createdRoom(); as room) {
+  <div class="flex flex-col items-center text-center gap-4 py-6">
+    <div class="w-14 h-14 rounded-full flex items-center justify-center bg-secondary-container text-on-secondary">
+      <app-icon name="check" size="xl" [weight]="600"></app-icon>
+    </div>
+    <div class="flex flex-col gap-1">
+      <h3 class="text-xl font-bold text-white m-0">{{ room.name }} is live</h3>
+      <p class="text-sm text-on-surface-variant m-0">Share the code below. Players land in your lobby until you start the round.</p>
+    </div>
+
+    <div class="flex items-center gap-3 px-5 py-3 rounded-lg bg-surface-container-low border border-surface-high">
+      <span class="font-mono text-3xl font-bold tracking-wider text-primary">{{ room.code }}</span>
+    </div>
+
+    <div class="flex flex-wrap justify-center gap-2">
+      <app-button size="sm" variant="surface" [icon]="copied() === 'code' ? 'check' : 'content_copy'" iconPosition="start" (clicked)="copy('code', room)">
+        {{ copied() === 'code' ? 'Copied' : 'Copy code' }}
+      </app-button>
+      <app-button size="sm" variant="surface" [icon]="copied() === 'link' ? 'check' : 'link'" iconPosition="start" (clicked)="copy('link', room)">
+        {{ copied() === 'link' ? 'Copied' : 'Copy invite link' }}
+      </app-button>
+    </div>
+
+    <div class="flex flex-wrap justify-center gap-2">
+      <app-chip [label]="room.mode === 'RACE' ? 'Race Mode' : 'Co-op Mode'" [icon]="room.mode === 'RACE' ? 'sports_score' : 'handshake'"></app-chip>
+      <app-chip [label]="room.problemIds.length + ' problems'" icon="list"></app-chip>
+      <app-chip [label]="room.participants.length + ' / ' + room.settings.maxParticipants + ' players'" icon="group"></app-chip>
+    </div>
+
+    <app-button variant="primary" (clicked)="close()">Open lobby</app-button>
+  </div>
+} @else {
   <div class="max-h-dialog overflow-y-auto flex flex-col gap-6 pr-2">
-    <div class="grid grid-cols-3 gap-4">
+    <div class="d-grid grid-cols-3 gap-4">
       <div class="flex flex-col gap-2 min-w-0 col-span-2">
         <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Room Instance Name</span>
         <div class="flex items-start gap-2">
@@ -16,21 +48,18 @@
       </div>
 
       <div class="flex flex-col gap-2 min-w-0">
-        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Host Name</span>
-        <app-input
-          prefixIcon="person"
-          placeholder="Enter host name"
-          [required]="true"
-          [(value)]="hostName"
-          [errorMessage]="'Host name is required'">
-        </app-input>
+        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Session Host</span>
+        <div class="h-14 flex items-center gap-2 px-3 rounded-md bg-surface-container-low border border-surface-high">
+          <app-avatar [name]="hostName()" size="sm"></app-avatar>
+          <span class="text-sm font-semibold text-white truncate">{{ hostName() }}</span>
+        </div>
       </div>
     </div>
 
     <div class="flex flex-col gap-2">
       <div class="flex items-center justify-between gap-2">
       </div>
-      <div role="radiogroup" aria-label="Room mode" class="grid grid-cols-2 gap-3">
+      <div role="radiogroup" aria-label="Room mode" class="d-grid grid-cols-2 gap-3">
         <app-option-card
           icon="sports_score"
           title="Race Mode"
@@ -161,8 +190,8 @@
       }
     </div>
 
-    <div class="p-3 rounded-lg bg-surface-container-low border border-surface-high">
-      <div class="flex flex-col gap-2 max-w-sm">
+    <div class="d-grid grid-cols-3 gap-4 p-3 rounded-lg bg-surface-container-low border border-surface-high">
+      <div class="flex flex-col gap-2">
         <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Lobby Headcount</span>
         <app-input
           type="number"
@@ -177,6 +206,27 @@
           <p class="-mt-4 pl-4 text-xs text-error m-0">{{ headcountError() }}</p>
         }
       </div>
+
+      <div class="flex flex-col gap-2">
+        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Test Suite Engine</span>
+        <div class="h-14 flex items-center justify-between gap-3 px-3 rounded-md bg-surface-container-lowest border border-surface-high">
+          <div class="flex flex-col min-w-0">
+            <span class="text-sm text-on-surface">Hidden test cases</span>
+            <span class="text-xs text-muted truncate">{{ hiddenTestCases() ? 'Graded on full suite' : 'Samples only' }}</span>
+          </div>
+          <app-toggle-switch ariaLabel="Hidden test cases" [(checked)]="hiddenTestCases"></app-toggle-switch>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Buffer Security</span>
+        <app-select
+          [options]="bufferOptions"
+          [disabled]="mode() === 'COOP'"
+          [hint]="mode() === 'COOP' ? 'Co-op rooms share one buffer' : ''"
+          [(value)]="bufferVisibility">
+        </app-select>
+      </div>
     </div>
   </div>
 
@@ -186,21 +236,16 @@
         <app-icon name="info" size="sm"></app-icon>
         Add at least one problem to the challenge set
       </span>
-    } @else {
-      <span class="flex items-center gap-2 font-mono text-xs text-muted">
-        <app-icon name="lock" size="sm"></app-icon>
-        Session token hash will generate upon room provisioning
-      </span>
     }
     <div class="flex items-center gap-2 ml-auto">
       <app-button variant="ghost" (clicked)="close()">Cancel</app-button>
       <app-button
         variant="primary"
         icon="arrow_forward"
-        [loading]="submitting()"
         [disabled]="!canSubmit()"
         (clicked)="create()">
         Create Room &amp; Launch Lobby
       </app-button>
     </div>
   </div>
+}

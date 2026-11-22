@@ -1,237 +1,64 @@
-<div class="w-full max-w-1440 mx-auto px-4 py-6 font-sans flex flex-col gap-6">
-  @if (room(); as room) {
-    <section class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-xl bg-surface-container-lowest border border-surface-high">
-      <div class="flex flex-wrap items-center gap-3 min-w-0">
-        <span
-          class="d-inline-block w-2-5 h-2-5 rounded-full shrink-0"
-          [class.bg-secondary]="connected()"
-          [class.bg-tertiary]="!connected()"
-          [attr.aria-label]="connected() ? 'Connected' : 'Reconnecting'"
-          role="img">
-        </span>
-        <h1 class="text-xl font-bold text-white m-0 truncate">{{ room.name }}</h1>
-        <app-badge [label]="room.status" variant="primary" shape="square" size="sm"></app-badge>
+<section class="w-full max-w-1440 mx-auto p-6 flex flex-col gap-5">
+  <div class="flex justify-between items-center gap-4">
+    <div>
+      <h1 class="m-0 text-2xl font-semibold">{{ room()?.name || 'Room lobby' }}</h1>
+      <p class="m-0 text-sm text-muted">{{ code }} · {{ connected() ? 'Connected' : 'Connecting…' }}</p>
+    </div>
+    <div class="flex gap-2">
+      <app-button variant="outline" icon="link" (clicked)="copyInvite()">Copy invite link</app-button>
+      <app-button variant="ghost" (clicked)="leave()">Leave room</app-button>
+    </div>
+  </div>
 
-        <div class="flex items-center gap-2 px-3 py-1 rounded-md bg-surface-container-low border border-surface-high font-mono text-xs">
-          <span class="text-muted">CODE</span>
-          <span class="font-bold tracking-wider text-on-surface">{{ room.code }}</span>
-          <button
-            type="button"
-            class="p-1 border-0 bg-transparent cursor-pointer hover-underline focus-ring font-mono text-xs font-bold text-primary"
-            (click)="copyInviteLink()">
-            {{ copied() ? 'COPIED' : 'COPY LINK' }}
-          </button>
-        </div>
-
-        <app-badge
-          [label]="room.mode === 'RACE' ? 'RACE MODE' : 'CO-OP MODE'"
-          [icon]="room.mode === 'RACE' ? 'sports_score' : 'handshake'"
-          [variant]="room.mode === 'RACE' ? 'tertiary' : 'secondary'"
-          shape="square"
-          size="sm">
-        </app-badge>
-      </div>
-
-      @if (host(); as host) {
-        <div class="flex items-center gap-2 px-2 py-1 rounded-md bg-surface-container-low border border-surface-high">
-          <app-icon name="workspace_premium" size="sm" color="var(--color-tertiary)"></app-icon>
-          <span class="text-sm font-semibold text-on-surface">&#64;{{ host.username }}</span>
-          <app-badge label="HOST" variant="primary" shape="square" size="sm"></app-badge>
-        </div>
-      }
-    </section>
-
-    <div class="d-grid grid-cols-3 gap-6 items-start">
-      <div class="flex flex-col gap-6 min-w-0">
-        <section class="flex flex-col gap-3 p-4 rounded-xl bg-surface-container-lowest border border-surface-high">
-          <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2">
-              <app-icon name="playlist_play" size="md" color="var(--color-primary)"></app-icon>
-              <h2 class="text-xs font-bold uppercase tracking-wider text-on-surface m-0">Match Problem Sequence</h2>
-            </div>
-            <app-badge [label]="problems().length + (problems().length === 1 ? ' Challenge' : ' Challenges')" variant="primary" shape="square" size="sm"></app-badge>
-          </div>
-
-          <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-md bg-surface-container-low font-mono text-xs">
-            <span class="text-muted">
-              Format:
-              <span class="font-bold text-primary">{{ room.mode === 'RACE' ? 'Sequential Race (Auto-Unlock)' : 'Shared Buffer (Team Solve)' }}</span>
-            </span>
-            <span class="flex items-center gap-1 text-muted">
-              <span class="d-inline-block w-2 h-2 rounded-full bg-secondary"></span>
-              @for (problem of problems(); track problem.id; let last = $last) {
-                #{{ problem.position }}@if (!last) { &rarr; }
-              }
-            </span>
-          </div>
-
-          <ol class="list-none m-0 p-0 flex flex-col gap-2">
-            @for (problem of problems(); track problem.id; let first = $first) {
-              <li
-                class="flex flex-col gap-2 p-3 rounded-md border"
-                [class.bg-surface-container]="first"
-                [class.border-primary]="first"
-                [class.bg-surface-container-low]="!first"
-                [class.border-surface-high]="!first">
-                <div class="flex items-center gap-2 min-w-0">
-                  <span
-                    class="flex items-center justify-center w-6 h-6 rounded-full shrink-0 font-mono text-xs font-bold"
-                    [class.bg-primary-container]="first"
-                    [class.text-on-primary]="first"
-                    [class.bg-surface-container-high]="!first"
-                    [class.text-on-surface-variant]="!first">
-                    {{ problem.position }}
-                  </span>
-                  <span class="text-base font-semibold text-white truncate">{{ problem.title }}</span>
-                  @if (problem.difficulty) {
-                    <app-badge [label]="problem.difficulty" [variant]="difficultyVariant(problem.difficulty)" shape="square" size="sm"></app-badge>
-                  } @else if (!problem.loaded) {
-                    <app-icon name="progress_activity" size="sm" [spin]="true" class="text-muted"></app-icon>
-                  }
-                  <app-badge [label]="problem.stage" [variant]="first ? 'secondary' : 'surface'" shape="square" size="sm"></app-badge>
-                  <span class="ml-auto shrink-0">
-                    @if (first) {
-                      <app-icon name="play_circle" size="md" color="var(--color-secondary)" ariaLabel="Unlocked first"></app-icon>
-                    } @else {
-                      <app-icon name="lock" size="md" color="var(--color-outline)" ariaLabel="Unlocks after the previous problem"></app-icon>
-                    }
-                  </span>
-                </div>
-
-                @if (problem.loaded) {
-                  <div class="pl-8 flex items-center justify-between font-mono text-2xs text-muted">
-                    <span>{{ problem.publicTestCount ?? 0 }} Sample {{ problem.publicTestCount === 1 ? 'Test' : 'Tests' }}</span>
-                    <span>{{ problem.timeLimitMs }}ms &middot; {{ problem.memoryLimitMb }}MB</span>
-                  </div>
-                }
-              </li>
-            }
-          </ol>
-        </section>
-
-        <section class="flex flex-col gap-3 p-4 rounded-xl bg-surface-container-lowest border border-surface-high">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-on-surface-variant m-0">Session Rules &amp; Mechanics</h2>
-          <ul class="list-none m-0 p-0 flex flex-col gap-2">
-            @for (rule of sessionRules(); track rule) {
-              <li class="flex items-center gap-2 text-sm text-on-surface">
-                <app-icon name="check_circle" size="sm" color="var(--color-secondary)"></app-icon>
-                {{ rule }}
+  @if (room(); as activeRoom) {
+    <div class="d-grid grid-cols-2 gap-6">
+      <div class="flex flex-col gap-4">
+        <section class="flex flex-col gap-2">
+          <h2 class="m-0 text-lg font-medium">Players</h2>
+          <ul class="m-0 pl-5">
+            @for (player of activeRoom.participants; track player.id) {
+              <li>
+                {{ player.username }}
+                @if (player.isHost) { <span class="text-sm text-muted">· Host</span> }
+                @if (!player.online) { <span class="text-sm text-muted">· Offline</span> }
               </li>
             }
           </ul>
         </section>
+        <section class="flex flex-col gap-2">
+          <h2 class="m-0 text-lg font-medium">Problems</h2>
+          <ol class="m-0 pl-5">
+            @for (id of activeRoom.problemIds; track id) {
+              <li>
+                @if (activeRoom.status === 'IN_PROGRESS') {
+                  <a class="text-primary" [routerLink]="['/problem', id]" [queryParams]="{ room: code }">{{ titles()[id] }}</a>
+                } @else {
+                  {{ titles()[id] }}
+                }
+              </li>
+            }
+          </ol>
+          @if (activeRoom.status === 'LOBBY' && isHost(activeRoom)) {
+            <app-button [disabled]="!connected()" (clicked)="launch()">Start room</app-button>
+          }
+        </section>
       </div>
 
-      <div class="flex flex-col gap-4 min-w-0 col-span-2">
-        <section class="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-surface-container-lowest border border-surface-high">
-          <div class="flex items-center gap-3 min-w-0">
-            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-surface-container-high shrink-0">
-              <app-icon name="groups" size="lg" color="var(--color-secondary)"></app-icon>
-            </div>
-            <div class="flex flex-col gap-1 min-w-0">
-              <div class="flex items-center gap-2">
-                <h2 class="text-xl font-bold text-white m-0">Participants Roster</h2>
-                <app-badge [label]="players().length + ' / ' + maxPlayers() + ' JOINED'" variant="secondary" shape="square" size="sm"></app-badge>
-              </div>
-              <span class="text-sm text-on-surface-variant">
-                {{ players().length < maxPlayers() ? 'Share the room code to fill the remaining slots.' : 'Lobby is full. The host may launch the arena.' }}
-              </span>
-            </div>
-          </div>
-          <span class="flex items-center gap-1 font-mono text-xs" [class.text-secondary]="connected()" [class.text-tertiary]="!connected()">
-            <span class="d-inline-block w-2 h-2 rounded-full" [class.bg-secondary]="connected()" [class.bg-tertiary]="!connected()"></span>
-            {{ connected() ? 'Live Sync' : 'Reconnecting…' }}
-          </span>
-        </section>
-
-        <div class="d-grid grid-cols-2 gap-4">
-          @for (player of players(); track player.id) {
-            <article
-              class="relative flex flex-col gap-3 p-4 rounded-xl bg-surface-container-lowest border"
-              [class.border-primary]="player.isSelf"
-              [class.border-surface-high]="!player.isSelf">
-              @if (player.isHost) {
-                <span class="absolute top-0 right-0 m-2">
-                  <app-badge label="HOST" icon="workspace_premium" variant="primary" shape="square" size="sm"></app-badge>
-                </span>
-              }
-              <div class="flex items-center gap-3">
-                <span class="relative d-inline-flex shrink-0">
-                  <app-avatar [name]="player.username" size="lg" [variant]="player.isHost ? 'primary' : 'surface'"></app-avatar>
-                  <span
-                    class="absolute bottom-0 right-0 w-2-5 h-2-5 rounded-full border-2 border-surface-high"
-                    [class.bg-secondary]="!!player.socketId"
-                    [class.bg-surface-container-highest]="!player.socketId"
-                    [attr.aria-label]="player.socketId ? 'Online' : 'Offline'"
-                    role="img">
-                  </span>
-                </span>
-                <div class="flex flex-col min-w-0">
-                  <span class="text-sm font-semibold text-white truncate">
-                    {{ player.username }}
-                    @if (player.isSelf) {
-                      <span class="text-xs font-normal text-muted">(You)</span>
-                    }
-                  </span>
-                  <span class="font-mono text-xs text-muted">
-                    {{ player.socketId ? 'Connected' : 'Disconnected' }}
-                  </span>
-                </div>
-              </div>
-              <div class="flex items-center gap-2 px-3 py-2 rounded-md bg-surface-container-low font-mono text-xs font-bold text-secondary">
-                <app-icon name="check_circle" size="sm"></app-icon>
-                {{ player.isHost ? 'HOST · READY' : 'READY' }}
-              </div>
-            </article>
-          }
-          @for (slot of openSlots(); track $index) {
-            <div class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-surface-high text-muted">
-              <app-icon name="person_add" size="lg"></app-icon>
-              <span class="text-xs">Waiting for player…</span>
-            </div>
+      <section class="flex flex-col gap-3">
+        <h2 class="m-0 text-lg font-medium">Room chat</h2>
+        <div class="max-h-dialog overflow-y-auto flex flex-col gap-2 p-3 rounded-md border border-surface-high" role="log">
+          @for (message of messages(); track $index) {
+            <p class="m-0 break-words"><strong>{{ message.user.username }}</strong> {{ message.message }}</p>
+          } @empty {
+            <p class="m-0 text-sm text-muted">No messages yet.</p>
           }
         </div>
-      </div>
-    </div>
-
-    <section class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-xl bg-surface-container-lowest border border-surface-high">
-      <div class="flex flex-wrap items-center gap-2 text-sm">
-        <span
-          class="d-inline-block w-2-5 h-2-5 rounded-full"
-          [class.bg-secondary]="room.status === 'IN_PROGRESS'"
-          [class.bg-tertiary]="room.status === 'LOBBY'"
-          [class.bg-outline]="room.status === 'FINISHED'">
-        </span>
-        <span class="font-semibold text-on-surface">Match Status:</span>
-        <span
-          class="font-mono text-xs font-bold"
-          [class.text-secondary]="room.status === 'IN_PROGRESS'"
-          [class.text-tertiary]="room.status === 'LOBBY'">
-          {{ room.status === 'IN_PROGRESS' ? 'In Progress' : room.status === 'FINISHED' ? 'Finished' : 'Awaiting Launch' }}
-        </span>
-        <span class="font-mono text-xs text-muted">
-        {{ problems().length }} {{ problems().length === 1 ? 'Problem' : 'Problems' }}
-        </span>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <app-button variant="surface" icon="logout" iconPosition="start" (clicked)="leaveRoom()">Leave Room</app-button>
-        @if (isHost()) {
-          <app-button
-            variant="primary"
-            icon="rocket_launch"
-            iconPosition="start"
-            [disabled]="!connected() || problems().length === 0"
-            (clicked)="launchRoom()">
-            Launch {{ room.mode === 'RACE' ? 'Arena Race' : 'Co-op Session' }}
-          </app-button>
-        }
-      </div>
-    </section>
-  } @else {
-    <div class="flex flex-col items-center justify-center gap-3 py-20 text-center">
-      <app-icon name="progress_activity" size="xl" [spin]="true" class="text-primary"></app-icon>
-      <p class="text-sm text-on-surface-variant m-0">Connecting to room <span class="font-mono font-bold">{{ roomCode }}</span>…</p>
-      <app-button variant="ghost" size="sm" icon="arrow_back" iconPosition="start" (clicked)="leaveRoom()">Back to home</app-button>
+        <form class="flex gap-2" (submit)="sendChat($event, message)">
+          <input #message class="flex-1 min-w-0 rounded-md border border-surface-high p-2 bg-surface text-on-surface"
+            aria-label="Chat message" placeholder="Write a message" maxlength="2000" required>
+          <app-button type="submit" [disabled]="!connected()">Send</app-button>
+        </form>
+      </section>
     </div>
   }
-</div>
+</section>

@@ -28,7 +28,6 @@ export * from './components/toast';
 export * from './directives/run-shortcuts.directive';
 export * from './utils/platform';
 export * from './components/loader/loader.component';
-export * from './components/live-chat/live-chat.component';
 export * from '../services/loading.service';
 export * from '../services/theme.service';
 
