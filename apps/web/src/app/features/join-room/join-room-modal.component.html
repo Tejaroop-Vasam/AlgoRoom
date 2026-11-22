@@ -12,7 +12,7 @@
         <app-chip [label]="player.username" [icon]="player.isHost ? 'star' : 'person'" size="sm"></app-chip>
       }
     </div>
-    <app-button variant="primary" (clicked)="close()">Done</app-button>
+    <app-button variant="primary" (clicked)="close()">Open lobby</app-button>
   </div>
 } @else {
   <form class="flex flex-col gap-4" (submit)="$event.preventDefault(); submit()">
@@ -56,9 +56,9 @@
     <div class="flex items-center justify-end gap-2">
       <app-button variant="ghost" (clicked)="close()">Cancel</app-button>
       @if (preview()) {
-        <app-button type="submit" variant="primary" icon="login" [loading]="loading()" [disabled]="roomFull()">Join Room</app-button>
+        <app-button type="submit" variant="primary" icon="login" [disabled]="loading() || roomFull()">Join Room</app-button>
       } @else {
-        <app-button type="submit" variant="primary" icon="search" [loading]="loading()" [disabled]="!codeComplete()">Find Room</app-button>
+        <app-button type="submit" variant="primary" icon="search" [disabled]="loading() || !codeComplete()">Find Room</app-button>
       }
     </div>
   </form>

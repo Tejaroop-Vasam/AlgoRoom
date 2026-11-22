@@ -1,0 +1,64 @@
+<section class="w-full max-w-1440 mx-auto p-6 flex flex-col gap-5">
+  <div class="flex justify-between items-center gap-4">
+    <div>
+      <h1 class="m-0 text-2xl font-semibold">{{ room()?.name || 'Room lobby' }}</h1>
+      <p class="m-0 text-sm text-muted">{{ code }} · {{ connected() ? 'Connected' : 'Connecting…' }}</p>
+    </div>
+    <div class="flex gap-2">
+      <app-button variant="outline" icon="link" (clicked)="copyInvite()">Copy invite link</app-button>
+      <app-button variant="ghost" (clicked)="leave()">Leave room</app-button>
+    </div>
+  </div>
+
+  @if (room(); as activeRoom) {
+    <div class="d-grid grid-cols-2 gap-6">
+      <div class="flex flex-col gap-4">
+        <section class="flex flex-col gap-2">
+          <h2 class="m-0 text-lg font-medium">Players</h2>
+          <ul class="m-0 pl-5">
+            @for (player of activeRoom.participants; track player.id) {
+              <li>
+                {{ player.username }}
+                @if (player.isHost) { <span class="text-sm text-muted">· Host</span> }
+                @if (!player.online) { <span class="text-sm text-muted">· Offline</span> }
+              </li>
+            }
+          </ul>
+        </section>
+        <section class="flex flex-col gap-2">
+          <h2 class="m-0 text-lg font-medium">Problems</h2>
+          <ol class="m-0 pl-5">
+            @for (id of activeRoom.problemIds; track id) {
+              <li>
+                @if (activeRoom.status === 'IN_PROGRESS') {
+                  <a class="text-primary" [routerLink]="['/problem', id]" [queryParams]="{ room: code }">{{ titles()[id] }}</a>
+                } @else {
+                  {{ titles()[id] }}
+                }
+              </li>
+            }
+          </ol>
+          @if (activeRoom.status === 'LOBBY' && isHost(activeRoom)) {
+            <app-button [disabled]="!connected()" (clicked)="launch()">Start room</app-button>
+          }
+        </section>
+      </div>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="m-0 text-lg font-medium">Room chat</h2>
+        <div class="max-h-dialog overflow-y-auto flex flex-col gap-2 p-3 rounded-md border border-surface-high" role="log">
+          @for (message of messages(); track $index) {
+            <p class="m-0 break-words"><strong>{{ message.user.username }}</strong> {{ message.message }}</p>
+          } @empty {
+            <p class="m-0 text-sm text-muted">No messages yet.</p>
+          }
+        </div>
+        <form class="flex gap-2" (submit)="sendChat($event, message)">
+          <input #message class="flex-1 min-w-0 rounded-md border border-surface-high p-2 bg-surface text-on-surface"
+            aria-label="Chat message" placeholder="Write a message" maxlength="2000" required>
+          <app-button type="submit" [disabled]="!connected()">Send</app-button>
+        </form>
+      </section>
+    </div>
+  }
+</section>

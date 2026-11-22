@@ -1,19 +1,9 @@
+import type { CreateRoomDto, RoomDto, RoomParticipantDto, RoomPreviewDto } from './api-client';
+
 export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
 export type RoomMode = 'RACE' | 'COOP';
 export type RoomStatus = 'LOBBY' | 'IN_PROGRESS' | 'FINISHED';
 export type BufferVisibility = 'OBSCURED' | 'HOST_ONLY' | 'OPEN';
-
-export interface UserProfile {
-  id: string;
-  username: string;
-  email: string;
-  is_admin: boolean;
-  created_at: string;
-}
-
-export interface ProfileResponse {
-  user: UserProfile;
-}
 
 export interface ProblemSummary {
   id: number;
@@ -38,47 +28,10 @@ export interface ProblemsListResponse {
   totalPages: number;
 }
 
-export interface RoomSettings {
-  maxParticipants: number;
-  hiddenTestCases: boolean;
-  bufferVisibility: BufferVisibility;
-}
-
-export interface CreateRoomRequest extends RoomSettings {
-  name: string;
-  mode: RoomMode;
-  problemIds: number[];
-}
-
-export interface RoomParticipant {
-  id: string;
-  username: string;
-  isHost: boolean;
-}
-
-export interface Room {
-  id: string;
-  code: string;
-  name: string;
-  mode: RoomMode;
-  status: RoomStatus;
-  host: RoomParticipant;
-  participants: RoomParticipant[];
-  problemIds: number[];
-  settings: RoomSettings;
-  createdAt: string;
-}
-
-export interface RoomPreview {
-  code: string;
-  name: string;
-  mode: RoomMode;
-  status: RoomStatus;
-  hostName: string;
-  participantCount: number;
-  maxParticipants: number;
-  problemCount: number;
-}
+export type CreateRoomRequest = CreateRoomDto;
+export type Room = RoomDto;
+export type RoomParticipant = RoomParticipantDto;
+export type RoomPreview = RoomPreviewDto;
 
 export interface ApiError {
   statusCode: number;

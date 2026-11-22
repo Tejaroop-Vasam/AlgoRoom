@@ -1,0 +1,11 @@
+*
+!Dockerfile
+!app/
+!app/*.py
+!alembic.ini
+!alembic/
+!alembic/*.py
+!alembic/versions/
+!alembic/versions/*.py
+!alembic/script.py.mako
+!requirements.txt

@@ -1,3 +1,18 @@
+x-api-build: &api-build
+  image: algoroom-api:${RELEASE_TAG:-local}
+  build:
+    context: .
+    target: api
+
+x-db-env: &db-env
+  DATABASE_URL: ""
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_DBPORT: 5432
+  DB_USER: ${DB_USER:-postgres}
+  DB_PASSWORD: ${DB_PASSWORD:-strongpassword}
+  DB_DATABASE: ${DB_DATABASE:-algoroom}
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -10,38 +25,84 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_DATABASE:-algoroom}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  migrate:
+    <<: *api-build
+    environment: *db-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["alembic", "upgrade", "head"]
 
   server:
-    build:
-      context: ../..
-      dockerfile: apps/server/Dockerfile
+    <<: *api-build
     container_name: algoroom-backend
     restart: unless-stopped
     depends_on:
-      - postgres
+      migrate:
+        condition: service_completed_successfully
+      runner:
+        condition: service_healthy
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-strongpassword}@postgres:5432/${DB_DATABASE:-algoroom}
+      <<: *db-env
       PORT: 3000
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /tmp:/tmp
+      RUNNER_URL: http://runner:3001
+    networks:
+      - default
+      - execution
     ports:
       - "127.0.0.1:3000:3000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:3000/health/ready', timeout=5)"]
+      interval: 10s
+      timeout: 6s
+      retries: 6
+
+  runner:
+    image: algoroom-executor:${RELEASE_TAG:-local}
+    build:
+      context: .
+      target: runner
+    restart: unless-stopped
+    environment:
+      RUNNER_WORKSPACE: ${RUNNER_WORKSPACE:-/tmp/algoroom-runner}
+    networks:
+      - execution
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${RUNNER_WORKSPACE:-/tmp/algoroom-runner}:${RUNNER_WORKSPACE:-/tmp/algoroom-runner}
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:3001/health/ready', timeout=3)"]
+      interval: 10s
+      timeout: 4s
+      retries: 6
 
   caddy:
     image: caddy:alpine
     container_name: algoroom-caddy
     restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+
+networks:
+  execution:
+    internal: true
 
 volumes:
   pgdata:

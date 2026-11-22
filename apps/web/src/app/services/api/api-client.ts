@@ -16,30 +16,35 @@ export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 
 export interface IUsersControllerClient {
     /**
-     * Register a new user account
+     * Register
+     * @return Successful Response
      */
-    register(body: RegisterUserDto): Observable<void>;
+    register(body: RegisterUserDto): Observable<UserResultDto>;
     /**
-     * Authenticate user with username/email and password
+     * Login
+     * @return Successful Response
      */
-    login(body: LoginUserDto): Observable<void>;
+    login(body: LoginUserDto): Observable<AuthResultDto>;
     /**
-     * Update user profile details
-     */
-    update(body: UpdateUserDto): Observable<void>;
-    /**
-     * Get current user profile
-     * @return Current user profile
+     * Profile
+     * @return Successful Response
      */
     profile(): Observable<ProfileResponseDto>;
     /**
-     * Change user password
+     * Update
+     * @return Successful Response
      */
-    changePassword(body: ChangePasswordDto): Observable<void>;
+    update(body: UpdateUserDto): Observable<UserResultDto>;
     /**
-     * Authenticate or register user with Google OAuth id token
+     * Change Password
+     * @return Successful Response
      */
-    googleOAuth(body: GoogleOAuthDto): Observable<void>;
+    changePassword(body: ChangePasswordDto): Observable<MessageDto>;
+    /**
+     * Google Oauth
+     * @return Successful Response
+     */
+    googleOAuth(body: GoogleOAuthDto): Observable<AuthResultDto>;
 }
 
 @Injectable({
@@ -56,9 +61,10 @@ export class UsersControllerClient implements IUsersControllerClient {
     }
 
     /**
-     * Register a new user account
+     * Register
+     * @return Successful Response
      */
-    register(body: RegisterUserDto): Observable<void> {
+    register(body: RegisterUserDto): Observable<UserResultDto> {
         let url_ = this.baseUrl + "/register";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -71,6 +77,7 @@ export class UsersControllerClient implements IUsersControllerClient {
             withCredentials: true,
             headers: new HttpHeaders({
                 "Content-Type": "application/json",
+                "Accept": "application/json"
             })
         };
 
@@ -81,14 +88,14 @@ export class UsersControllerClient implements IUsersControllerClient {
                 try {
                     return this.processRegister(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<UserResultDto>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<UserResultDto>;
         }));
     }
 
-    protected processRegister(response: HttpResponseBase): Observable<void> {
+    protected processRegister(response: HttpResponseBase): Observable<UserResultDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -97,7 +104,15 @@ export class UsersControllerClient implements IUsersControllerClient {
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
         if (status === 201) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserResultDto;
+            return _observableOf(result201);
+            }));
+        } else if (status === 422) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result422: any = null;
+            result422 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ValidationErrorDto;
+            return throwException("Validation error", status, _responseText, _headers, result422);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -108,9 +123,10 @@ export class UsersControllerClient implements IUsersControllerClient {
     }
 
     /**
-     * Authenticate user with username/email and password
+     * Login
+     * @return Successful Response
      */
-    login(body: LoginUserDto): Observable<void> {
+    login(body: LoginUserDto): Observable<AuthResultDto> {
         let url_ = this.baseUrl + "/login";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -123,6 +139,7 @@ export class UsersControllerClient implements IUsersControllerClient {
             withCredentials: true,
             headers: new HttpHeaders({
                 "Content-Type": "application/json",
+                "Accept": "application/json"
             })
         };
 
@@ -133,14 +150,14 @@ export class UsersControllerClient implements IUsersControllerClient {
                 try {
                     return this.processLogin(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<AuthResultDto>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<AuthResultDto>;
         }));
     }
 
-    protected processLogin(response: HttpResponseBase): Observable<void> {
+    protected processLogin(response: HttpResponseBase): Observable<AuthResultDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -149,7 +166,15 @@ export class UsersControllerClient implements IUsersControllerClient {
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
         if (status === 201) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AuthResultDto;
+            return _observableOf(result201);
+            }));
+        } else if (status === 422) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result422: any = null;
+            result422 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ValidationErrorDto;
+            return throwException("Validation error", status, _responseText, _headers, result422);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -160,60 +185,8 @@ export class UsersControllerClient implements IUsersControllerClient {
     }
 
     /**
-     * Update user profile details
-     */
-    update(body: UpdateUserDto): Observable<void> {
-        let url_ = this.baseUrl + "/update";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            withCredentials: true,
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-            })
-        };
-
-        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processUpdate(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processUpdate(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<void>;
-        }));
-    }
-
-    protected processUpdate(response: HttpResponseBase): Observable<void> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Get current user profile
-     * @return Current user profile
+     * Profile
+     * @return Successful Response
      */
     profile(): Observable<ProfileResponseDto> {
         let url_ = this.baseUrl + "/profile";
@@ -255,6 +228,12 @@ export class UsersControllerClient implements IUsersControllerClient {
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProfileResponseDto;
             return _observableOf(result200);
             }));
+        } else if (status === 422) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result422: any = null;
+            result422 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ValidationErrorDto;
+            return throwException("Validation error", status, _responseText, _headers, result422);
+            }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -264,9 +243,72 @@ export class UsersControllerClient implements IUsersControllerClient {
     }
 
     /**
-     * Change user password
+     * Update
+     * @return Successful Response
      */
-    changePassword(body: ChangePasswordDto): Observable<void> {
+    update(body: UpdateUserDto): Observable<UserResultDto> {
+        let url_ = this.baseUrl + "/update";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UserResultDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UserResultDto>;
+        }));
+    }
+
+    protected processUpdate(response: HttpResponseBase): Observable<UserResultDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserResultDto;
+            return _observableOf(result200);
+            }));
+        } else if (status === 422) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result422: any = null;
+            result422 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ValidationErrorDto;
+            return throwException("Validation error", status, _responseText, _headers, result422);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Change Password
+     * @return Successful Response
+     */
+    changePassword(body: ChangePasswordDto): Observable<MessageDto> {
         let url_ = this.baseUrl + "/change-password";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -279,6 +321,7 @@ export class UsersControllerClient implements IUsersControllerClient {
             withCredentials: true,
             headers: new HttpHeaders({
                 "Content-Type": "application/json",
+                "Accept": "application/json"
             })
         };
 
@@ -289,14 +332,14 @@ export class UsersControllerClient implements IUsersControllerClient {
                 try {
                     return this.processChangePassword(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<MessageDto>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<MessageDto>;
         }));
     }
 
-    protected processChangePassword(response: HttpResponseBase): Observable<void> {
+    protected processChangePassword(response: HttpResponseBase): Observable<MessageDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -305,7 +348,15 @@ export class UsersControllerClient implements IUsersControllerClient {
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as MessageDto;
+            return _observableOf(result200);
+            }));
+        } else if (status === 422) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result422: any = null;
+            result422 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ValidationErrorDto;
+            return throwException("Validation error", status, _responseText, _headers, result422);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -316,9 +367,10 @@ export class UsersControllerClient implements IUsersControllerClient {
     }
 
     /**
-     * Authenticate or register user with Google OAuth id token
+     * Google Oauth
+     * @return Successful Response
      */
-    googleOAuth(body: GoogleOAuthDto): Observable<void> {
+    googleOAuth(body: GoogleOAuthDto): Observable<AuthResultDto> {
         let url_ = this.baseUrl + "/google-oauth";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -331,6 +383,7 @@ export class UsersControllerClient implements IUsersControllerClient {
             withCredentials: true,
             headers: new HttpHeaders({
                 "Content-Type": "application/json",
+                "Accept": "application/json"
             })
         };
 
@@ -341,14 +394,14 @@ export class UsersControllerClient implements IUsersControllerClient {
                 try {
                     return this.processGoogleOAuth(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
+                    return _observableThrow(e) as any as Observable<AuthResultDto>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<void>;
+                return _observableThrow(response_) as any as Observable<AuthResultDto>;
         }));
     }
 
-    protected processGoogleOAuth(response: HttpResponseBase): Observable<void> {
+    protected processGoogleOAuth(response: HttpResponseBase): Observable<AuthResultDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -357,7 +410,15 @@ export class UsersControllerClient implements IUsersControllerClient {
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
         if (status === 201) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return _observableOf(null as any);
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AuthResultDto;
+            return _observableOf(result201);
+            }));
+        } else if (status === 422) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result422: any = null;
+            result422 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ValidationErrorDto;
+            return throwException("Validation error", status, _responseText, _headers, result422);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -370,17 +431,17 @@ export class UsersControllerClient implements IUsersControllerClient {
 
 export interface IProblemsControllerClient {
     /**
-     * List and filter DSA problems with pagination
-     * @param difficulty (optional) Difficulty level
-     * @param search (optional) Search term by problem title or description
+     * Problems
+     * @param difficulty (optional) Filter by difficulty
+     * @param search (optional) Search problem titles and descriptions
      * @param page (optional) Page number
-     * @param limit (optional) Page limit
-     * @return Paginated list of problems
+     * @param limit (optional) Results per page
+     * @return Successful Response
      */
-    getProblems(difficulty?: Difficulty | undefined, search?: string | undefined, page?: number | undefined, limit?: number | undefined): Observable<ProblemsListResponseDto>;
+    getProblems(difficulty?: Difficulty | null | undefined, search?: string | null | undefined, page?: number | undefined, limit?: number | undefined): Observable<ProblemsListResponseDto>;
     /**
-     * Get DSA problem statement, constraints, and starter codes by ID
-     * @return Problem statement details
+     * Problem Detail
+     * @return Successful Response
      */
     getProblem(id: number): Observable<ProblemDetailResponseDto>;
 }
@@ -399,22 +460,18 @@ export class ProblemsControllerClient implements IProblemsControllerClient {
     }
 
     /**
-     * List and filter DSA problems with pagination
-     * @param difficulty (optional) Difficulty level
-     * @param search (optional) Search term by problem title or description
+     * Problems
+     * @param difficulty (optional) Filter by difficulty
+     * @param search (optional) Search problem titles and descriptions
      * @param page (optional) Page number
-     * @param limit (optional) Page limit
-     * @return Paginated list of problems
+     * @param limit (optional) Results per page
+     * @return Successful Response
      */
-    getProblems(difficulty?: Difficulty | undefined, search?: string | undefined, page?: number | undefined, limit?: number | undefined): Observable<ProblemsListResponseDto> {
+    getProblems(difficulty?: Difficulty | null | undefined, search?: string | null | undefined, page?: number | undefined, limit?: number | undefined): Observable<ProblemsListResponseDto> {
         let url_ = this.baseUrl + "/problems?";
-        if (difficulty === null)
-            throw new globalThis.Error("The parameter 'difficulty' cannot be null.");
-        else if (difficulty !== undefined)
+        if (difficulty !== undefined && difficulty !== null)
             url_ += "difficulty=" + encodeURIComponent("" + difficulty) + "&";
-        if (search === null)
-            throw new globalThis.Error("The parameter 'search' cannot be null.");
-        else if (search !== undefined)
+        if (search !== undefined && search !== null)
             url_ += "search=" + encodeURIComponent("" + search) + "&";
         if (page === null)
             throw new globalThis.Error("The parameter 'page' cannot be null.");
@@ -462,6 +519,12 @@ export class ProblemsControllerClient implements IProblemsControllerClient {
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemsListResponseDto;
             return _observableOf(result200);
             }));
+        } else if (status === 422) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result422: any = null;
+            result422 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ValidationErrorDto;
+            return throwException("Validation error", status, _responseText, _headers, result422);
+            }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -471,8 +534,8 @@ export class ProblemsControllerClient implements IProblemsControllerClient {
     }
 
     /**
-     * Get DSA problem statement, constraints, and starter codes by ID
-     * @return Problem statement details
+     * Problem Detail
+     * @return Successful Response
      */
     getProblem(id: number): Observable<ProblemDetailResponseDto> {
         let url_ = this.baseUrl + "/problems/{id}";
@@ -517,6 +580,228 @@ export class ProblemsControllerClient implements IProblemsControllerClient {
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProblemDetailResponseDto;
             return _observableOf(result200);
             }));
+        } else if (status === 422) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result422: any = null;
+            result422 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ValidationErrorDto;
+            return throwException("Validation error", status, _responseText, _headers, result422);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+export interface IRoomsControllerClient {
+    /**
+     * Create Room
+     * @return Successful Response
+     */
+    createRoom(body: CreateRoomDto): Observable<CreatedRoomDto>;
+    /**
+     * Room Preview
+     * @return Successful Response
+     */
+    getRoomPreview(code: string): Observable<RoomPreviewDto>;
+    /**
+     * Join Room
+     * @return Successful Response
+     */
+    joinRoom(code: string): Observable<RoomDto>;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class RoomsControllerClient implements IRoomsControllerClient {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Create Room
+     * @return Successful Response
+     */
+    createRoom(body: CreateRoomDto): Observable<CreatedRoomDto> {
+        let url_ = this.baseUrl + "/rooms";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateRoom(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateRoom(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CreatedRoomDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CreatedRoomDto>;
+        }));
+    }
+
+    protected processCreateRoom(response: HttpResponseBase): Observable<CreatedRoomDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CreatedRoomDto;
+            return _observableOf(result201);
+            }));
+        } else if (status === 422) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result422: any = null;
+            result422 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ValidationErrorDto;
+            return throwException("Validation error", status, _responseText, _headers, result422);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Room Preview
+     * @return Successful Response
+     */
+    getRoomPreview(code: string): Observable<RoomPreviewDto> {
+        let url_ = this.baseUrl + "/rooms/{code}";
+        if (code === undefined || code === null)
+            throw new globalThis.Error("The parameter 'code' must be defined.");
+        url_ = url_.replace("{code}", encodeURIComponent("" + code));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetRoomPreview(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetRoomPreview(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RoomPreviewDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RoomPreviewDto>;
+        }));
+    }
+
+    protected processGetRoomPreview(response: HttpResponseBase): Observable<RoomPreviewDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RoomPreviewDto;
+            return _observableOf(result200);
+            }));
+        } else if (status === 422) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result422: any = null;
+            result422 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ValidationErrorDto;
+            return throwException("Validation error", status, _responseText, _headers, result422);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Join Room
+     * @return Successful Response
+     */
+    joinRoom(code: string): Observable<RoomDto> {
+        let url_ = this.baseUrl + "/rooms/{code}/join";
+        if (code === undefined || code === null)
+            throw new globalThis.Error("The parameter 'code' must be defined.");
+        url_ = url_.replace("{code}", encodeURIComponent("" + code));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            withCredentials: true,
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processJoinRoom(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processJoinRoom(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RoomDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RoomDto>;
+        }));
+    }
+
+    protected processJoinRoom(response: HttpResponseBase): Observable<RoomDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RoomDto;
+            return _observableOf(result200);
+            }));
+        } else if (status === 422) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result422: any = null;
+            result422 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ValidationErrorDto;
+            return throwException("Validation error", status, _responseText, _headers, result422);
+            }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -528,18 +813,18 @@ export class ProblemsControllerClient implements IProblemsControllerClient {
 
 export interface IRunnerControllerClient {
     /**
-     * Execute code against custom input or problem sample test case
-     * @return Code execution result
+     * Run
+     * @return Successful Response
      */
     run(body: RunCodeDto): Observable<ExecutionResultDto>;
     /**
-     * Submit solution to evaluate against full test cases from storage/DB
-     * @return Evaluation results
+     * Submit
+     * @return Successful Response
      */
     submit(body: SubmitCodeDto): Observable<SubmissionEvaluationResultDto>;
     /**
-     * Format source code using backend formatters (Ruff, Clang-Format, Prettier)
-     * @return Formatted code result
+     * Format Code
+     * @return Successful Response
      */
     format(body: FormatCodeDto): Observable<FormatResultDto>;
 }
@@ -558,8 +843,8 @@ export class RunnerControllerClient implements IRunnerControllerClient {
     }
 
     /**
-     * Execute code against custom input or problem sample test case
-     * @return Code execution result
+     * Run
+     * @return Successful Response
      */
     run(body: RunCodeDto): Observable<ExecutionResultDto> {
         let url_ = this.baseUrl + "/api/run";
@@ -605,6 +890,12 @@ export class RunnerControllerClient implements IRunnerControllerClient {
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ExecutionResultDto;
             return _observableOf(result200);
             }));
+        } else if (status === 422) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result422: any = null;
+            result422 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ValidationErrorDto;
+            return throwException("Validation error", status, _responseText, _headers, result422);
+            }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -614,8 +905,8 @@ export class RunnerControllerClient implements IRunnerControllerClient {
     }
 
     /**
-     * Submit solution to evaluate against full test cases from storage/DB
-     * @return Evaluation results
+     * Submit
+     * @return Successful Response
      */
     submit(body: SubmitCodeDto): Observable<SubmissionEvaluationResultDto> {
         let url_ = this.baseUrl + "/api/submit";
@@ -661,6 +952,12 @@ export class RunnerControllerClient implements IRunnerControllerClient {
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SubmissionEvaluationResultDto;
             return _observableOf(result200);
             }));
+        } else if (status === 422) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result422: any = null;
+            result422 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ValidationErrorDto;
+            return throwException("Validation error", status, _responseText, _headers, result422);
+            }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -670,8 +967,8 @@ export class RunnerControllerClient implements IRunnerControllerClient {
     }
 
     /**
-     * Format source code using backend formatters (Ruff, Clang-Format, Prettier)
-     * @return Formatted code result
+     * Format Code
+     * @return Successful Response
      */
     format(body: FormatCodeDto): Observable<FormatResultDto> {
         let url_ = this.baseUrl + "/api/format";
@@ -717,203 +1014,11 @@ export class RunnerControllerClient implements IRunnerControllerClient {
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as FormatResultDto;
             return _observableOf(result200);
             }));
-        } else if (status !== 200 && status !== 204) {
+        } else if (status === 422) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-}
-
-export interface IRoomsControllerClient {
-    /**
-     * Create a new room instance
-     * @return Room created successfully
-     */
-    createRoom(body: CreateRoomDto): Observable<RoomDto>;
-    /**
-     * Get preview for a room by code
-     * @return Room preview details
-     */
-    getRoomPreview(code: string): Observable<RoomPreviewDto>;
-    /**
-     * Join a room by code
-     * @return Joined room details
-     */
-    joinRoom(code: string): Observable<RoomDto>;
-}
-
-@Injectable({
-    providedIn: 'root'
-})
-export class RoomsControllerClient implements IRoomsControllerClient {
-    private http: HttpClient;
-    private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
-    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
-        this.http = http;
-        this.baseUrl = baseUrl ?? "";
-    }
-
-    /**
-     * Create a new room instance
-     * @return Room created successfully
-     */
-    createRoom(body: CreateRoomDto): Observable<RoomDto> {
-        let url_ = this.baseUrl + "/rooms";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            withCredentials: true,
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processCreateRoom(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processCreateRoom(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<RoomDto>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<RoomDto>;
-        }));
-    }
-
-    protected processCreateRoom(response: HttpResponseBase): Observable<RoomDto> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 201) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result201: any = null;
-            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RoomDto;
-            return _observableOf(result201);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Get preview for a room by code
-     * @return Room preview details
-     */
-    getRoomPreview(code: string): Observable<RoomPreviewDto> {
-        let url_ = this.baseUrl + "/rooms/{code}";
-        if (code === undefined || code === null)
-            throw new globalThis.Error("The parameter 'code' must be defined.");
-        url_ = url_.replace("{code}", encodeURIComponent("" + code));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_ : any = {
-            observe: "response",
-            responseType: "blob",
-            withCredentials: true,
-            headers: new HttpHeaders({
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetRoomPreview(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetRoomPreview(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<RoomPreviewDto>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<RoomPreviewDto>;
-        }));
-    }
-
-    protected processGetRoomPreview(response: HttpResponseBase): Observable<RoomPreviewDto> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RoomPreviewDto;
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * Join a room by code
-     * @return Joined room details
-     */
-    joinRoom(code: string): Observable<RoomDto> {
-        let url_ = this.baseUrl + "/rooms/{code}/join";
-        if (code === undefined || code === null)
-            throw new globalThis.Error("The parameter 'code' must be defined.");
-        url_ = url_.replace("{code}", encodeURIComponent("" + code));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_ : any = {
-            observe: "response",
-            responseType: "blob",
-            withCredentials: true,
-            headers: new HttpHeaders({
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processJoinRoom(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processJoinRoom(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<RoomDto>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<RoomDto>;
-        }));
-    }
-
-    protected processJoinRoom(response: HttpResponseBase): Observable<RoomDto> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RoomDto;
-            return _observableOf(result200);
+            let result422: any = null;
+            result422 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ValidationErrorDto;
+            return throwException("Validation error", status, _responseText, _headers, result422);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
@@ -924,27 +1029,142 @@ export class RoomsControllerClient implements IRoomsControllerClient {
     }
 }
 
-export interface RegisterUserDto {
+export interface AuthResultDto {
+    message: string;
+    user: UserProfileDto;
+    token: string;
 
     [key: string]: any;
 }
+
+export type BufferVisibility = "OBSCURED" | "HOST_ONLY" | "OPEN";
+
+export interface ChangePasswordDto {
+    oldPassword: string;
+    newPassword: string;
+
+    [key: string]: any;
+}
+
+export interface CreateRoomDto {
+    maxParticipants?: number;
+    hiddenTestCases?: boolean;
+    bufferVisibility?: BufferVisibility;
+    name: string;
+    mode: RoomMode;
+    problemIds: number[];
+
+    [key: string]: any;
+}
+
+export interface CreatedRoomDto {
+    id: number;
+    code: string;
+    name: string;
+    mode: RoomMode;
+    status: RoomStatus;
+    host: RoomParticipantDto;
+    participants: RoomParticipantDto[];
+    problemIds: number[];
+    settings: RoomSettingsDto;
+    createdAt: Date;
+    hostSession?: GuestHostSessionDto | undefined;
+
+    [key: string]: any;
+}
+
+export type Difficulty = "EASY" | "MEDIUM" | "HARD";
+
+export interface ExecutionResultDto {
+    status: ExecutionStatus;
+    stdout: string;
+    stderr: string;
+    executionTimeMs: number;
+
+    [key: string]: any;
+}
+
+export type ExecutionStatus = "SUCCESS" | "TIME_LIMIT_EXCEEDED" | "MEMORY_LIMIT_EXCEEDED" | "COMPILE_ERROR" | "RUNTIME_ERROR";
+
+export interface FormatCodeDto {
+    language: FormatLanguage;
+    code: string;
+
+    [key: string]: any;
+}
+
+export type FormatLanguage = "python" | "cpp" | "java" | "javascript" | "typescript";
+
+export interface FormatResultDto {
+    code: string;
+    formatted: boolean;
+    error?: string | undefined;
+
+    [key: string]: any;
+}
+
+export interface GoogleOAuthDto {
+    token: string;
+
+    [key: string]: any;
+}
+
+export interface GuestHostSessionDto {
+    token: string;
+    expiresAt: number;
+
+    [key: string]: any;
+}
+
+export type Language = "python" | "cpp" | "java";
 
 export interface LoginUserDto {
-
-    [key: string]: any;
-}
-
-export interface UpdateUserDto {
-
-    [key: string]: any;
-}
-
-export interface UserProfileDto {
-    id: string;
-    username: string;
     email: string;
-    is_admin: boolean;
-    created_at: Date;
+    password: string;
+
+    [key: string]: any;
+}
+
+export interface MessageDto {
+    message: string;
+
+    [key: string]: any;
+}
+
+export interface ProblemDetailResponseDto {
+    id: number;
+    title: string;
+    difficulty: Difficulty;
+    createdAt: Date;
+    updatedAt: Date;
+    description: string;
+    constraints: string[];
+    hints: string[];
+    sampleTestCases: SampleTestCaseDto[];
+    starterTemplates: { [key: string]: string; };
+    starterCodes: { [key: string]: string; };
+    timeLimitMs: number;
+    memoryLimitMb: number;
+
+    [key: string]: any;
+}
+
+export interface ProblemListItemDto {
+    id: number;
+    title: string;
+    difficulty: Difficulty;
+    createdAt: Date;
+    updatedAt: Date;
+
+    [key: string]: any;
+}
+
+export interface ProblemsListResponseDto {
+    problems: ProblemListItemDto[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
 
     [key: string]: any;
 }
@@ -955,100 +1175,78 @@ export interface ProfileResponseDto {
     [key: string]: any;
 }
 
-export interface ChangePasswordDto {
+export interface RegisterUserDto {
+    email: string;
+    password: string;
+    username: string;
 
     [key: string]: any;
 }
 
-export interface GoogleOAuthDto {
-
-    [key: string]: any;
-}
-
-export interface ProblemListItemDto {
-    /** Unique problem identifier */
+export interface RoomDto {
     id: number;
-    /** Problem title */
-    title: string;
-    /** Difficulty level */
-    difficulty: ProblemListItemDtoDifficulty;
-    /** Created timestamp */
+    code: string;
+    name: string;
+    mode: RoomMode;
+    status: RoomStatus;
+    host: RoomParticipantDto;
+    participants: RoomParticipantDto[];
+    problemIds: number[];
+    settings: RoomSettingsDto;
     createdAt: Date;
-    /** Updated timestamp */
-    updatedAt: Date;
 
     [key: string]: any;
 }
 
-export interface ProblemsListResponseDto {
-    /** List of problems matching the query */
-    problems: ProblemListItemDto[];
-    /** Total number of problems matching the query */
-    total: number;
-    /** Current page number */
-    page: number;
-    /** Items per page limit */
-    limit: number;
-    /** Total number of pages */
-    totalPages: number;
+export type RoomMode = "RACE" | "COOP";
+
+export interface RoomParticipantDto {
+    id: string;
+    username: string;
+    isHost: boolean;
+    online: boolean;
+
+    [key: string]: any;
+}
+
+export interface RoomPreviewDto {
+    code: string;
+    name: string;
+    mode: RoomMode;
+    status: RoomStatus;
+    hostName: string;
+    participantCount: number;
+    maxParticipants: number;
+    problemCount: number;
+    isMember: boolean;
+
+    [key: string]: any;
+}
+
+export interface RoomSettingsDto {
+    maxParticipants: number;
+    hiddenTestCases: boolean;
+    bufferVisibility: BufferVisibility;
+
+    [key: string]: any;
+}
+
+export type RoomStatus = "LOBBY" | "IN_PROGRESS" | "FINISHED";
+
+export interface RunCodeDto {
+    language: Language;
+    code: string;
+    problemId?: number | undefined;
+    input?: string | undefined;
 
     [key: string]: any;
 }
 
 export interface SampleTestCaseDto {
-    id?: number;
+    id?: number | undefined;
     input: string;
     expectedOutput: string;
-    explanation?: string;
-
-    [key: string]: any;
-}
-
-export interface ProblemDetailResponseDto {
-    id: number;
-    title: string;
-    description: string;
-    difficulty: ProblemDetailResponseDtoDifficulty;
-    constraints: string[];
-    hints: string[];
-    sampleTestCases: SampleTestCaseDto[];
-    starterTemplates: { [key: string]: string; };
-    starterCodes: { [key: string]: string; };
-    timeLimitMs: number;
-    memoryLimitMb: number;
-    createdAt: Date;
-    updatedAt: Date;
-
-    [key: string]: any;
-}
-
-export interface RunCodeDto {
-
-    [key: string]: any;
-}
-
-export interface ExecutionResultDto {
-    status: ExecutionResultDtoStatus;
-    stdout: string;
-    stderr: string;
-    executionTimeMs: number;
-
-    [key: string]: any;
-}
-
-export interface SubmitCodeDto {
-
-    [key: string]: any;
-}
-
-export interface TestCaseEvaluationResultDto {
-    testCaseIndex: number;
-    verdict: TestCaseEvaluationResultDtoVerdict;
-    input: string;
-    expectedOutput: string;
-    actualOutput: string;
-    stderr: string;
-    executionTimeMs: number;
+    explanation?: string | undefined;
 
     [key: string]: any;
 }
@@ -1062,113 +1260,61 @@ export interface SubmissionEvaluationResultDto {
     [key: string]: any;
 }
 
-/** Programming language to format */
-export type FormatLanguage = "python" | "cpp" | "java" | "javascript" | "typescript";
+export type SubmissionVerdict = "ACCEPTED" | "WRONG_ANSWER" | "TIME_LIMIT_EXCEEDED" | "MEMORY_LIMIT_EXCEEDED" | "COMPILE_ERROR" | "RUNTIME_ERROR";
 
-export interface FormatCodeDto {
-    /** Programming language to format */
-    language: FormatLanguage;
-    /** Source code to format */
+export interface SubmitCodeDto {
+    language: Language;
     code: string;
+    problemId: number;
 
     [key: string]: any;
 }
 
-export interface FormatResultDto {
-    /** Formatted code or original code if formatting failed */
-    code: string;
-    /** Whether the code was successfully formatted */
-    formatted: boolean;
-    /** Error message if formatting failed */
-    error?: string;
+export interface TestCaseEvaluationResultDto {
+    testCaseIndex: number;
+    verdict: SubmissionVerdict;
+    input: string;
+    expectedOutput: string;
+    actualOutput: string;
+    stderr: string;
+    executionTimeMs: number;
 
     [key: string]: any;
 }
 
-export interface CreateRoomDto {
-    /** Room name */
-    name: string;
-    /** Room mode */
-    mode: CreateRoomDtoMode;
-    /** List of problem IDs */
-    problemIds: number[];
-    /** Max participants */
-    maxParticipants: number;
-    /** Hidden test cases */
-    hiddenTestCases: boolean;
-    /** Buffer visibility */
-    bufferVisibility: CreateRoomDtoBufferVisibility;
+export interface UpdateUserDto {
+    username?: string | undefined;
+    email?: string | undefined;
 
     [key: string]: any;
 }
 
-export interface RoomParticipantDto {
+export interface UserProfileDto {
     id: string;
     username: string;
-    isHost: boolean;
+    email: string;
+    is_admin: boolean;
+    google_id: string | undefined;
+    created_at: Date;
+    updated_at: Date;
 
     [key: string]: any;
 }
 
-export interface RoomSettingsDto {
-    maxParticipants: number;
-    hiddenTestCases: boolean;
-    bufferVisibility: RoomSettingsDtoBufferVisibility;
+export interface UserResultDto {
+    message: string;
+    user: UserProfileDto;
 
     [key: string]: any;
 }
 
-export interface RoomDto {
-    id: string;
-    code: string;
-    name: string;
-    mode: RoomDtoMode;
-    status: RoomDtoStatus;
-    host: RoomParticipantDto;
-    participants: RoomParticipantDto[];
-    problemIds: number[];
-    settings: RoomSettingsDto;
-    createdAt: string;
+export interface ValidationErrorDto {
+    statusCode: number;
+    message: string[];
+    error: string;
 
     [key: string]: any;
 }
-
-export interface RoomPreviewDto {
-    code: string;
-    name: string;
-    mode: RoomPreviewDtoMode;
-    status: RoomPreviewDtoStatus;
-    hostName: string;
-    participantCount: number;
-    maxParticipants: number;
-    problemCount: number;
-
-    [key: string]: any;
-}
-
-export type Difficulty = "EASY" | "MEDIUM" | "HARD";
-
-export type ProblemListItemDtoDifficulty = "EASY" | "MEDIUM" | "HARD";
-
-export type ProblemDetailResponseDtoDifficulty = "EASY" | "MEDIUM" | "HARD";
-
-export type ExecutionResultDtoStatus = "SUCCESS" | "TIME_LIMIT_EXCEEDED" | "MEMORY_LIMIT_EXCEEDED" | "COMPILE_ERROR" | "RUNTIME_ERROR";
-
-export type TestCaseEvaluationResultDtoVerdict = "ACCEPTED" | "WRONG_ANSWER" | "TIME_LIMIT_EXCEEDED" | "MEMORY_LIMIT_EXCEEDED" | "COMPILE_ERROR" | "RUNTIME_ERROR";
-
-export type CreateRoomDtoMode = "RACE" | "COOP";
-
-export type CreateRoomDtoBufferVisibility = "OBSCURED" | "HOST_ONLY" | "OPEN";
-
-export type RoomSettingsDtoBufferVisibility = "OBSCURED" | "HOST_ONLY" | "OPEN";
-
-export type RoomDtoMode = "RACE" | "COOP";
-
-export type RoomDtoStatus = "LOBBY" | "IN_PROGRESS" | "FINISHED";
-
-export type RoomPreviewDtoMode = "RACE" | "COOP";
-
-export type RoomPreviewDtoStatus = "LOBBY" | "IN_PROGRESS" | "FINISHED";
 
 export class SwaggerException extends Error {
     override message: string;

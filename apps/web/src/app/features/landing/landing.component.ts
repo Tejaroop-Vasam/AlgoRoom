@@ -8,6 +8,11 @@ import {
   LiveGridComponent,
   ModalService,
 } from '../../shared';
+import { firstValueFrom } from 'rxjs';
+import { Room } from '../../services/api';
+import { AuthSessionService } from '../../services/auth-session.service';
+import { RoomHostSessionService } from '../../services/room-host-session.service';
+import { AuthModalComponent } from '../auth-modal/auth-modal.component';
 import { CreateRoomModalComponent } from '../create-room/create-room-modal.component';
 import { JoinRoomModalComponent, JoinRoomModalData } from '../join-room/join-room-modal.component';
 
@@ -52,6 +57,8 @@ export class LandingComponent implements OnInit {
   private readonly modalService = inject(ModalService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly session = inject(AuthSessionService);
+  private readonly hostSessions = inject(RoomHostSessionService);
 
   readonly raceFeatures: ModeFeature[] = [
     { label: 'Private isolated sandbox environments' },
@@ -110,17 +117,24 @@ export class LandingComponent implements OnInit {
     }
   }
 
-  openCreateRoom(): void {
-    this.modalService.open(CreateRoomModalComponent, {
+  async openCreateRoom(): Promise<void> {
+    const dialog = this.modalService.open<CreateRoomModalComponent, Room>(CreateRoomModalComponent, {
       title: 'Create Room',
       showEscHint: true,
       width: '60rem',
       maxWidth: '95vw',
     });
+    const room = await firstValueFrom(dialog.afterClosed());
+    if (room) await this.router.navigate(['/room', room.code]);
   }
 
-  openJoinRoom(code?: string): void {
-    this.modalService.open(JoinRoomModalComponent, {
+  async openJoinRoom(code?: string): Promise<void> {
+    if (code && this.hostSessions.get(code)) {
+      await this.router.navigate(['/room', code]);
+      return;
+    }
+    if (!await this.signInToJoinRoom()) return;
+    const dialog = this.modalService.open<JoinRoomModalComponent, Room>(JoinRoomModalComponent, {
       title: 'Join with Code',
       description: 'Enter the room code your host shared with you',
       icon: 'key',
@@ -128,5 +142,15 @@ export class LandingComponent implements OnInit {
       width: '28rem',
       data: { code } satisfies JoinRoomModalData,
     });
+    const room = await firstValueFrom(dialog.afterClosed());
+    if (room) await this.router.navigate(['/room', room.code]);
+  }
+
+  private async signInToJoinRoom(): Promise<boolean> {
+    if (this.session.accessToken()) return true;
+    return Boolean(await firstValueFrom(this.modalService.open<AuthModalComponent, boolean>(AuthModalComponent, {
+      title: 'Sign in to join a room',
+      width: '28rem',
+    }).afterClosed()));
   }
 }

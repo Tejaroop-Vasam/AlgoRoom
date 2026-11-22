@@ -27,12 +27,12 @@
       <app-chip [label]="room.participants.length + ' / ' + room.settings.maxParticipants + ' players'" icon="group"></app-chip>
     </div>
 
-    <app-button variant="primary" (clicked)="close()">Done</app-button>
+    <app-button variant="primary" (clicked)="close()">Open lobby</app-button>
   </div>
 } @else {
   <div class="max-h-dialog overflow-y-auto flex flex-col gap-6 pr-2">
-    <div class="d-grid grid-cols-1 lg-grid-cols-3 gap-4">
-      <div class="flex flex-col gap-2 min-w-0 lg-col-span-2">
+    <div class="d-grid grid-cols-3 gap-4">
+      <div class="flex flex-col gap-2 min-w-0 col-span-2">
         <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Room Instance Name</span>
         <div class="flex items-start gap-2">
           <div class="flex-1 min-w-0">
@@ -50,15 +50,8 @@
       <div class="flex flex-col gap-2 min-w-0">
         <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Session Host</span>
         <div class="h-14 flex items-center gap-2 px-3 rounded-md bg-surface-container-low border border-surface-high">
-          @if (host(); as user) {
-            <app-avatar [name]="user.username" size="sm"></app-avatar>
-            <span class="text-sm font-semibold text-white truncate">{{ user.username }}</span>
-            <app-icon name="verified" size="sm" color="var(--color-primary)" ariaLabel="Verified"></app-icon>
-            <span class="ml-auto"><app-chip label="Owner" size="sm"></app-chip></span>
-          } @else {
-            <app-icon name="progress_activity" size="sm" [spin]="true" class="text-muted"></app-icon>
-            <span class="text-sm text-muted">Loading profile…</span>
-          }
+          <app-avatar [name]="hostName()" size="sm"></app-avatar>
+          <span class="text-sm font-semibold text-white truncate">{{ hostName() }}</span>
         </div>
       </div>
     </div>
@@ -66,7 +59,7 @@
     <div class="flex flex-col gap-2">
       <div class="flex items-center justify-between gap-2">
       </div>
-      <div role="radiogroup" aria-label="Room mode" class="d-grid grid-cols-1 lg-grid-cols-2 gap-3">
+      <div role="radiogroup" aria-label="Room mode" class="d-grid grid-cols-2 gap-3">
         <app-option-card
           icon="sports_score"
           title="Race Mode"
@@ -197,7 +190,7 @@
       }
     </div>
 
-    <div class="d-grid grid-cols-1 lg-grid-cols-3 gap-4 p-3 rounded-lg bg-surface-container-low border border-surface-high">
+    <div class="d-grid grid-cols-3 gap-4 p-3 rounded-lg bg-surface-container-low border border-surface-high">
       <div class="flex flex-col gap-2">
         <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Lobby Headcount</span>
         <app-input
@@ -243,18 +236,12 @@
         <app-icon name="info" size="sm"></app-icon>
         Add at least one problem to the challenge set
       </span>
-    } @else {
-      <span class="flex items-center gap-2 font-mono text-xs text-muted">
-        <app-icon name="lock" size="sm"></app-icon>
-        Session token hash will generate upon room provisioning
-      </span>
     }
     <div class="flex items-center gap-2 ml-auto">
       <app-button variant="ghost" (clicked)="close()">Cancel</app-button>
       <app-button
         variant="primary"
         icon="arrow_forward"
-        [loading]="submitting()"
         [disabled]="!canSubmit()"
         (clicked)="create()">
         Create Room &amp; Launch Lobby

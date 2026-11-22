@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   CodeEditorComponent,
   RunShortcutsDirective,
@@ -12,8 +12,9 @@ import {
 } from '../../shared';
 import { ProblemPanelComponent } from '../problem-panel/problem-panel.component';
 import { ProblemsApiService } from '../../services/api/problems-api.service';
+import { LoadingService } from '../../services/loading.service';
 import { RunnerApiService } from '../../services/api/runner-api.service';
-import { ProblemDetailResponseDto } from '../../services/api/api-client';
+import { Language, ProblemDetailResponseDto } from '../../services/api/api-client';
 import {
   buildRunResult,
   buildSubmitResult,
@@ -27,6 +28,7 @@ import {
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     SplitPaneComponent,
     ProblemPanelComponent,
     CodeEditorComponent,
@@ -45,9 +47,11 @@ export class ProblemWorkspaceComponent implements OnInit {
   private readonly runnerApi = inject(RunnerApiService);
   private readonly toast = inject(ToastService);
 
+  readonly roomCode = this.route.snapshot.queryParamMap.get('room');
   readonly problemId = signal<number>(1);
   readonly problemDetail = signal<ProblemDetailResponseDto | null>(null);
 
+  readonly languages: Language[] = ['python', 'cpp', 'java'];
   readonly language = signal<string>('python');
   readonly code = signal<string>('');
   readonly starterCodes = signal<Record<string, string>>({});
@@ -56,8 +60,7 @@ export class ProblemWorkspaceComponent implements OnInit {
   readonly consoleTab = signal<'testcase' | 'result'>('testcase');
   readonly testResult = signal<TestResultData | null>(null);
 
-  readonly isRunning = signal<boolean>(false);
-  readonly isSubmitting = signal<boolean>(false);
+  readonly loading = inject(LoadingService).isLoading;
 
   readonly problemData = computed(() => mapToProblemData(this.problemDetail()));
 
@@ -76,8 +79,7 @@ export class ProblemWorkspaceComponent implements OnInit {
       const starters: Record<string, string> = (res.starterCodes as Record<string, string>) || {};
       this.starterCodes.set(starters);
 
-      const availableLangs = Object.keys(starters);
-      this.language.set( availableLangs[0]);
+      this.language.set(this.languages.find(language => starters[language]) ?? 'python');
       this.code.set(starters[this.language()] || '');
 
       const parsedCases: TestCaseItem[] = (res.sampleTestCases ?? []).map((stc, idx) => ({
@@ -114,9 +116,8 @@ export class ProblemWorkspaceComponent implements OnInit {
   }
 
   async onRun(testcase: TestCaseItem): Promise<void> {
-    if (this.isRunning() || this.isSubmitting()) return;
+    if (this.loading()) return;
 
-    this.isRunning.set(true);
     this.consoleTab.set('result');
     this.testResult.set(null);
 
@@ -125,7 +126,7 @@ export class ProblemWorkspaceComponent implements OnInit {
     try {
       const res = await this.runnerApi.run({
         problemId: this.problemId(),
-        language: this.language(),
+        language: this.language() as Language,
         code: this.code(),
         input: inputPayload,
       });
@@ -133,37 +134,30 @@ export class ProblemWorkspaceComponent implements OnInit {
       const { result, toastType, toastMessage } = buildRunResult(res, testcase, inputPayload);
       this.testResult.set(result);
       this.toast[toastType](toastMessage);
-    } catch {
-    } finally {
-      this.isRunning.set(false);
-    }
+    } catch {}
   }
 
   async onSubmit(): Promise<void> {
-    if (this.isRunning() || this.isSubmitting()) return;
+    if (this.loading()) return;
 
-    this.isSubmitting.set(true);
     this.consoleTab.set('result');
     this.testResult.set(null);
 
     try {
       const res = await this.runnerApi.submit({
         problemId: this.problemId(),
-        language: this.language(),
+        language: this.language() as Language,
         code: this.code(),
       });
 
       const { result, toastType, toastMessage } = buildSubmitResult(res);
       this.testResult.set(result);
       this.toast[toastType](toastMessage);
-    } catch {
-    } finally {
-      this.isSubmitting.set(false);
-    }
+    } catch {}
   }
 
   onShortcutRun(): void {
-    if (this.isRunning() || this.isSubmitting()) return;
+    if (this.loading()) return;
     const selected = this.testcases()[0];
     if (selected) {
       this.onRun(selected);
@@ -171,7 +165,7 @@ export class ProblemWorkspaceComponent implements OnInit {
   }
 
   onShortcutSubmit(): void {
-    if (this.isRunning() || this.isSubmitting()) return;
+    if (this.loading()) return;
     this.onSubmit();
   }
 }

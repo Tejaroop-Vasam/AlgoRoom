@@ -10,6 +10,8 @@ import psycopg
 from psycopg.types.json import Jsonb
 import requests
 from dotenv import load_dotenv
+
+from problem_drivers import generate_cpp_driver, generate_java_driver
 SCRAPER_DIR = Path(__file__).resolve().parent
 APPS_DIR = SCRAPER_DIR.parent
 PROJECT_ROOT = APPS_DIR.parent
@@ -258,9 +260,9 @@ def main():
                         "driverCode": generate_python_driver(py_method) if py_method else None,
                     }
                 if cpp_snippet:
-                    code_templates["cpp"] = {"starterCode": cpp_snippet}
+                    code_templates["cpp"] = {"starterCode": cpp_snippet, "driverCode": generate_cpp_driver(cpp_snippet)}
                 if java_snippet:
-                    code_templates["java"] = {"starterCode": java_snippet}
+                    code_templates["java"] = {"starterCode": java_snippet, "driverCode": generate_java_driver(java_snippet)}
 
                 raw_diff = (q.get("difficulty") or "Easy").upper()
                 difficulty = "HARD" if raw_diff == "HARD" else ("MEDIUM" if raw_diff == "MEDIUM" else "EASY")

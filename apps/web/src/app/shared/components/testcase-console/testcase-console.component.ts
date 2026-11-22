@@ -56,6 +56,7 @@ export class TestcaseConsoleComponent {
   readonly activeCaseIndex = model<number>(0);
   readonly testResult = input<TestResultData | null>(null);
 
+  readonly actionsDisabled = input(false);
   readonly isRunning = input<boolean>(false);
   readonly isSubmitting = input<boolean>(false);
 

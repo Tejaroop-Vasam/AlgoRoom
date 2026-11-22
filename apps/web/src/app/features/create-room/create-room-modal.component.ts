@@ -29,9 +29,8 @@ import {
   Room,
   RoomMode,
   RoomsApiService,
-  UserProfile,
-  UsersApiService,
 } from '../../services/api';
+import { AuthSessionService } from '../../services/auth-session.service';
 import { LoadingService } from '../../services/loading.service';
 import {
   MAX_PARTICIPANTS,
@@ -64,6 +63,7 @@ export interface CreateRoomModalData {
     ToggleSwitchComponent,
   ],
   templateUrl: './create-room-modal.component.html',
+  styleUrl: './create-room-modal.component.css',
   host: {
     class: 'd-block',
   },
@@ -72,15 +72,17 @@ export class CreateRoomModalComponent {
   private readonly container = inject(ModalContainerComponent, { optional: true });
   private readonly problemsApi = inject(ProblemsApiService);
   private readonly roomsApi = inject(RoomsApiService);
-  private readonly usersApi = inject(UsersApiService);
   private readonly loadingService = inject(LoadingService);
+  private readonly session = inject(AuthSessionService);
 
   readonly maxStaged = MAX_STAGED_PROBLEMS;
   readonly minParticipants = MIN_PARTICIPANTS;
   readonly maxParticipants = MAX_PARTICIPANTS;
 
   readonly roomName = signal<string | null>(null);
-  readonly host = signal<UserProfile | null>(null);
+  readonly hostName = computed(() =>
+    (this.session.accessToken() && this.session.user()?.username) || 'Guest'
+  );
 
   readonly mode = signal<RoomMode>('RACE');
 
@@ -151,10 +153,6 @@ export class CreateRoomModalComponent {
 
   private async loadInitialData(): Promise<void> {
     try {
-      const profileRes = await this.usersApi.getProfile().catch(() => null);
-      if (profileRes?.user) {
-        this.host.set(profileRes.user);
-      }
     } catch {}
   }
 
@@ -220,7 +218,7 @@ export class CreateRoomModalComponent {
   }
 
   inviteLink(room: Room): string {
-    return `${window.location.origin}/?join=${room.code}`;
+    return new URL(`./?join=${room.code}`, document.baseURI).href;
   }
 
   async copy(kind: 'code' | 'link', room: Room): Promise<void> {

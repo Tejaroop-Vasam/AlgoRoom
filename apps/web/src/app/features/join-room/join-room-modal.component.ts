@@ -15,6 +15,7 @@ const ROOM_CODE_LENGTH = 6;
   standalone: true,
   imports: [BadgeComponent, ButtonComponent, ChipComponent, IconComponent, InputComponent],
   templateUrl: './join-room-modal.component.html',
+  styleUrl: './join-room-modal.component.css',
   host: {
     class: 'd-block',
   },
@@ -34,7 +35,7 @@ export class JoinRoomModalComponent implements OnInit {
 
   readonly roomFull = computed(() => {
     const room = this.preview();
-    return !!room && room.participantCount >= room.maxParticipants;
+    return !!room && !room.isMember && room.participantCount >= room.maxParticipants;
   });
 
   ngOnInit(): void {
