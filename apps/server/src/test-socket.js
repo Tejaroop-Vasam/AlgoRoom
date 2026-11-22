@@ -27,7 +27,6 @@ user2.on('connect', () => {
   user2.emit('joinLobby', { code: ROOM_CODE });
 });
 
-// Listen for room state & chat broadcasts
 user2.on('roomStateUpdated', (room) => {
   console.log('🔄 Room state updated. Participants:', room.participants.length);
 });
