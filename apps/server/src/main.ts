@@ -3,6 +3,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { setupSwagger } from './swagger';
+import { runAutoMigrate } from './migrate';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -11,10 +12,27 @@ async function bootstrap() {
 
   const clientUrl = configService.get<string>('CLIENT_URL');
   const allowedOrigins = Array.from(
-    new Set([clientUrl, 'http://localhost:4200', 'http://127.0.0.1:4200'].filter(Boolean) as string[]),
+    new Set(
+      [
+        clientUrl,
+        'https://tejaroop-vasam.github.io',
+        'http://localhost:4200',
+        'http://127.0.0.1:4200',
+      ].filter(Boolean) as string[],
+    ),
   );
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.github.io') ||
+        origin === 'https://tejaroop-vasam.github.io'
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Allow all during dev/launch
+    },
     credentials: true,
   });
 
@@ -27,6 +45,12 @@ async function bootstrap() {
   );
 
   setupSwagger(app);
+
+  try {
+    await runAutoMigrate();
+  } catch (err) {
+    logger.error('Failed to run automated database migrations', err);
+  }
 
   const port = configService.get<number>('PORT') || 3000;
   await app.listen(port);

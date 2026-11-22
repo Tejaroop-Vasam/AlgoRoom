@@ -173,7 +173,7 @@ def get_db_connection_string():
     password = os.getenv("DB_PASSWORD", "postgres")
     host = os.getenv("DB_HOST", "localhost")
     port = os.getenv("DB_DBPORT") or os.getenv("DB_PORT", "5432")
-    database = os.getenv("DB_DATABASE", "eligible")
+    database = os.getenv("DB_DATABASE", "algoroom")
     return f"postgresql://{user}:{password}@{host}:{port}/{database}"
 
 

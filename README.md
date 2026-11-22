@@ -156,7 +156,7 @@ The MVP focuses strictly on the 20 core user stories required to prove the produ
 - Long-term session history and performance analytics
 - Gamification achievements and badges
 
-Detailed story specifications and acceptance criteria are documented in [docs/requirements/user-stories-and-mvp.md](file:///Users/tejaroopvasam/Desktop/Eligible.ai/docs/requirements/user-stories-and-mvp.md).
+Detailed story specifications and acceptance criteria are documented in [docs/requirements/user-stories-and-mvp.md](docs/requirements/user-stories-and-mvp.md).
 
 ---
 
@@ -200,4 +200,4 @@ Detailed story specifications and acceptance criteria are documented in [docs/re
 4. **Phase 4: Race Competition** — Live participant progress, real-time solved broadcasts, timer, leaderboard.
 5. **Phase 5: Co-op Mode** — Monaco + Yjs document synchronization, real-time shared editing, synchronized room chat.
 
-Complete architectural specifications and schema definitions are detailed in [docs/architecture/system-architecture.md](file:///Users/tejaroopvasam/Desktop/Eligible.ai/docs/architecture/system-architecture.md).
+Complete architectural specifications and schema definitions are detailed in [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md).

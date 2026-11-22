@@ -1,7 +1,7 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "Eligible.ai NestJS Server",
+  "description": "AlgoRoom NestJS Server",
   "private": true,
   "scripts": {
     "build": "nest build",
@@ -12,7 +12,8 @@
     "start:prod": "node dist/main",
     "dev": "nest start --watch",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "node dist/migrate.js",
+    "db:migrate:prod": "node dist/migrate.js",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "seed:problems": "../scraper/.venv/bin/python3 ../scraper/seed_problems.py",

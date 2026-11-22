@@ -1,7 +1,7 @@
 {
-  "name": "Leet-Rooms",
+  "name": "algoroom",
   "version": "1.0.0",
-  "description": "Collaborative & Competitive Real-Time DSA Practice Platform",
+  "description": "AlgoRoom - Collaborative & Competitive Real-Time DSA Practice Platform",
   "private": true,
   "scripts": {
     "dev": "npm run db:start && concurrently -n \"server,web,studio\" -c \"blue,green,magenta\" --kill-others-on-fail \"npm run server:dev\" \"npm run web:dev\" \"npm run db:studio\"",
@@ -21,7 +21,7 @@
     "api:generate": "npm --prefix apps/web run api:generate",
     "api:sync": "npm run swagger:export && npm run api:generate"
   },
-  "author": "Leet-Rooms",
+  "author": "AlgoRoom",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^10.0.6"
