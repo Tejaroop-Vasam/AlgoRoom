@@ -57,7 +57,6 @@ export interface CreateRoomModalData {
     SegmentedControlComponent,
   ],
   templateUrl: './create-room-modal.component.html',
-  styleUrl: './create-room-modal.component.css',
   host: {
     class: 'd-block',
   },
