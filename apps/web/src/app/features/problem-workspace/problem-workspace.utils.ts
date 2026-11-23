@@ -87,10 +87,6 @@ export function mapToProblemData(p: ProblemDetailResponseDto | null): ProblemDat
       output: stc.expectedOutput,
       explanation: stc.explanation,
     })),
-    topics: ['DSA', 'Algorithms'],
-    companies: ['LeetRooms'],
-    likes: 1200,
-    commentsCount: 350,
   };
 }
 

@@ -1,0 +1,59 @@
+<div class="flex flex-wrap items-center gap-3 px-3 py-2 rounded-lg border border-surface-high bg-surface-container-lowest font-sans text-on-surface">
+  <div class="flex items-center gap-2 shrink-0" role="timer" [attr.aria-label]="sessionLabel() + ' timer: ' + timerLabel()">
+    <app-icon name="timer" size="md" [color]="lowTime() ? 'var(--color-error)' : 'var(--color-primary)'"></app-icon>
+    <span class="font-mono text-lg font-bold" [class.text-error]="lowTime()">{{ timerLabel() }}</span>
+    @if (room().status === 'IN_PROGRESS' && !countingDown()) {
+      <span class="text-xs text-muted">{{ remainingMs() !== null ? 'left' : 'elapsed' }}</span>
+    }
+    @if (lowTime()) {
+      <app-badge label="Last minute" icon="warning" variant="error" shape="square" size="sm"></app-badge>
+    }
+  </div>
+
+  <nav class="flex flex-wrap items-center gap-1 min-w-0" [attr.aria-label]="sessionLabel() + ' problems'">
+    @for (id of room().problemIds; track id; let index = $index) {
+      <a
+        class="flex items-center gap-1 px-3 py-1 rounded-md border text-sm text-on-surface no-underline focus-ring"
+        [class.border-primary]="id === currentProblemId()"
+        [class.bg-surface-container]="id === currentProblemId()"
+        [class.font-semibold]="id === currentProblemId()"
+        [class.border-surface-high]="id !== currentProblemId()"
+        [routerLink]="['/problem', id]"
+        [queryParams]="{ room: room().code }"
+        [attr.aria-current]="id === currentProblemId() ? 'page' : null"
+        [title]="titleFor(id, index)">
+        <span class="font-mono text-xs text-muted">{{ index + 1 }}</span>
+        <span class="truncate max-w-48">{{ titleFor(id, index) }}</span>
+        @if (solvedByMe(id)) {
+          <app-icon name="check_circle" size="sm" color="var(--color-secondary)" ariaLabel="Solved"></app-icon>
+        }
+      </a>
+    }
+  </nav>
+
+  <div class="flex items-center gap-2 ml-auto shrink-0">
+    @if (myStanding(); as me) {
+      <app-badge [label]="'#' + me.rank + ' of ' + standings().length" variant="primary" shape="square" size="sm"></app-badge>
+      <span class="text-sm text-muted">{{ me.solvedCount }} / {{ room().problemIds.length }} solved</span>
+    }
+    @if (canFinish()) {
+      <app-button [variant]="confirmingFinish() ? 'primary' : 'surface'" size="sm" icon="check_circle" iconPosition="start"
+        [loading]="finishing()" (clicked)="requestFinish()">
+        {{ confirmingFinish() ? 'Confirm finish' : 'Finish' }}
+      </app-button>
+    }
+    @if (isHost() && room().status === 'IN_PROGRESS') {
+      <app-button variant="outline" size="sm" icon="flag" iconPosition="start" [loading]="ending()" (clicked)="endRace.emit()">
+        End {{ sessionLabel().toLowerCase() }}
+      </app-button>
+    }
+  </div>
+</div>
+
+@if (countingDown()) {
+  <div class="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-overlay backdrop-blur font-sans" role="alert" aria-live="assertive">
+    <span class="text-sm font-semibold uppercase tracking-wider text-on-surface">{{ sessionLabel() }} starts in</span>
+    <span class="text-display font-bold font-mono text-primary">{{ countdownValue() }}</span>
+    <span class="text-sm text-on-surface-variant">Get ready. The problem unlocks when the timer hits zero.</span>
+  </div>
+}

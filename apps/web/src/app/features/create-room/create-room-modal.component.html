@@ -30,7 +30,7 @@
     <app-button variant="primary" (clicked)="close()">Open lobby</app-button>
   </div>
 } @else {
-  <div class="max-h-dialog overflow-y-auto flex flex-col gap-6 pr-2">
+  <div class="max-h-dialog overflow-y-auto flex flex-col gap-6 pt-2 pr-2">
     <div class="d-grid grid-cols-2 gap-4">
       <app-input label="Room name" placeholder="Name your room" [required]="true" [(value)]="roomName"></app-input>
       <app-input label="Your name" autocomplete="nickname" [required]="true" [maxLength]="maxPlayerNameLength"
@@ -92,9 +92,8 @@
               (checkedChange)="setStaged(problem, $event)">
             </app-checkbox>
             <ng-container *ngTemplateOutlet="problemInfo; context: { $implicit: problem, staged: true }"></ng-container>
-            <button type="button" class="flex items-center justify-center p-1 border-0 rounded bg-transparent text-outline hover-bg-surface-high hover-text-on-surface focus-ring cursor-grab" cdkDragHandle [attr.aria-label]="'Reorder ' + problem.title">
-              <app-icon name="drag_indicator" size="md"></app-icon>
-            </button>
+            <app-button cdkDragHandle variant="ghost" size="sm" icon="drag_indicator" [iconOnly]="true"
+              [ariaLabel]="'Reorder ' + problem.title" tooltip="Drag to reorder"></app-button>
           </div>
         }
       </div>
@@ -115,18 +114,10 @@
                 (checkedChange)="setStaged(problem, $event)">
               </app-checkbox>
               <ng-container *ngTemplateOutlet="problemInfo; context: { $implicit: problem }"></ng-container>
-              <button
-                type="button"
-                class="flex items-center justify-center p-1 border-0 rounded bg-transparent text-outline hover-bg-surface-high hover-text-on-surface focus-ring"
-                [class.cursor-pointer]="!stagingFull()"
-                [class.cursor-not-allowed]="stagingFull()"
-                [class.opacity-50]="stagingFull()"
-                [disabled]="stagingFull()"
-                [attr.aria-label]="'Add ' + problem.title"
-                [title]="stagingFull() ? 'Challenge set is full (' + maxStaged + ' max)' : 'Add to challenge set'"
-                (click)="setStaged(problem, true)">
-                <app-icon name="add" size="md"></app-icon>
-              </button>
+              <app-button variant="ghost" size="sm" icon="add" [iconOnly]="true" [disabled]="stagingFull()"
+                [ariaLabel]="'Add ' + problem.title"
+                [tooltip]="stagingFull() ? 'Challenge set is full (' + maxStaged + ' max)' : 'Add to challenge set'"
+                (clicked)="setStaged(problem, true)"></app-button>
             </div>
           } @empty {
             <div class="flex flex-col items-center gap-1 py-6 text-sm text-muted">
@@ -162,25 +153,36 @@
               (removed)="setStaged(problem, false)">
             </app-chip>
           }
-          <button type="button" class="ml-auto p-1 border-0 bg-transparent cursor-pointer hover-underline focus-ring font-mono text-xs text-error" (click)="clearStaged()">Clear All</button>
+          <app-button class="ml-auto" variant="ghost" size="sm" icon="delete_sweep" iconPosition="start" (clicked)="clearStaged()">Clear all</app-button>
         </div>
       }
     </div>
 
-    <div class="w-fit flex flex-col gap-2">
-      <app-input
-        label="Max players"
-        type="number"
-        prefixIcon="group"
-        [min]="minParticipants"
-        [max]="maxParticipants"
-        [step]="1"
-        [hint]="headcountError() ? '' : minParticipants + '–' + maxParticipants + ' players'"
-        [(value)]="headcount">
-      </app-input>
-      @if (headcountError()) {
-        <p class="text-xs text-error m-0">{{ headcountError() }}</p>
-      }
+    <div class="flex flex-wrap items-start gap-6">
+      <div class="w-fit flex flex-col gap-2">
+        <app-input
+          label="Max players"
+          type="number"
+          prefixIcon="group"
+          [min]="minParticipants"
+          [max]="maxParticipants"
+          [step]="1"
+          [hint]="headcountError() ? '' : minParticipants + '–' + maxParticipants + ' players'"
+          [(value)]="headcount">
+        </app-input>
+        @if (headcountError()) {
+          <p class="text-xs text-error m-0">{{ headcountError() }}</p>
+        }
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Time limit</span>
+        <app-segmented-control ariaLabel="Time limit" size="sm" [options]="durationOptions" [(value)]="durationMinutes">
+        </app-segmented-control>
+        <span class="text-xs text-muted">
+          {{ mode() === 'RACE' ? 'The race ends when time runs out or everyone solves every problem.' : 'The session ends when time runs out.' }}
+        </span>
+      </div>
     </div>
   </div>
 

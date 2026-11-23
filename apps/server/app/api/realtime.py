@@ -1,3 +1,4 @@
+import asyncio
 import re
 from datetime import datetime, timezone
 from typing import Annotated
@@ -8,7 +9,7 @@ from pydantic import BaseModel, StringConstraints, ValidationError
 from redis.exceptions import RedisError
 
 from app.core.security import GUEST_TOKEN_PATTERN, guest_id
-from app.schemas.room import ProblemIds, StoredRoom
+from app.schemas.room import ProblemIds, RoomStatus, StoredRoom, UpdateRoomSettingsDto
 from app.services.room_service import normalize_code
 
 NAMESPACE = "/rooms"
@@ -36,6 +37,22 @@ def create_socket_server(app: FastAPI, origins: list[str]) -> socketio.ASGIApp:
         await sio.emit("roomStateUpdated", payload, to=room.code, namespace=NAMESPACE)
 
     app.state.broadcast_room = broadcast
+    race_deadlines: dict[str, asyncio.Task] = {}
+
+    async def finish_at_deadline(code: str, ends_at: datetime):
+        try:
+            await asyncio.sleep(max(0.0, (ends_at - datetime.now(timezone.utc)).total_seconds()))
+            room = await app.state.rooms.finish_if_expired(code)
+            if room:
+                await broadcast(room)
+        except RedisError:
+            sio.logger.warning("Could not finish race %s at its deadline", code)
+        finally:
+            race_deadlines.pop(code, None)
+
+    def schedule_deadline(room: StoredRoom):
+        if room.status == RoomStatus.IN_PROGRESS and room.ends_at and room.code not in race_deadlines:
+            race_deadlines[room.code] = asyncio.create_task(finish_at_deadline(room.code, room.ends_at))
 
     async def event_error(sid: str, message: str):
         payload = {"message": message}
@@ -72,6 +89,7 @@ def create_socket_server(app: FastAPI, origins: list[str]) -> socketio.ASGIApp:
             session["code"] = code
             await sio.save_session(sid, session, namespace=NAMESPACE)
             await broadcast(room)
+            schedule_deadline(room)
             return {"participantId": guest_id(code, session["token"])}
         except ValidationError:
             return await event_error(sid, "Enter a valid room code.")
@@ -116,6 +134,31 @@ def create_socket_server(app: FastAPI, origins: list[str]) -> socketio.ASGIApp:
             code = (await joined_session(sid))["code"]
             room = await app.state.rooms.launch(code, sid)
             await broadcast(room)
+            schedule_deadline(room)
+        except HTTPException as exc:
+            return await event_error(sid, exc.detail)
+        except RedisError:
+            return await event_error(sid, "Room storage is unavailable.")
+
+    @sio.on("finishActivity", namespace=NAMESPACE)
+    async def finish_activity(sid):
+        try:
+            code = (await joined_session(sid))["code"]
+            room = await app.state.rooms.finish_activity(code, sid)
+            await broadcast(room)
+            return {"finished": True}
+        except HTTPException as exc:
+            return await event_error(sid, exc.detail)
+        except RedisError:
+            return await event_error(sid, "Room storage is unavailable.")
+
+    @sio.on("endRace", namespace=NAMESPACE)
+    async def end_race(sid):
+        try:
+            code = (await joined_session(sid))["code"]
+            room = await app.state.rooms.end_race(code, sid)
+            await broadcast(room)
+            return {"ended": room.status == RoomStatus.FINISHED}
         except HTTPException as exc:
             return await event_error(sid, exc.detail)
         except RedisError:
@@ -130,6 +173,21 @@ def create_socket_server(app: FastAPI, origins: list[str]) -> socketio.ASGIApp:
             await broadcast(room)
         except ValidationError:
             return await event_error(sid, "Choose a valid problem order.")
+        except HTTPException as exc:
+            return await event_error(sid, exc.detail)
+        except RedisError:
+            return await event_error(sid, "Room storage is unavailable.")
+
+    @sio.on("updateSettings", namespace=NAMESPACE)
+    async def update_settings(sid, payload):
+        try:
+            settings = UpdateRoomSettingsDto.model_validate(payload)
+            code = (await joined_session(sid))["code"]
+            room = await app.state.rooms.update_settings(code, sid, settings)
+            await broadcast(room)
+            return {"updated": True}
+        except ValidationError:
+            return await event_error(sid, "Check the room settings and try again.")
         except HTTPException as exc:
             return await event_error(sid, exc.detail)
         except RedisError:

@@ -363,8 +363,6 @@ def circle_area(radius):
     ],
     topics: ['Array', 'Hash Table'],
     companies: ['Amazon', 'Google', 'Apple', 'Meta'],
-    likes: 70800,
-    commentsCount: 2100,
   };
 
   readonly workspaceLanguage = signal<string>('cpp');

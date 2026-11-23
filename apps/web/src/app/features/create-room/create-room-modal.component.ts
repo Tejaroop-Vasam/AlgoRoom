@@ -101,6 +101,9 @@ export class CreateRoomModalComponent {
 
   readonly headcount = signal<number>(4);
 
+  readonly durationOptions: SegmentOption<number>[] = [15, 30, 45, 60, 90].map(minutes => ({ label: `${minutes}m`, value: minutes }));
+  readonly durationMinutes = signal<number | undefined>(45);
+
   readonly headcountError = computed(() => {
     const n = Number(this.headcount());
     return Number.isInteger(n) && n >= MIN_PARTICIPANTS && n <= MAX_PARTICIPANTS
@@ -188,6 +191,7 @@ export class CreateRoomModalComponent {
         mode: this.mode(),
         problemIds: this.staged().map(p => p.id),
         maxParticipants: Number(this.headcount()),
+        durationMinutes: this.durationMinutes() ?? 45,
       });
       this.createdRoom.set(room);
     } catch {}

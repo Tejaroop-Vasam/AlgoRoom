@@ -23,12 +23,33 @@ export interface ProblemData {
   hints?: string[];
   topics?: string[];
   companies?: string[];
-  likes?: number;
-  dislikes?: number;
-  commentsCount?: number;
 }
 
 export type ProblemTab = 'description' | 'submissions';
+
+export interface SubmissionRecord {
+  submittedAt: string;
+  language: string;
+  verdict: string;
+  passedCount: number;
+  totalCount: number;
+  runtimeMs: number | null;
+}
+
+const VERDICT_LABELS: Record<string, string> = {
+  ACCEPTED: 'Accepted',
+  WRONG_ANSWER: 'Wrong Answer',
+  TIME_LIMIT_EXCEEDED: 'Time Limit Exceeded',
+  MEMORY_LIMIT_EXCEEDED: 'Memory Limit Exceeded',
+  COMPILE_ERROR: 'Compile Error',
+  RUNTIME_ERROR: 'Runtime Error',
+};
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  python: 'Python',
+  cpp: 'C++',
+  java: 'Java',
+};
 
 @Component({
   selector: 'app-problem-panel',
@@ -51,18 +72,27 @@ export type ProblemTab = 'description' | 'submissions';
 export class ProblemPanelComponent {
   readonly problem = input<ProblemData | null>(null);
   readonly activeTab = model<ProblemTab>('description');
+  readonly submissions = input<SubmissionRecord[]>([]);
 
   readonly problemTabOptions: SegmentOption<ProblemTab>[] = [
     { label: 'Description', value: 'description', icon: 'description' },
     { label: 'Submissions', value: 'submissions', icon: 'history' },
   ];
 
+  verdictLabel(verdict: string): string {
+    return VERDICT_LABELS[verdict] ?? verdict;
+  }
+
+  languageLabel(language: string): string {
+    return LANGUAGE_LABELS[language] ?? language;
+  }
+
+  submittedTime(submittedAt: string): string {
+    return new Date(submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
   readonly showTopics = signal<boolean>(false);
   readonly showCompanies = signal<boolean>(false);
-
-  readonly isLiked = signal<boolean>(false);
-  readonly isDisliked = signal<boolean>(false);
-  readonly isStarred = signal<boolean>(false);
 
   readonly difficultyBadgeVariant = computed(() => {
     const diff = (this.problem()?.difficulty || 'easy').toLowerCase();
@@ -76,11 +106,6 @@ export class ProblemPanelComponent {
     return diff.charAt(0).toUpperCase() + diff.slice(1).toLowerCase();
   });
 
-  readonly likeCount = computed(() => {
-    const base = this.problem()?.likes ?? 70800;
-    return this.isLiked() ? base + 1 : base;
-  });
-
   setTab(tab: ProblemTab): void {
     this.activeTab.set(tab);
   }
@@ -91,23 +116,5 @@ export class ProblemPanelComponent {
 
   toggleCompanies(): void {
     this.showCompanies.update(v => !v);
-  }
-
-  toggleLike(): void {
-    this.isLiked.update(v => !v);
-    if (this.isLiked()) {
-      this.isDisliked.set(false);
-    }
-  }
-
-  toggleDislike(): void {
-    this.isDisliked.update(v => !v);
-    if (this.isDisliked()) {
-      this.isLiked.set(false);
-    }
-  }
-
-  toggleStar(): void {
-    this.isStarred.update(v => !v);
   }
 }

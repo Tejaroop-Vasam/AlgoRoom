@@ -8,6 +8,9 @@ from app.schemas.runner import ExecutionStatus, SubmissionVerdict
 
 PlayerName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]
 ProblemIds = Annotated[list[Annotated[int, Field(gt=0, le=2_147_483_647)]], Field(min_length=1, max_length=5)]
+RaceDuration = Annotated[int, Field(ge=5, le=120)]
+RoomName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
+MaxParticipants = Annotated[int, Field(ge=2, le=8)]
 
 
 class RoomMode(StrEnum):
@@ -23,14 +26,23 @@ class RoomStatus(StrEnum):
 
 class RoomSettingsDto(BaseModel):
     maxParticipants: int
+    durationMinutes: int | None = None
 
 
 class CreateRoomDto(RoomSettingsDto):
-    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
+    name: RoomName
     playerName: PlayerName
     mode: RoomMode
     problemIds: ProblemIds
-    maxParticipants: Annotated[int, Field(ge=2, le=8)] = 4
+    maxParticipants: MaxParticipants = 4
+    durationMinutes: RaceDuration = 45
+
+
+class UpdateRoomSettingsDto(BaseModel):
+    name: RoomName
+    mode: RoomMode
+    maxParticipants: MaxParticipants
+    durationMinutes: RaceDuration
 
 
 class JoinRoomDto(BaseModel):
@@ -46,6 +58,7 @@ class ProblemTelemetryDto(BaseModel):
     totalTests: int = 0
     executionTimeMs: int | None = None
     status: ExecutionStatus | SubmissionVerdict | None = None
+    solvedAt: datetime | None = None
 
 
 class RoomParticipantDto(BaseModel):
@@ -54,6 +67,7 @@ class RoomParticipantDto(BaseModel):
     isHost: bool
     online: bool
     telemetry: dict[int, ProblemTelemetryDto] = Field(default_factory=dict)
+    finishedAt: datetime | None = None
 
 
 class RoomDto(BaseModel):
@@ -67,6 +81,10 @@ class RoomDto(BaseModel):
     problemIds: list[int]
     settings: RoomSettingsDto
     createdAt: datetime
+    startedAt: datetime | None = None
+    endsAt: datetime | None = None
+    finishedAt: datetime | None = None
+    serverTime: datetime
 
 
 class RoomPreviewDto(BaseModel):
@@ -86,6 +104,7 @@ class RoomMember(BaseModel):
     username: str
     socket_id: str | None = None
     telemetry: dict[int, ProblemTelemetryDto] = Field(default_factory=dict)
+    finished_at: datetime | None = None
 
 
 class StoredRoom(BaseModel):
@@ -99,3 +118,6 @@ class StoredRoom(BaseModel):
     settings: RoomSettingsDto
     created_at: datetime
     members: list[RoomMember]
+    started_at: datetime | None = None
+    ends_at: datetime | None = None
+    finished_at: datetime | None = None

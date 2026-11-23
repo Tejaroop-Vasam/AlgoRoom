@@ -113,7 +113,6 @@ async def run_process(command: tuple[str, ...], stdin: str = "", timeout: float 
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
-        # Drain the OS pipes after cancellation so a noisy child cannot block cleanup.
         await asyncio.gather(process.stdout.read(), process.stderr.read(), process.wait())
 
 

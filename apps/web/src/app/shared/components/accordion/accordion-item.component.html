@@ -1,24 +1,22 @@
 <div
   cdkAccordionItem
   #accordionItem="cdkAccordionItem"
-  role="button"
-  tabindex="0"
-  [attr.id]="'accordion-header-' + accordionItem.id"
-  [attr.aria-expanded]="accordionItem.expanded"
-  [attr.aria-controls]="'accordion-body-' + accordionItem.id"
   [(expanded)]="expanded"
   [disabled]="disabled()"
-  class="w-full rounded-lg border border-surface-highest overflow-hidden transition-colors"
+  class="w-full rounded-lg border border-surface-highest overflow-hidden"
   [class.bg-surface-container-low]="accordionItem.expanded"
   [class.bg-surface-container]="!accordionItem.expanded"
   [class.opacity-50]="disabled()">
   <button
     type="button"
+    [attr.id]="'accordion-header-' + accordionItem.id"
+    [attr.aria-expanded]="accordionItem.expanded"
+    [attr.aria-controls]="'accordion-body-' + accordionItem.id"
     (click)="accordionItem.toggle()"
     [disabled]="disabled()"
-    class="w-full flex items-center justify-between p-3.5 text-left bg-transparent border-0 text-white cursor-pointer select-none transition-colors hover-bg-surface-container-high"
+    class="w-full flex items-center justify-between gap-2 p-3 text-left bg-transparent border-0 text-white cursor-pointer select-none hover-bg-surface-high focus-ring"
     [class.cursor-not-allowed]="disabled()">
-    <div class="flex items-center gap-2.5 min-w-0">
+    <div class="flex items-center gap-2 min-w-0">
       @if (icon()) {
         <app-icon [name]="icon()!" size="sm" [color]="iconColor()"></app-icon>
       }
@@ -30,16 +28,11 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-2.5 flex-shrink-0">
+    <div class="flex items-center gap-2 shrink-0">
       @if (badge()) {
         <app-badge [label]="badge()!" [variant]="badgeVariant()" size="sm"></app-badge>
       }
-      <app-icon
-        name="expand_more"
-        size="sm"
-        class="transition-transform duration-200"
-        [class.rotate-180]="accordionItem.expanded">
-      </app-icon>
+      <app-icon [name]="accordionItem.expanded ? 'expand_less' : 'expand_more'" size="sm"></app-icon>
     </div>
   </button>
 
