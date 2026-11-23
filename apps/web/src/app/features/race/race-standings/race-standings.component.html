@@ -1,0 +1,82 @@
+@if (variant() === 'compact') {
+  <ol class="m-0 p-0 list-none flex flex-col gap-2" aria-label="Race standings">
+    @for (row of standings(); track row.player.id) {
+      <li class="flex items-center gap-2 px-3 py-2 rounded-md border"
+        [class.border-primary]="row.player.id === participantId()"
+        [class.border-surface-high]="row.player.id !== participantId()">
+        <span class="w-6 font-mono text-sm font-bold" [class.text-primary]="row.rank === 1">#{{ row.rank }}</span>
+        <app-avatar [name]="row.player.username" size="sm"></app-avatar>
+        <span class="flex-1 min-w-0 text-sm font-medium truncate" [title]="row.player.username">
+          {{ row.player.username }}{{ row.player.id === participantId() ? ' (you)' : '' }}
+        </span>
+        <span class="font-mono text-xs text-muted">{{ row.solvedCount }}/{{ problemIds().length }}</span>
+        @if (row.solvedCount) {
+          <span class="font-mono text-xs text-muted">{{ formatDuration(row.finishMs) }}</span>
+        }
+        @if (row.endedMs !== null) {
+          <app-icon name="flag" size="sm" color="var(--color-outline)" ariaLabel="Finished"></app-icon>
+        }
+      </li>
+    }
+  </ol>
+} @else {
+  <div class="overflow-x-auto rounded-lg border border-surface-high">
+    <table class="w-full text-sm" aria-label="Final race results">
+      <thead>
+        <tr class="bg-surface-container-low text-left text-xs uppercase tracking-wider text-on-surface-variant">
+          <th scope="col" class="px-3 py-2 font-semibold">Rank</th>
+          <th scope="col" class="px-3 py-2 font-semibold">Player</th>
+          <th scope="col" class="px-3 py-2 font-semibold">Solved</th>
+          <th scope="col" class="px-3 py-2 font-semibold">Finish time</th>
+          @for (id of problemIds(); track id; let index = $index) {
+            <th scope="col" class="px-3 py-2 font-semibold" [title]="titleFor(id, index)">
+              <span class="d-block truncate max-w-48">{{ index + 1 }}. {{ titleFor(id, index) }}</span>
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of standings(); track row.player.id) {
+          <tr class="border-t border-surface-high" [class.bg-surface-container]="row.player.id === participantId()">
+            <td class="px-3 py-2">
+              @if (row.rank <= 3 && row.solvedCount) {
+                <app-badge [label]="'#' + row.rank" [variant]="row.rank === 1 ? 'tertiary' : 'surface'" shape="square" size="sm"></app-badge>
+              } @else {
+                <span class="font-mono text-muted">#{{ row.rank }}</span>
+              }
+            </td>
+            <td class="px-3 py-2">
+              <span class="flex items-center gap-2">
+                <app-avatar [name]="row.player.username" size="sm"></app-avatar>
+                <span class="flex flex-col">
+                  <span class="font-medium">{{ row.player.username }}{{ row.player.id === participantId() ? ' (you)' : '' }}</span>
+                  @if (row.endedMs !== null) {
+                    <span class="text-xs text-muted">Finished at {{ formatDuration(row.endedMs) }}</span>
+                  }
+                </span>
+              </span>
+            </td>
+            <td class="px-3 py-2 font-mono">{{ row.solvedCount }} / {{ problemIds().length }}</td>
+            <td class="px-3 py-2 font-mono">{{ row.solvedCount ? formatDuration(row.finishMs) : '—' }}</td>
+            @for (problem of row.problems; track problem.problemId) {
+              <td class="px-3 py-2">
+                @if (problem.solved) {
+                  <span class="flex items-center gap-1 font-mono text-success">
+                    <app-icon name="check_circle" size="sm" ariaLabel="Solved"></app-icon>
+                    {{ formatDuration(problem.solveMs ?? 0) }}
+                  </span>
+                } @else {
+                  <span class="flex items-center gap-1 text-muted">
+                    <app-icon name="cancel" size="sm" ariaLabel="Not solved"></app-icon>
+                    {{ problem.totalTests ? problem.passedTests + '/' + problem.totalTests + ' tests' : 'Not attempted' }}
+                  </span>
+                }
+                <span class="d-block text-xs text-muted">{{ problem.submissions }} {{ problem.submissions === 1 ? 'submission' : 'submissions' }}</span>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

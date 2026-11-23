@@ -1,6 +1,6 @@
 import secrets
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 
@@ -13,15 +13,23 @@ from app.schemas.room import (
     ProblemTelemetryDto,
     RoomDto,
     RoomMember,
+    RoomMode,
     RoomParticipantDto,
     RoomPreviewDto,
     RoomSettingsDto,
     RoomStatus,
     StoredRoom,
+    UpdateRoomSettingsDto,
 )
 from app.schemas.runner import ExecutionResultDto, ExecutionStatus, SubmissionEvaluationResultDto, SubmissionVerdict
 
 CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+COUNTDOWN_SECONDS = 3
+DEFAULT_DURATION_MINUTES = 45
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 def normalize_code(code: str) -> str:
@@ -41,6 +49,7 @@ class RoomService:
                 isHost=member.id == room.host_id,
                 online=bool(member.socket_id),
                 telemetry=member.telemetry,
+                finishedAt=member.finished_at,
             )
             for member in room.members
         ]
@@ -56,6 +65,10 @@ class RoomService:
             problemIds=room.problem_ids,
             settings=room.settings,
             createdAt=room.created_at,
+            startedAt=room.started_at,
+            endsAt=room.ends_at,
+            finishedAt=room.finished_at,
+            serverTime=utc_now(),
         )
 
     async def create(self, body: CreateRoomDto, token: str, db: SessionFactory) -> StoredRoom:
@@ -73,8 +86,11 @@ class RoomService:
                 status=RoomStatus.LOBBY,
                 host_id=host_id,
                 problem_ids=body.problemIds,
-                settings=RoomSettingsDto(maxParticipants=body.maxParticipants),
-                created_at=datetime.now(timezone.utc),
+                settings=RoomSettingsDto(
+                    maxParticipants=body.maxParticipants,
+                    durationMinutes=body.durationMinutes,
+                ),
+                created_at=utc_now(),
                 members=[RoomMember(id=host_id, username=body.playerName)],
             )
             if await self.repository.insert(room):
@@ -103,6 +119,7 @@ class RoomService:
         participant_id = guest_id(normalize_code(code), token)
 
         def change(room: StoredRoom) -> bool:
+            self._finish_if_expired(room, utc_now())
             member = next((candidate for candidate in room.members if candidate.id == participant_id), None)
             if member is None:
                 if username is None:
@@ -154,10 +171,53 @@ class RoomService:
             if room.status != RoomStatus.LOBBY:
                 return False
             room.status = RoomStatus.IN_PROGRESS
+            room.started_at = utc_now() + timedelta(seconds=COUNTDOWN_SECONDS)
+            room.settings.durationMinutes = room.settings.durationMinutes or DEFAULT_DURATION_MINUTES
+            room.ends_at = room.started_at + timedelta(minutes=room.settings.durationMinutes)
             return True
 
         room, _ = await self._update(code, change)
         return room
+
+    async def end_race(self, code: str, sid: str) -> StoredRoom:
+        def change(room: StoredRoom) -> bool:
+            member = self._require_socket_member(room, sid)
+            if room.host_id != member.id:
+                raise HTTPException(403, "Only the host can end the race.")
+            if room.status != RoomStatus.IN_PROGRESS:
+                return False
+            self._finish(room, utc_now())
+            return True
+
+        room, _ = await self._update(code, change)
+        return room
+
+    async def finish_activity(self, code: str, sid: str) -> StoredRoom:
+        def change(room: StoredRoom) -> bool:
+            member = self._require_socket_member(room, sid)
+            now = utc_now()
+            if self._finish_if_expired(room, now):
+                return True
+            if room.status != RoomStatus.IN_PROGRESS or member.finished_at is not None:
+                return False
+            if room.started_at and now < room.started_at:
+                raise HTTPException(409, "Wait for the session to start.")
+            member.finished_at = now
+            if self._everyone_done(room):
+                self._finish(room, now)
+            return True
+
+        room, _ = await self._update(code, change)
+        return room
+
+    async def finish_if_expired(self, code: str) -> StoredRoom | None:
+        result = await self.repository.update(
+            normalize_code(code), lambda room: self._finish_if_expired(room, utc_now()),
+        )
+        if result is None:
+            return None
+        room, changed = result
+        return room if changed else None
 
     async def reorder_problems(self, code: str, sid: str, problem_ids: list[int]) -> StoredRoom:
         def change(room: StoredRoom) -> bool:
@@ -174,6 +234,24 @@ class RoomService:
         room, _ = await self._update(code, change)
         return room
 
+    async def update_settings(self, code: str, sid: str, settings: UpdateRoomSettingsDto) -> StoredRoom:
+        def change(room: StoredRoom) -> bool:
+            member = self._require_socket_member(room, sid)
+            if room.host_id != member.id:
+                raise HTTPException(403, "Only the host can change the room settings.")
+            if room.status != RoomStatus.LOBBY:
+                raise HTTPException(409, "Settings are locked once the room starts.")
+            if settings.maxParticipants < len(room.members):
+                raise HTTPException(400, f"There are already {len(room.members)} players in the room.")
+            room.name = settings.name
+            room.mode = settings.mode
+            room.settings.maxParticipants = settings.maxParticipants
+            room.settings.durationMinutes = settings.durationMinutes
+            return True
+
+        room, _ = await self._update(code, change)
+        return room
+
     async def active_member(self, code: str, sid: str) -> RoomMember:
         return self._require_socket_member(await self.get(code), sid)
 
@@ -184,10 +262,15 @@ class RoomService:
         participant_id = guest_id(code, token)
 
         def change(room: StoredRoom) -> bool:
+            now = utc_now()
+            if self._finish_if_expired(room, now):
+                return True
             if room.status != RoomStatus.IN_PROGRESS or problem_id not in room.problem_ids:
                 return False
+            if room.started_at and now < room.started_at:
+                return False
             member = next((member for member in room.members if member.id == participant_id), None)
-            if member is None:
+            if member is None or member.finished_at is not None:
                 return False
 
             stats = member.telemetry.setdefault(problem_id, ProblemTelemetryDto())
@@ -210,10 +293,41 @@ class RoomService:
 
             stats.compileErrors += int(ExecutionStatus.COMPILE_ERROR in verdicts)
             stats.runtimeErrors += int(ExecutionStatus.RUNTIME_ERROR in verdicts)
+            if isinstance(result, SubmissionEvaluationResultDto) and result.passed and stats.solvedAt is None:
+                stats.solvedAt = now
+                if self._everyone_done(room):
+                    self._finish(room, now)
             return True
 
         updated = await self.repository.update(code, change)
         return updated[0] if updated is not None and updated[1] else None
+
+    @staticmethod
+    def _finish(room: StoredRoom, at: datetime) -> None:
+        room.status = RoomStatus.FINISHED
+        room.finished_at = at
+
+    def _finish_if_expired(self, room: StoredRoom, now: datetime) -> bool:
+        if room.status == RoomStatus.IN_PROGRESS and room.started_at and room.ends_at is None:
+            room.settings.durationMinutes = room.settings.durationMinutes or DEFAULT_DURATION_MINUTES
+            room.ends_at = room.started_at + timedelta(minutes=room.settings.durationMinutes)
+        if room.status == RoomStatus.IN_PROGRESS and room.ends_at and now >= room.ends_at:
+            self._finish(room, room.ends_at)
+            return True
+        return False
+
+    @staticmethod
+    def _solved_everything(room: StoredRoom, member: RoomMember) -> bool:
+        return all(
+            (stats := member.telemetry.get(problem_id)) is not None and stats.solvedAt is not None
+            for problem_id in room.problem_ids
+        )
+
+    def _everyone_done(self, room: StoredRoom) -> bool:
+        return all(
+            member.finished_at is not None or (room.mode == RoomMode.RACE and self._solved_everything(room, member))
+            for member in room.members
+        )
 
     async def _update(self, code: str, change: Callable[[StoredRoom], bool]) -> tuple[StoredRoom, bool]:
         result = await self.repository.update(normalize_code(code), change)

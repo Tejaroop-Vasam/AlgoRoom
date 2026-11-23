@@ -1,0 +1,98 @@
+<section class="w-full max-w-6xl mx-auto p-6 flex flex-col gap-6 font-sans text-on-surface">
+  @if (room(); as finished) {
+    @if (stillRunning()) {
+      <div class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-lg border border-primary bg-surface-container-lowest" role="status">
+        <app-icon name="hourglass_top" size="md" color="var(--color-primary)"></app-icon>
+        <span class="text-sm font-semibold">You finished. The {{ isRace() ? 'race' : 'session' }} is still running.</span>
+        <span class="text-sm text-muted">
+          {{ playersStillGoing() }} {{ playersStillGoing() === 1 ? 'player is' : 'players are' }} still playing.
+          @if (remainingMs() !== null) {
+            Ends in {{ formatDuration(remainingMs()!) }}.
+          }
+          Standings update live.
+        </span>
+      </div>
+    }
+    <header class="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-surface-high">
+      <div class="flex flex-col gap-2 min-w-0">
+        <span class="font-mono text-xs font-bold uppercase tracking-wider text-primary">{{ isRace() ? 'Race' : 'Session' }} results · {{ code }}</span>
+        <h1 class="m-0 text-3xl font-semibold break-words">{{ finished.name }}</h1>
+        <p class="m-0 text-sm text-muted">
+          @if (stillRunning()) {
+            Live standings so far.
+          } @else {
+            {{ endedByTime() ? 'Time ran out.' : (isRace() ? 'Race' : 'Session') + ' finished.' }}
+          }
+          @if (raceLengthMs() !== null) {
+            Lasted {{ formatDuration(raceLengthMs()!) }} across {{ finished.problemIds.length }}
+            {{ finished.problemIds.length === 1 ? 'problem' : 'problems' }}.
+          }
+        </p>
+      </div>
+      <app-button variant="primary" icon="home" iconPosition="start" (clicked)="leave()">Back to home</app-button>
+    </header>
+
+    <div class="d-grid grid-cols-1 lg-grid-cols-3 gap-4">
+      @if (isRace()) {
+        <div class="flex items-center gap-3 p-4 rounded-lg border border-surface-high bg-surface-container-lowest">
+          <app-icon name="emoji_events" size="xl" color="var(--color-tertiary)"></app-icon>
+          <div class="flex flex-col min-w-0">
+            <span class="text-xs uppercase tracking-wider text-muted">Winner</span>
+            @if (winner(); as top) {
+              <span class="text-lg font-semibold truncate">{{ top.player.username }}</span>
+              <span class="text-sm text-muted">{{ top.solvedCount }} solved · finished {{ formatDuration(top.finishMs) }}</span>
+            } @else {
+              <span class="text-lg font-semibold">No one solved a problem</span>
+            }
+          </div>
+        </div>
+      }
+
+      @if (me(); as mine) {
+        <div class="flex items-center gap-3 p-4 rounded-lg border border-primary bg-surface-container-lowest">
+          <app-icon name="military_tech" size="xl" color="var(--color-primary)"></app-icon>
+          <div class="flex flex-col min-w-0">
+            <span class="text-xs uppercase tracking-wider text-muted">{{ isRace() ? 'Your finish' : 'Your progress' }}</span>
+            @if (isRace()) {
+              <span class="text-lg font-semibold">#{{ mine.rank }} of {{ standings().length }}</span>
+            }
+            <span class="text-sm text-muted">
+              {{ mine.solvedCount }} / {{ finished.problemIds.length }} solved{{ mine.solvedCount ? ' · finished ' + formatDuration(mine.finishMs) : '' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2 p-4 rounded-lg border border-surface-high bg-surface-container-lowest">
+          <span class="text-xs uppercase tracking-wider text-muted">Your problems</span>
+          <ul class="m-0 p-0 list-none flex flex-col gap-1">
+            @for (problem of mine.problems; track problem.problemId; let index = $index) {
+              <li class="flex items-center gap-2 text-sm">
+                <app-icon [name]="problem.solved ? 'check_circle' : 'cancel'" size="sm"
+                  [color]="problem.solved ? 'var(--color-secondary)' : 'var(--color-outline)'"></app-icon>
+                <span class="flex-1 min-w-0 truncate">{{ problemTitles()[problem.problemId] ?? 'Problem ' + (index + 1) }}</span>
+                <span class="font-mono text-xs text-muted">{{ problem.solved ? formatDuration(problem.solveMs ?? 0) : 'Unsolved' }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+
+    <section class="flex flex-col gap-3">
+      <div class="flex items-center gap-2">
+        <h2 class="m-0 text-xl font-semibold">{{ isRace() ? 'Standings' : 'Players' }}</h2>
+        <app-badge [label]="standings().length + ' players'" variant="surface" shape="square" size="sm"></app-badge>
+      </div>
+      <app-race-standings variant="full" [standings]="standings()" [problemIds]="finished.problemIds"
+        [problemTitles]="problemTitles()" [participantId]="participantId()"></app-race-standings>
+      @if (isRace()) {
+        <p class="m-0 text-xs text-muted">Ranked by problems solved, then the time of the last solve, then fewest submissions.</p>
+      }
+    </section>
+  } @else if (joinFailed()) {
+    <p class="m-0 text-sm text-muted">Couldn’t load the results for this room.</p>
+    <app-button variant="ghost" icon="arrow_back" iconPosition="start" (clicked)="leave()">Back to home</app-button>
+  } @else {
+    <p class="m-0 text-sm text-muted" role="status">Loading results…</p>
+  }
+</section>

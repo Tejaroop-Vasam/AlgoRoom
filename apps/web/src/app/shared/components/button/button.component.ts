@@ -26,6 +26,10 @@ export class ButtonComponent {
   readonly loading = input<boolean>(false);
   readonly icon = input<string | undefined>(undefined);
   readonly iconPosition = input<'start' | 'end'>('end');
+  readonly iconOnly = input<boolean>(false);
+  readonly ariaLabel = input<string | undefined>(undefined);
+  readonly tooltip = input<string | undefined>(undefined);
+  readonly ariaExpanded = input<boolean | undefined>(undefined);
 
   readonly clicked = output<MouseEvent>();
 

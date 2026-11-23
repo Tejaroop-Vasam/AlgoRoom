@@ -39,6 +39,7 @@ export interface CreateRoomRequest {
   mode: RoomMode;
   problemIds: number[];
   maxParticipants: number;
+  durationMinutes?: number;
 }
 
 export interface RoomParticipant {
@@ -47,6 +48,7 @@ export interface RoomParticipant {
   isHost: boolean;
   online: boolean;
   telemetry?: Record<number, RoomProblemTelemetry>;
+  finishedAt?: string | null;
 }
 
 export interface RoomProblemTelemetry {
@@ -58,6 +60,7 @@ export interface RoomProblemTelemetry {
   totalTests: number;
   executionTimeMs: number | null;
   status: ExecutionResultDto['status'] | SubmissionEvaluationResultDto['results'][number]['verdict'] | null;
+  solvedAt?: string | null;
 }
 
 export interface Room {
@@ -69,8 +72,12 @@ export interface Room {
   host: RoomParticipant;
   participants: RoomParticipant[];
   problemIds: number[];
-  settings: { maxParticipants: number };
+  settings: { maxParticipants: number; durationMinutes?: number | null };
   createdAt: string;
+  startedAt?: string | null;
+  endsAt?: string | null;
+  finishedAt?: string | null;
+  serverTime: string;
 }
 
 export interface RoomPreview {
