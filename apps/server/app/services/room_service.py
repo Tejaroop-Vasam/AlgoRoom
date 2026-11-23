@@ -10,6 +10,7 @@ from app.repositories.problem_repository import count_problems
 from app.repositories.room_repository import RoomRepository
 from app.schemas.room import (
     CreateRoomDto,
+    ProblemTelemetryDto,
     RoomDto,
     RoomMember,
     RoomParticipantDto,
@@ -18,6 +19,7 @@ from app.schemas.room import (
     RoomStatus,
     StoredRoom,
 )
+from app.schemas.runner import ExecutionResultDto, ExecutionStatus, SubmissionEvaluationResultDto, SubmissionVerdict
 
 CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
@@ -38,6 +40,7 @@ class RoomService:
                 username=member.username,
                 isHost=member.id == room.host_id,
                 online=bool(member.socket_id),
+                telemetry=member.telemetry,
             )
             for member in room.members
         ]
@@ -72,7 +75,7 @@ class RoomService:
                 problem_ids=body.problemIds,
                 settings=RoomSettingsDto(maxParticipants=body.maxParticipants),
                 created_at=datetime.now(timezone.utc),
-                members=[RoomMember(id=host_id, username="Guest")],
+                members=[RoomMember(id=host_id, username=body.playerName)],
             )
             if await self.repository.insert(room):
                 return room
@@ -94,16 +97,22 @@ class RoomService:
             isMember=any(participant.id == participant_id for participant in room.participants),
         )
 
-    async def join(self, code: str, token: str, sid: str | None = None) -> StoredRoom:
+    async def join(
+        self, code: str, token: str, *, username: str | None = None, sid: str | None = None,
+    ) -> StoredRoom:
         participant_id = guest_id(normalize_code(code), token)
 
         def change(room: StoredRoom) -> bool:
             member = next((candidate for candidate in room.members if candidate.id == participant_id), None)
             if member is None:
+                if username is None:
+                    raise HTTPException(403, "Enter your name to join the room.")
                 if len(room.members) >= room.settings.maxParticipants:
                     raise HTTPException(400, "This room is full.")
-                member = RoomMember(id=participant_id, username=f"Guest {participant_id[:4].upper()}")
+                member = RoomMember(id=participant_id, username=username)
                 room.members.append(member)
+            elif username is not None:
+                member.username = username
             if sid:
                 member.socket_id = sid
             return True
@@ -150,8 +159,61 @@ class RoomService:
         room, _ = await self._update(code, change)
         return room
 
+    async def reorder_problems(self, code: str, sid: str, problem_ids: list[int]) -> StoredRoom:
+        def change(room: StoredRoom) -> bool:
+            member = self._require_socket_member(room, sid)
+            if room.host_id != member.id:
+                raise HTTPException(403, "Only the host can change the problem order.")
+            if room.status != RoomStatus.LOBBY:
+                raise HTTPException(409, "The problem order is locked once the room starts.")
+            if sorted(problem_ids) != sorted(room.problem_ids):
+                raise HTTPException(400, "Use the same problems when changing their order.")
+            room.problem_ids = problem_ids
+            return True
+
+        room, _ = await self._update(code, change)
+        return room
+
     async def active_member(self, code: str, sid: str) -> RoomMember:
         return self._require_socket_member(await self.get(code), sid)
+
+    async def record_attempt(
+        self, code: str, token: str, problem_id: int, result: ExecutionResultDto | SubmissionEvaluationResultDto,
+    ) -> StoredRoom | None:
+        code = normalize_code(code)
+        participant_id = guest_id(code, token)
+
+        def change(room: StoredRoom) -> bool:
+            if room.status != RoomStatus.IN_PROGRESS or problem_id not in room.problem_ids:
+                return False
+            member = next((member for member in room.members if member.id == participant_id), None)
+            if member is None:
+                return False
+
+            stats = member.telemetry.setdefault(problem_id, ProblemTelemetryDto())
+            if isinstance(result, ExecutionResultDto):
+                stats.runs += 1
+                stats.status = result.status
+                stats.executionTimeMs = result.executionTimeMs
+                verdicts = {result.status}
+            else:
+                stats.submissions += 1
+                if result.totalCount and result.passedCount * stats.totalTests >= stats.passedTests * result.totalCount:
+                    stats.passedTests = result.passedCount
+                    stats.totalTests = result.totalCount
+                stats.status = SubmissionVerdict.ACCEPTED if result.passed else next(
+                    (case.verdict for case in result.results if case.verdict != SubmissionVerdict.ACCEPTED),
+                    SubmissionVerdict.WRONG_ANSWER,
+                )
+                stats.executionTimeMs = sum(case.executionTimeMs for case in result.results)
+                verdicts = {case.verdict for case in result.results}
+
+            stats.compileErrors += int(ExecutionStatus.COMPILE_ERROR in verdicts)
+            stats.runtimeErrors += int(ExecutionStatus.RUNTIME_ERROR in verdicts)
+            return True
+
+        updated = await self.repository.update(code, change)
+        return updated[0] if updated is not None and updated[1] else None
 
     async def _update(self, code: str, change: Callable[[StoredRoom], bool]) -> tuple[StoredRoom, bool]:
         result = await self.repository.update(normalize_code(code), change)

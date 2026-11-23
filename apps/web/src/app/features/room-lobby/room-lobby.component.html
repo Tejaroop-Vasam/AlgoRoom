@@ -1,64 +1,125 @@
-<section class="w-full max-w-1440 mx-auto p-6 flex flex-col gap-5">
-  <div class="flex justify-between items-center gap-4">
-    <div>
-      <h1 class="m-0 text-2xl font-semibold">{{ room()?.name || 'Room lobby' }}</h1>
-      <p class="m-0 text-sm text-muted">{{ code }} · {{ connected() ? 'Connected' : 'Connecting…' }}</p>
+<section class="w-full max-w-5xl mx-auto p-6 flex flex-col gap-6 font-sans text-on-surface">
+  <header class="flex items-center justify-between gap-4 pb-4 border-b border-surface-high">
+    <div class="flex flex-col gap-2 min-w-0">
+      <div class="flex items-center gap-2 text-sm text-muted">
+        <span>Room code</span>
+        <span class="font-mono font-semibold text-primary">{{ code }}</span>
+        <span aria-hidden="true">·</span>
+        <span role="status">{{ connected() ? 'Connected' : joinFailed() ? 'Could not join' : 'Connecting…' }}</span>
+      </div>
+      <h1 class="m-0 text-3xl font-semibold break-words">{{ room()?.name || 'Room lobby' }}</h1>
+      @if (room(); as activeRoom) {
+        <div class="flex gap-2">
+          <app-badge [label]="activeRoom.mode === 'RACE' ? 'Race Mode' : 'Co-op Mode'"
+            [icon]="activeRoom.mode === 'RACE' ? 'sports_score' : 'handshake'" variant="primary" size="sm"></app-badge>
+          <app-badge
+            [label]="activeRoom.status === 'LOBBY' ? 'Waiting to start' : activeRoom.status === 'IN_PROGRESS' ? 'In progress' : 'Finished'"
+            variant="surface" size="sm"></app-badge>
+        </div>
+      }
     </div>
-    <div class="flex gap-2">
-      <app-button variant="outline" icon="link" (clicked)="copyInvite()">Copy invite link</app-button>
+    <div class="flex items-center gap-2 shrink-0">
+      @if (room()) {
+        <app-button variant="outline" icon="link" (clicked)="copyInvite()">Copy invite link</app-button>
+      }
       <app-button variant="ghost" (clicked)="leave()">Leave room</app-button>
     </div>
-  </div>
+  </header>
 
   @if (room(); as activeRoom) {
-    <div class="d-grid grid-cols-2 gap-6">
-      <div class="flex flex-col gap-4">
-        <section class="flex flex-col gap-2">
-          <h2 class="m-0 text-lg font-medium">Players</h2>
-          <ul class="m-0 pl-5">
+    <div class="d-grid grid-cols-3 gap-6 items-start">
+      <section class="col-span-2 flex flex-col gap-4 p-5 rounded-lg border border-surface-high bg-surface-container-lowest">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex flex-col gap-1">
+            <h2 class="m-0 text-xl font-semibold">Selected problems</h2>
+            @if (canReorder()) {
+              <p class="m-0 text-sm text-muted">Use the arrows to set the order before you start.</p>
+            } @else if (activeRoom.status === 'LOBBY' && !isHost(activeRoom)) {
+              <p class="m-0 text-sm text-muted">{{ activeRoom.host.username }} will start the room.</p>
+            }
+          </div>
+          @if (activeRoom.status === 'LOBBY' && isHost(activeRoom)) {
+            <app-button icon="play_arrow" iconPosition="start" [disabled]="!connected() || reordering()"
+              (clicked)="launch()">Start room</app-button>
+          }
+        </div>
+
+        <ol class="m-0 p-0 list-none flex flex-col gap-2">
+          @for (id of activeRoom.problemIds; track id; let index = $index) {
+            @let problem = problemDetails()[id];
+            @let title = problem?.title || 'Problem #' + id;
+            <li class="flex items-center gap-3 rounded-md bg-surface-container-low px-3 py-2">
+              <span class="flex items-center justify-center w-8 h-8 rounded-md bg-surface-container text-sm font-medium shrink-0">
+                {{ index + 1 }}
+              </span>
+              @if (activeRoom.status === 'IN_PROGRESS') {
+                <a class="flex-1 min-w-0 text-sm font-semibold text-primary break-words"
+                  [routerLink]="['/problem', id]" [queryParams]="{ room: code }">{{ title }}</a>
+              } @else {
+                <span class="flex-1 min-w-0 text-sm font-semibold break-words">{{ title }}</span>
+              }
+              @if (problem) {
+                <app-badge [label]="problem.difficulty | titlecase" size="sm"
+                  [variant]="problem.difficulty === 'EASY' ? 'secondary' : problem.difficulty === 'MEDIUM' ? 'tertiary' : 'error'">
+                </app-badge>
+              }
+              @if (canReorder()) {
+                <div class="flex gap-1 shrink-0">
+                  <button type="button" [attr.aria-label]="'Move ' + title + ' up'" title="Move up"
+                    class="flex items-center justify-center w-8 h-8 rounded-md border-0 bg-transparent text-on-surface hover-bg-surface-high focus-ring"
+                    [disabled]="index === 0 || !connected() || reordering()"
+                    [class.opacity-50]="index === 0 || !connected() || reordering()"
+                    (click)="moveProblem(index, -1)">
+                    <app-icon name="keyboard_arrow_up" size="md"></app-icon>
+                  </button>
+                  <button type="button" [attr.aria-label]="'Move ' + title + ' down'" title="Move down"
+                    class="flex items-center justify-center w-8 h-8 rounded-md border-0 bg-transparent text-on-surface hover-bg-surface-high focus-ring"
+                    [disabled]="index === activeRoom.problemIds.length - 1 || !connected() || reordering()"
+                    [class.opacity-50]="index === activeRoom.problemIds.length - 1 || !connected() || reordering()"
+                    (click)="moveProblem(index, 1)">
+                    <app-icon name="keyboard_arrow_down" size="md"></app-icon>
+                  </button>
+                </div>
+              }
+              @if (activeRoom.status === 'IN_PROGRESS') {
+                <app-icon name="arrow_outward" size="sm" class="text-muted"></app-icon>
+              }
+            </li>
+          }
+        </ol>
+      </section>
+
+      <div class="flex flex-col gap-4 min-w-0">
+        <section class="flex flex-col gap-3 p-4 rounded-lg border border-surface-high bg-surface-container-lowest">
+          <div class="flex justify-between items-center gap-2">
+            <h2 class="m-0 text-lg font-semibold">Players</h2>
+            <span class="text-sm text-muted">{{ activeRoom.participants.length }} / {{ activeRoom.settings.maxParticipants }}</span>
+          </div>
+          <ul class="m-0 p-0 list-none flex flex-col gap-3">
             @for (player of activeRoom.participants; track player.id) {
-              <li>
-                {{ player.username }}
-                @if (player.isHost) { <span class="text-sm text-muted">· Host</span> }
-                @if (!player.online) { <span class="text-sm text-muted">· Offline</span> }
+              <li class="flex items-center gap-2">
+                <app-avatar class="shrink-0" [name]="player.username" size="md"></app-avatar>
+                <div class="flex flex-col flex-1 min-w-0">
+                  <span class="text-sm font-medium truncate" [title]="player.username">
+                    {{ player.username }}{{ player.id === participantId() ? ' (you)' : '' }}
+                  </span>
+                  <span class="text-xs" [class.text-success]="player.online" [class.text-muted]="!player.online">
+                    {{ player.online ? 'Online' : 'Offline' }}
+                  </span>
+                </div>
+                @if (player.isHost) {
+                  <app-badge label="Host" variant="surface" size="sm"></app-badge>
+                }
               </li>
             }
           </ul>
         </section>
-        <section class="flex flex-col gap-2">
-          <h2 class="m-0 text-lg font-medium">Problems</h2>
-          <ol class="m-0 pl-5">
-            @for (id of activeRoom.problemIds; track id) {
-              <li>
-                @if (activeRoom.status === 'IN_PROGRESS') {
-                  <a class="text-primary" [routerLink]="['/problem', id]" [queryParams]="{ room: code }">{{ titles()[id] }}</a>
-                } @else {
-                  {{ titles()[id] }}
-                }
-              </li>
-            }
-          </ol>
-          @if (activeRoom.status === 'LOBBY' && isHost(activeRoom)) {
-            <app-button [disabled]="!connected()" (clicked)="launch()">Start room</app-button>
-          }
-        </section>
-      </div>
 
-      <section class="flex flex-col gap-3">
-        <h2 class="m-0 text-lg font-medium">Room chat</h2>
-        <div class="max-h-dialog overflow-y-auto flex flex-col gap-2 p-3 rounded-md border border-surface-high" role="log">
-          @for (message of messages(); track $index) {
-            <p class="m-0 break-words"><strong>{{ message.user.username }}</strong> {{ message.message }}</p>
-          } @empty {
-            <p class="m-0 text-sm text-muted">No messages yet.</p>
-          }
-        </div>
-        <form class="flex gap-2" (submit)="sendChat($event, message)">
-          <input #message class="flex-1 min-w-0 rounded-md border border-surface-high p-2 bg-surface text-on-surface"
-            aria-label="Chat message" placeholder="Write a message" maxlength="2000" required>
-          <app-button type="submit" [disabled]="!connected()">Send</app-button>
-        </form>
-      </section>
+        <app-room-chat class="p-4 rounded-lg border border-surface-high bg-surface-container-lowest"
+          [messages]="messages()" [connected]="connected()" (sent)="sendChat($event)"></app-room-chat>
+      </div>
     </div>
+  } @else if (joinFailed()) {
+    <p class="m-0 text-sm text-muted">Couldn’t open this room. Go back and check the room code.</p>
   }
 </section>

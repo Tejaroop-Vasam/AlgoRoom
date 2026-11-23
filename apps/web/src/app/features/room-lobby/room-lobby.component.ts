@@ -1,21 +1,17 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { moveItemInArray } from '@angular/cdk/drag-drop';
+import { TitleCasePipe } from '@angular/common';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
-import { ProblemsApiService, Room } from '../../services/api';
+import { ProblemsApiService, ProblemSummary, Room } from '../../services/api';
 import { GuestSessionService } from '../../services/guest-session.service';
-import { ButtonComponent } from '../../shared/components/button/button.component';
-import { ToastService } from '../../shared/components/toast/toast.service';
-
-interface ChatMessage {
-  user: { id: string; username: string };
-  message: string;
-  timestamp: string;
-}
+import { AvatarComponent, BadgeComponent, ButtonComponent, IconComponent, ToastService } from '../../shared';
+import { RoomChatComponent, RoomChatMessage } from '../../shared/components/room-chat/room-chat.component';
 
 @Component({
   selector: 'app-room-lobby',
-  imports: [RouterLink, ButtonComponent],
+  imports: [RouterLink, TitleCasePipe, AvatarComponent, BadgeComponent, ButtonComponent, IconComponent, RoomChatComponent],
   templateUrl: './room-lobby.component.html',
   styleUrl: './room-lobby.component.css',
 })
@@ -25,14 +21,21 @@ export class RoomLobbyComponent implements OnInit, OnDestroy {
   private readonly toast = inject(ToastService);
   private readonly problems = inject(ProblemsApiService);
   private readonly guest = inject(GuestSessionService);
-  private readonly participantId = signal<string | null>(null);
+  private readonly requestedProblems = new Set<number>();
   private socket?: Socket;
 
   readonly code = (this.route.snapshot.paramMap.get('code') ?? '').toUpperCase();
+  readonly participantId = signal<string | null>(null);
   readonly room = signal<Room | null>(null);
   readonly connected = signal(false);
-  readonly messages = signal<ChatMessage[]>([]);
-  readonly titles = signal<Record<number, string>>({});
+  readonly joinFailed = signal(false);
+  readonly reordering = signal(false);
+  readonly messages = signal<RoomChatMessage[]>([]);
+  readonly problemDetails = signal<Partial<Record<number, Pick<ProblemSummary, 'title' | 'difficulty'>>>>({});
+  readonly canReorder = computed(() => {
+    const room = this.room();
+    return !!room && this.isHost(room) && room.status === 'LOBBY' && room.problemIds.length > 1;
+  });
 
   ngOnInit(): void {
     const socket = io(`${environment.apiUrl}/rooms`, {
@@ -40,23 +43,35 @@ export class RoomLobbyComponent implements OnInit, OnDestroy {
       transports: ['polling', 'websocket'],
     });
     this.socket = socket;
-    socket.on('connect', () => {
-      socket.emit('joinLobby', { code: this.code }, (result: { participantId?: string }) => {
-        this.participantId.set(result.participantId ?? null);
-      });
+    socket.on('connect', async () => {
+      this.joinFailed.set(false);
+      try {
+        const result = await socket.timeout(4000).emitWithAck('joinLobby', { code: this.code });
+        if (result?.needsName) {
+          await this.router.navigate(['/'], { queryParams: { join: this.code }, replaceUrl: true });
+          return;
+        }
+        this.participantId.set(result?.participantId ?? null);
+        this.joinFailed.set(!result?.participantId);
+      } catch {
+        this.joinFailed.set(true);
+      }
     });
     socket.on('disconnect', () => this.connected.set(false));
     socket.on('connect_error', (error: Error) => {
       this.connected.set(false);
-      if (!socket.active) this.toast.error(error.message);
+      if (!socket.active) {
+        this.joinFailed.set(true);
+        this.toast.error(error.message);
+      }
     });
     socket.on('error', (error: { message: string }) => this.toast.error(error.message));
     socket.on('roomStateUpdated', (room: Room) => {
       this.connected.set(true);
       this.room.set(room);
-      this.loadTitles(room.problemIds);
+      this.loadProblems(room.problemIds);
     });
-    socket.on('chatBroadcast', (message: ChatMessage) => {
+    socket.on('chatBroadcast', (message: RoomChatMessage) => {
       this.messages.update(messages => [...messages.slice(-99), message]);
     });
   }
@@ -65,16 +80,31 @@ export class RoomLobbyComponent implements OnInit, OnDestroy {
     this.socket?.disconnect();
   }
 
-  sendChat(event: SubmitEvent, input: HTMLInputElement): void {
-    event.preventDefault();
-    const message = input.value.trim();
-    if (!message || !this.connected()) return;
-    this.socket?.emit('chatMessage', { message });
-    input.value = '';
+  sendChat(message: string): void {
+    if (this.connected()) this.socket?.emit('chatMessage', { message });
   }
 
   launch(): void {
     this.socket?.emit('launchRoom');
+  }
+
+  async moveProblem(index: number, direction: -1 | 1): Promise<void> {
+    const room = this.room();
+    const socket = this.socket;
+    if (!room || !socket || !this.connected() || !this.canReorder() || this.reordering()) return;
+    const target = index + direction;
+    if (target < 0 || target >= room.problemIds.length) return;
+
+    const problemIds = [...room.problemIds];
+    moveItemInArray(problemIds, index, target);
+    this.reordering.set(true);
+    try {
+      await socket.timeout(4000).emitWithAck('reorderProblems', { problemIds });
+    } catch {
+      this.toast.error('Could not update the problem order. Try again.');
+    } finally {
+      this.reordering.set(false);
+    }
   }
 
   isHost(room: Room): boolean {
@@ -103,13 +133,13 @@ export class RoomLobbyComponent implements OnInit, OnDestroy {
     }
   }
 
-  private loadTitles(ids: number[]): void {
+  private loadProblems(ids: number[]): void {
     for (const id of ids) {
-      if (this.titles()[id]) continue;
-      this.titles.update(titles => ({ ...titles, [id]: `Problem #${id}` }));
-      void this.problems.getProblem(id).then(problem => {
-        this.titles.update(titles => ({ ...titles, [id]: problem.title }));
-      }).catch(() => {});
+      if (this.problemDetails()[id] || this.requestedProblems.has(id)) continue;
+      this.requestedProblems.add(id);
+      void this.problems.getProblem(id).then(({ title, difficulty }) => {
+        this.problemDetails.update(problems => ({ ...problems, [id]: { title, difficulty } }));
+      }).catch(() => {}).finally(() => this.requestedProblems.delete(id));
     }
   }
 }

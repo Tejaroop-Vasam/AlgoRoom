@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, akhil1]
+    branches: [main]
   pull_request:
-    branches: [main, akhil1]
+    branches: [main]
   workflow_dispatch:
 
 permissions:

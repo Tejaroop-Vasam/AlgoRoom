@@ -28,6 +28,7 @@ import {
 import { LoadingService } from '../../services/loading.service';
 import {
   MAX_PARTICIPANTS,
+  MAX_PLAYER_NAME_LENGTH,
   MAX_STAGED_PROBLEMS,
   MIN_PARTICIPANTS,
 } from '../../app.constants';
@@ -68,8 +69,10 @@ export class CreateRoomModalComponent {
   readonly maxStaged = MAX_STAGED_PROBLEMS;
   readonly minParticipants = MIN_PARTICIPANTS;
   readonly maxParticipants = MAX_PARTICIPANTS;
+  readonly maxPlayerNameLength = MAX_PLAYER_NAME_LENGTH;
 
   readonly roomName = signal<string | null>(null);
+  readonly playerName = signal('');
 
   readonly mode = signal<RoomMode>('RACE');
 
@@ -111,6 +114,7 @@ export class CreateRoomModalComponent {
 
   readonly canSubmit = computed(() =>
     !!this.roomName()?.trim() &&
+    !!this.playerName().trim() &&
     this.staged().length > 0 &&
     !this.headcountError() &&
     !this.submitting()
@@ -180,6 +184,7 @@ export class CreateRoomModalComponent {
     try {
       const room = await this.roomsApi.createRoom({
         name: this.roomName()?.trim() || '',
+        playerName: this.playerName().trim(),
         mode: this.mode(),
         problemIds: this.staged().map(p => p.id),
         maxParticipants: Number(this.headcount()),

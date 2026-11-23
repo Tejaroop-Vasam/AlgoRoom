@@ -1,6 +1,38 @@
-import { TestCaseItem, TestCaseParam, TestResultData, TestResultStatus } from '../../shared';
+import { Competitor, TestCaseItem, TestCaseParam, TestResultData, TestResultStatus } from '../../shared';
 import { ProblemData } from '../problem-panel/problem-panel.component';
-import { ExecutionResultDto, ProblemDetailResponseDto, SubmissionEvaluationResultDto } from '../../services/api/api.types';
+import { ExecutionResultDto, ProblemDetailResponseDto, RoomParticipant, RoomProblemTelemetry, SubmissionEvaluationResultDto } from '../../services/api/api.types';
+
+const progressLabels: Record<NonNullable<RoomProblemTelemetry['status']>, string> = {
+  SUCCESS: 'Sample ran',
+  ACCEPTED: 'Accepted',
+  WRONG_ANSWER: 'Wrong answer',
+  TIME_LIMIT_EXCEEDED: 'Time limit',
+  MEMORY_LIMIT_EXCEEDED: 'Memory limit',
+  COMPILE_ERROR: 'Compile error',
+  RUNTIME_ERROR: 'Runtime error',
+};
+
+export function roomCompetitors(players: RoomParticipant[], problemId: number, currentId: string | null): Competitor[] {
+  const ranked = players.map(player => {
+    const stats = player.telemetry?.[problemId];
+    const lastStatus = stats?.status ? progressLabels[stats.status] : player.online ? 'Ready' : 'Offline';
+    return {
+      id: player.id,
+      name: player.username,
+      isCurrentUser: player.id === currentId,
+      status: stats?.totalTests ? `${stats.passedTests}/${stats.totalTests} tests · ${lastStatus}` : lastStatus,
+      hasPassedTests: !!stats?.totalTests && stats.passedTests === stats.totalTests,
+      time: stats?.executionTimeMs == null ? '' : `${stats.executionTimeMs} ms`,
+      progressPercent: stats?.totalTests ? Math.floor(100 * stats.passedTests / stats.totalTests) : 0,
+      runs: stats?.runs ?? 0,
+      submissions: stats?.submissions ?? 0,
+      compileErrors: stats?.compileErrors ?? 0,
+      runtimeErrors: stats?.runtimeErrors ?? 0,
+    };
+  });
+  return ranked.sort((a, b) => b.progressPercent - a.progressPercent)
+    .map((player, index) => ({ ...player, rank: index + 1 }));
+}
 
 export interface RunOutcome {
   result: TestResultData;

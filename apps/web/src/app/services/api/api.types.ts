@@ -35,6 +35,7 @@ export interface ProblemDetailResponseDto extends ProblemSummary {
 
 export interface CreateRoomRequest {
   name: string;
+  playerName: string;
   mode: RoomMode;
   problemIds: number[];
   maxParticipants: number;
@@ -45,6 +46,18 @@ export interface RoomParticipant {
   username: string;
   isHost: boolean;
   online: boolean;
+  telemetry?: Record<number, RoomProblemTelemetry>;
+}
+
+export interface RoomProblemTelemetry {
+  runs: number;
+  submissions: number;
+  compileErrors: number;
+  runtimeErrors: number;
+  passedTests: number;
+  totalTests: number;
+  executionTimeMs: number | null;
+  status: ExecutionResultDto['status'] | SubmissionEvaluationResultDto['results'][number]['verdict'] | null;
 }
 
 export interface Room {

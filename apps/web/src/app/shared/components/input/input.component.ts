@@ -29,6 +29,7 @@ export class InputComponent extends BaseInput {
   readonly type = input<InputType>('text');
   readonly min = input<number | string | undefined>(undefined);
   readonly max = input<number | string | undefined>(undefined);
+  readonly maxLength = input<number | undefined>(undefined);
   readonly step = input<number | string | undefined>(undefined);
 
   readonly showPassword = signal<boolean>(false);

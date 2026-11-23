@@ -5,43 +5,70 @@
   (submit)="onShortcutSubmit()">
   <div class="w-full h-full p-2 flex flex-col min-h-0">
     @if (roomCode) {
-      <a class="text-primary py-1" [routerLink]="['/room', roomCode]">Back to room</a>
+      <div class="flex items-center justify-between gap-3 pb-2 font-sans">
+        <a class="text-primary py-1" [routerLink]="['/room', roomCode]">Back to room</a>
+        <button type="button"
+          class="flex items-center gap-2 px-3 py-2 rounded-md border border-surface-high bg-surface-container-lowest text-on-surface text-sm font-sans cursor-pointer hover-bg-surface-high focus-ring"
+          [attr.aria-expanded]="activityOpen()" [attr.aria-controls]="activityOpen() ? 'room-activity' : null"
+          (click)="activityOpen.set(!activityOpen())">
+          <app-icon name="forum" size="sm"></app-icon>
+          {{ activityOpen() ? 'Hide room activity' : 'Room activity' }}
+        </button>
+      </div>
     }
-    <app-split-pane direction="horizontal" [split]="45">
-      <div pane-1 class="w-full h-full pr-1 flex flex-col min-h-0">
-        <app-problem-panel [problem]="problemData()"></app-problem-panel>
-      </div>
+    <div class="flex flex-1 min-h-0 overflow-hidden">
+      <app-split-pane class="flex-1 min-w-0" direction="horizontal" [split]="45">
+        <div pane-1 class="w-full h-full pr-1 flex flex-col min-h-0">
+          <app-problem-panel [problem]="problemData()"></app-problem-panel>
+        </div>
 
-      <div pane-2 class="w-full h-full pl-1 flex flex-col min-h-0">
-        <app-split-pane direction="vertical" [split]="58">
-          <div pane-1 class="w-full h-full pb-1 flex flex-col min-h-0">
-            <app-code-editor
-              [showReset]="true"
-              [showFullscreen]="true"
-              [(code)]="code"
-              [availableLanguages]="languages"
-              [(language)]="language"
-              (languageChange)="onLanguageChange($event)"
-              (reset)="resetCode()"
-              (run)="onShortcutRun()"
-              (submit)="onShortcutSubmit()"
-              minHeight="100%"
-              class="flex-1 h-full block">
-            </app-code-editor>
-          </div>
+        <div pane-2 class="w-full h-full pl-1 flex flex-col min-h-0">
+          <app-split-pane direction="vertical" [split]="58">
+            <div pane-1 class="w-full h-full pb-1 flex flex-col min-h-0">
+              <app-code-editor
+                [showReset]="true"
+                [showFullscreen]="true"
+                [(code)]="code"
+                [availableLanguages]="languages"
+                [(language)]="language"
+                (languageChange)="onLanguageChange($event)"
+                (reset)="resetCode()"
+                (run)="onShortcutRun()"
+                (submit)="onShortcutSubmit()"
+                minHeight="100%"
+                class="flex-1 h-full block">
+              </app-code-editor>
+            </div>
 
-          <div pane-2 class="w-full h-full pt-1 flex flex-col min-h-0">
-            <app-testcase-console
-              [(testcases)]="testcases"
-              [(activeTab)]="consoleTab"
-              [testResult]="testResult()"
-              [actionsDisabled]="loading()"
-              (runClicked)="onRun($event)"
-              (submitClicked)="onSubmit()">
-            </app-testcase-console>
-          </div>
-        </app-split-pane>
-      </div>
-    </app-split-pane>
+            <div pane-2 class="w-full h-full pt-1 flex flex-col min-h-0">
+              <app-testcase-console
+                [(testcases)]="testcases"
+                [(activeTab)]="consoleTab"
+                [testResult]="testResult()"
+                [actionsDisabled]="loading()"
+                (runClicked)="onRun($event)"
+                (submitClicked)="onSubmit()">
+              </app-testcase-console>
+            </div>
+          </app-split-pane>
+        </div>
+      </app-split-pane>
+      @if (roomCode && activityOpen()) {
+        <aside id="room-activity" aria-label="Room activity"
+          class="w-88 shrink-0 flex flex-col gap-4 overflow-y-auto border-l border-surface-high p-3 font-sans text-on-surface">
+          @if (competitors().length) {
+            <div class="h-48 shrink-0 overflow-y-auto">
+              <app-live-grid title="Live progress on this problem" [competitors]="competitors()"></app-live-grid>
+            </div>
+          } @else {
+            <p class="m-0 text-sm text-muted" role="status">
+              {{ roomProgressUnavailable() ? 'Room progress is unavailable.' : 'Connecting to room progress…' }}
+            </p>
+          }
+          <app-room-chat class="shrink-0" [messages]="messages()" [connected]="roomConnected()" (sent)="sendChat($event)">
+          </app-room-chat>
+        </aside>
+      }
+    </div>
   </div>
 </main>

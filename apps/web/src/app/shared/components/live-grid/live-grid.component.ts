@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IconComponent } from '../icon/icon.component';
 
 export interface Competitor {
+  id?: string;
   rank: number;
   name: string;
   isCurrentUser?: boolean;

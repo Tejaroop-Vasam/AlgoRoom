@@ -3,6 +3,7 @@ import { BadgeComponent, ButtonComponent, ChipComponent, IconComponent, InputCom
 import { ModalContainerComponent } from '../../shared/components/modal/modal-container.component';
 import { Room, RoomPreview, RoomsApiService } from '../../services/api';
 import { LoadingService } from '../../services/loading.service';
+import { MAX_PLAYER_NAME_LENGTH } from '../../app.constants';
 
 export interface JoinRoomModalData {
   code?: string;
@@ -26,6 +27,8 @@ export class JoinRoomModalComponent implements OnInit {
   private readonly loadingService = inject(LoadingService);
 
   readonly code = signal('');
+  readonly playerName = signal('');
+  readonly maxPlayerNameLength = MAX_PLAYER_NAME_LENGTH;
   readonly normalizedCode = computed(() => this.code().replace(/[^a-z0-9]/gi, '').toUpperCase());
   readonly codeComplete = computed(() => this.normalizedCode().length === ROOM_CODE_LENGTH);
 
@@ -59,17 +62,18 @@ export class JoinRoomModalComponent implements OnInit {
     }
     try {
       const preview = await this.roomsApi.getRoomPreview(this.normalizedCode());
-      this.preview.set(preview);
+      if (preview.code === this.normalizedCode()) this.preview.set(preview);
     } catch {}
   }
 
   async join(): Promise<void> {
     const room = this.preview();
-    if (!room || this.loading() || this.roomFull()) {
+    const playerName = this.playerName().trim();
+    if (!room || !playerName || this.loading() || this.roomFull()) {
       return;
     }
     try {
-      const joined = await this.roomsApi.joinRoom(room.code);
+      const joined = await this.roomsApi.joinRoom(room.code, playerName);
       this.joinedRoom.set(joined);
     } catch {}
   }

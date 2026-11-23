@@ -2,14 +2,14 @@ import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { Room } from '../../services/api';
-import { ButtonComponent, ModalService } from '../../shared';
+import { ButtonComponent, IconComponent, ModalService } from '../../shared';
 import { CreateRoomModalComponent } from '../create-room/create-room-modal.component';
 import { JoinRoomModalComponent, JoinRoomModalData } from '../join-room/join-room-modal.component';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [ButtonComponent],
+  imports: [ButtonComponent, IconComponent],
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.css',
   host: {

@@ -51,12 +51,14 @@
           </span>
         }
       </div>
+      <app-input label="Your name" autocomplete="nickname" [required]="true" [maxLength]="maxPlayerNameLength"
+        [(value)]="playerName"></app-input>
     }
 
     <div class="flex items-center justify-end gap-2">
       <app-button variant="ghost" (clicked)="close()">Cancel</app-button>
       @if (preview()) {
-        <app-button type="submit" variant="primary" icon="login" [disabled]="loading() || roomFull()">Join Room</app-button>
+        <app-button type="submit" variant="primary" icon="login" [disabled]="loading() || roomFull() || !playerName().trim()">Join Room</app-button>
       } @else {
         <app-button type="submit" variant="primary" icon="search" [disabled]="loading() || !codeComplete()">Find Room</app-button>
       }

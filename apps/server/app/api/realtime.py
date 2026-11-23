@@ -8,7 +8,7 @@ from pydantic import BaseModel, StringConstraints, ValidationError
 from redis.exceptions import RedisError
 
 from app.core.security import GUEST_TOKEN_PATTERN, guest_id
-from app.schemas.room import StoredRoom
+from app.schemas.room import ProblemIds, StoredRoom
 from app.services.room_service import normalize_code
 
 NAMESPACE = "/rooms"
@@ -22,6 +22,10 @@ class ChatEvent(BaseModel):
     message: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
 
 
+class ReorderProblemsEvent(BaseModel):
+    problemIds: ProblemIds
+
+
 def create_socket_server(app: FastAPI, origins: list[str]) -> socketio.ASGIApp:
     sio = socketio.AsyncServer(
         async_mode="asgi", cors_allowed_origins=origins, max_http_buffer_size=256_000,
@@ -30,6 +34,8 @@ def create_socket_server(app: FastAPI, origins: list[str]) -> socketio.ASGIApp:
     async def broadcast(room: StoredRoom):
         payload = app.state.rooms.public_room(room).model_dump(mode="json")
         await sio.emit("roomStateUpdated", payload, to=room.code, namespace=NAMESPACE)
+
+    app.state.broadcast_room = broadcast
 
     async def event_error(sid: str, message: str):
         payload = {"message": message}
@@ -56,7 +62,7 @@ def create_socket_server(app: FastAPI, origins: list[str]) -> socketio.ASGIApp:
             session = await sio.get_session(sid, namespace=NAMESPACE)
             previous_code = session.get("code")
             store = app.state.rooms
-            room = await store.join(code, session["token"], sid)
+            room = await store.join(code, session["token"], sid=sid)
             if previous_code and previous_code != code:
                 await sio.leave_room(sid, previous_code, namespace=NAMESPACE)
                 previous_room = await store.disconnect(previous_code, sid)
@@ -70,6 +76,8 @@ def create_socket_server(app: FastAPI, origins: list[str]) -> socketio.ASGIApp:
         except ValidationError:
             return await event_error(sid, "Enter a valid room code.")
         except HTTPException as exc:
+            if exc.status_code == 403:
+                return {"needsName": True}
             return await event_error(sid, exc.detail)
         except RedisError:
             return await event_error(sid, "Room storage is unavailable.")
@@ -108,6 +116,20 @@ def create_socket_server(app: FastAPI, origins: list[str]) -> socketio.ASGIApp:
             code = (await joined_session(sid))["code"]
             room = await app.state.rooms.launch(code, sid)
             await broadcast(room)
+        except HTTPException as exc:
+            return await event_error(sid, exc.detail)
+        except RedisError:
+            return await event_error(sid, "Room storage is unavailable.")
+
+    @sio.on("reorderProblems", namespace=NAMESPACE)
+    async def reorder_problems(sid, payload):
+        try:
+            order = ReorderProblemsEvent.model_validate(payload)
+            code = (await joined_session(sid))["code"]
+            room = await app.state.rooms.reorder_problems(code, sid, order.problemIds)
+            await broadcast(room)
+        except ValidationError:
+            return await event_error(sid, "Choose a valid problem order.")
         except HTTPException as exc:
             return await event_error(sid, exc.detail)
         except RedisError:

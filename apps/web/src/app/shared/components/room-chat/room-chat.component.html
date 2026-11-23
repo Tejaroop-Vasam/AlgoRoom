@@ -1,0 +1,22 @@
+<h2 class="m-0 text-lg font-semibold">Room chat</h2>
+<div #chatLog class="h-48 overflow-y-auto flex flex-col gap-3 rounded-md p-3 bg-surface-container-low"
+  role="log" aria-label="Chat messages">
+  @for (message of messages(); track message) {
+    <div class="flex flex-col gap-1">
+      <div class="flex justify-between items-center gap-2">
+        <span class="text-xs font-semibold truncate">{{ message.user.username }}</span>
+        <time class="text-xs text-muted shrink-0" [attr.datetime]="message.timestamp">
+          {{ message.timestamp | date:'shortTime' }}
+        </time>
+      </div>
+      <p class="m-0 text-sm break-words">{{ message.message }}</p>
+    </div>
+  } @empty {
+    <p class="m-0 text-sm text-muted">No messages yet.</p>
+  }
+</div>
+<form class="flex gap-2" (submit)="send($event, message)">
+  <input #message class="flex-1 min-w-0 rounded-md border border-surface-high p-2 bg-surface text-on-surface font-sans"
+    aria-label="Chat message" placeholder="Write a message" maxlength="2000" required [disabled]="!connected()">
+  <app-button type="submit" size="sm" [disabled]="!connected()">Send</app-button>
+</form>

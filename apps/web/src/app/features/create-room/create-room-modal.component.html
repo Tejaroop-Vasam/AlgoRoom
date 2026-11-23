@@ -31,7 +31,11 @@
   </div>
 } @else {
   <div class="max-h-dialog overflow-y-auto flex flex-col gap-6 pr-2">
-    <app-input label="Room name" placeholder="Name your room" [required]="true" [(value)]="roomName"></app-input>
+    <div class="d-grid grid-cols-2 gap-4">
+      <app-input label="Room name" placeholder="Name your room" [required]="true" [(value)]="roomName"></app-input>
+      <app-input label="Your name" autocomplete="nickname" [required]="true" [maxLength]="maxPlayerNameLength"
+        [(value)]="playerName"></app-input>
+    </div>
 
     <div class="flex flex-col gap-2">
       <div role="radiogroup" aria-label="Room mode" class="d-grid grid-cols-2 gap-3">

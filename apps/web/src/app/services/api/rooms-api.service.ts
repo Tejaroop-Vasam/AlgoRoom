@@ -19,7 +19,7 @@ export class RoomsApiService {
     return firstValueFrom(this.http.get<RoomPreview>(`${this.url}/${encodeURIComponent(code)}`, this.options));
   }
 
-  joinRoom(code: string): Promise<Room> {
-    return firstValueFrom(this.http.post<Room>(`${this.url}/${encodeURIComponent(code)}/join`, null, this.options));
+  joinRoom(code: string, playerName: string): Promise<Room> {
+    return firstValueFrom(this.http.post<Room>(`${this.url}/${encodeURIComponent(code)}/join`, { playerName }, this.options));
   }
 }
