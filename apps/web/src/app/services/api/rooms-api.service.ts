@@ -1,27 +1,25 @@
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { RoomHostSessionService } from '../room-host-session.service';
-import { RoomsControllerClient } from './api-client';
+import { environment } from '../../../environments/environment';
+import { GuestSessionService } from '../guest-session.service';
 import { CreateRoomRequest, Room, RoomPreview } from './api.types';
 
 @Injectable({ providedIn: 'root' })
 export class RoomsApiService {
-  private readonly roomsClient = inject(RoomsControllerClient);
-  private readonly hostSessions = inject(RoomHostSessionService);
+  private readonly http = inject(HttpClient);
+  private readonly url = `${environment.apiUrl}/rooms`;
+  private readonly options = { headers: { 'X-Guest-Token': inject(GuestSessionService).token } };
 
-  async createRoom(request: CreateRoomRequest): Promise<Room> {
-    const { hostSession, ...room } = await firstValueFrom(this.roomsClient.createRoom(request));
-    if (hostSession) {
-      this.hostSessions.start(room.code, room.host.id, hostSession);
-    }
-    return room;
+  createRoom(request: CreateRoomRequest): Promise<Room> {
+    return firstValueFrom(this.http.post<Room>(this.url, request, this.options));
   }
 
   getRoomPreview(code: string): Promise<RoomPreview> {
-    return firstValueFrom(this.roomsClient.getRoomPreview(code));
+    return firstValueFrom(this.http.get<RoomPreview>(`${this.url}/${encodeURIComponent(code)}`, this.options));
   }
 
   joinRoom(code: string): Promise<Room> {
-    return firstValueFrom(this.roomsClient.joinRoom(code));
+    return firstValueFrom(this.http.post<Room>(`${this.url}/${encodeURIComponent(code)}/join`, null, this.options));
   }
 }

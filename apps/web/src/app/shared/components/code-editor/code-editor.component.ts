@@ -6,7 +6,7 @@ import type * as Monaco from 'monaco-editor';
 import { IconComponent } from '../icon/icon.component';
 import { SelectComponent, SelectOption } from '../select/select.component';
 import { ThemeService } from '../../../services/theme.service';
-import { FormatLanguage, RunnerApiService } from '../../../services/api/runner-api.service';
+import { FormatLanguage, RunnerApiService } from '../../../services/api';
 
 @Component({
   selector: 'app-code-editor',

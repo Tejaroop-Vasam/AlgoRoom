@@ -4,7 +4,6 @@ import { NgTemplateOutlet } from '@angular/common';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { debounceTime } from 'rxjs';
 import {
-  AvatarComponent,
   BadgeComponent,
   BadgeVariant,
   ButtonComponent,
@@ -15,13 +14,9 @@ import {
   OptionCardComponent,
   SegmentOption,
   SegmentedControlComponent,
-  SelectComponent,
-  SelectOption,
-  ToggleSwitchComponent,
 } from '../../shared';
 import { ModalContainerComponent } from '../../shared/components/modal/modal-container.component';
 import {
-  BufferVisibility,
   Difficulty,
   ProblemsApiService,
   ProblemsQuery,
@@ -30,7 +25,6 @@ import {
   RoomMode,
   RoomsApiService,
 } from '../../services/api';
-import { AuthSessionService } from '../../services/auth-session.service';
 import { LoadingService } from '../../services/loading.service';
 import {
   MAX_PARTICIPANTS,
@@ -50,7 +44,6 @@ export interface CreateRoomModalData {
     CdkDropList,
     CdkDrag,
     CdkDragHandle,
-    AvatarComponent,
     BadgeComponent,
     ButtonComponent,
     CheckboxComponent,
@@ -59,8 +52,6 @@ export interface CreateRoomModalData {
     InputComponent,
     OptionCardComponent,
     SegmentedControlComponent,
-    SelectComponent,
-    ToggleSwitchComponent,
   ],
   templateUrl: './create-room-modal.component.html',
   styleUrl: './create-room-modal.component.css',
@@ -73,16 +64,12 @@ export class CreateRoomModalComponent {
   private readonly problemsApi = inject(ProblemsApiService);
   private readonly roomsApi = inject(RoomsApiService);
   private readonly loadingService = inject(LoadingService);
-  private readonly session = inject(AuthSessionService);
 
   readonly maxStaged = MAX_STAGED_PROBLEMS;
   readonly minParticipants = MIN_PARTICIPANTS;
   readonly maxParticipants = MAX_PARTICIPANTS;
 
   readonly roomName = signal<string | null>(null);
-  readonly hostName = computed(() =>
-    (this.session.accessToken() && this.session.user()?.username) || 'Guest'
-  );
 
   readonly mode = signal<RoomMode>('RACE');
 
@@ -110,13 +97,6 @@ export class CreateRoomModalComponent {
   readonly stagingFull = computed(() => this.staged().length >= MAX_STAGED_PROBLEMS);
 
   readonly headcount = signal<number>(4);
-  readonly hiddenTestCases = signal(true);
-  readonly bufferVisibility = signal<string | null>('OBSCURED');
-  readonly bufferOptions: SelectOption[] = [
-    { label: 'Obscured until round end', value: 'OBSCURED', icon: 'visibility_off' },
-    { label: 'Visible to host only', value: 'HOST_ONLY', icon: 'shield_person' },
-    { label: 'Open to all players', value: 'OPEN', icon: 'visibility' },
-  ];
 
   readonly headcountError = computed(() => {
     const n = Number(this.headcount());
@@ -142,18 +122,11 @@ export class CreateRoomModalComponent {
       this.staged.set([data.initialProblem]);
     }
 
-    this.loadInitialData();
-
     toObservable(this.problemQuery).pipe(
       debounceTime(250),
     ).subscribe(query => {
       this.fetchProblems(query);
     });
-  }
-
-  private async loadInitialData(): Promise<void> {
-    try {
-    } catch {}
   }
 
   private async fetchProblems(query: ProblemsQuery): Promise<void> {
@@ -210,8 +183,6 @@ export class CreateRoomModalComponent {
         mode: this.mode(),
         problemIds: this.staged().map(p => p.id),
         maxParticipants: Number(this.headcount()),
-        hiddenTestCases: this.hiddenTestCases(),
-        bufferVisibility: (this.mode() === 'COOP' ? 'OPEN' : this.bufferVisibility() ?? 'OBSCURED') as BufferVisibility,
       });
       this.createdRoom.set(room);
     } catch {}

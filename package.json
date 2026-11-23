@@ -13,12 +13,8 @@
     "web:build:pages": "npm --prefix apps/web run build:pages",
     "db:start": "docker compose -f apps/server/docker-compose.prod.yml up -d --wait postgres",
     "db:stop": "docker compose -f apps/server/docker-compose.prod.yml stop postgres",
-    "db:migrate": "docker compose -f apps/server/docker-compose.prod.yml run --build --rm migrate",
     "scraper:seed": "apps/scraper/.venv/bin/python3 apps/scraper/seed_problems.py",
-    "runners:build": "docker compose -f infrastructure/docker/docker-compose.runners.yml build",
-    "swagger:export": "cd apps/server && .venv/bin/python -m app.export_openapi",
-    "api:generate": "npm --prefix apps/web run api:generate",
-    "api:sync": "npm run swagger:export && npm run api:generate"
+    "runners:build": "docker compose -f infrastructure/docker/docker-compose.runners.yml build"
   },
   "author": "AlgoRoom",
   "license": "MIT"

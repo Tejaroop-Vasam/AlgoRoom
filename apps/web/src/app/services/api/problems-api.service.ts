@@ -1,40 +1,22 @@
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { firstValueFrom, Observable } from 'rxjs';
-import { ProblemDetailResponseDto, ProblemsControllerClient } from './api-client';
-import { Difficulty, ProblemsListResponse, ProblemsQuery } from './api.types';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ProblemDetailResponseDto, ProblemsListResponse, ProblemsQuery } from './api.types';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class ProblemsApiService {
-  private readonly problemsClient = inject(ProblemsControllerClient);
+  private readonly http = inject(HttpClient);
+  private readonly url = `${environment.apiUrl}/problems`;
 
-  async getProblems(query: ProblemsQuery = {}): Promise<ProblemsListResponse> {
-    const res = await firstValueFrom(
-      this.problemsClient.getProblems(
-        query.difficulty,
-        query.search,
-        query.page,
-        query.limit,
-      ),
-    );
-
-    return {
-      problems: (res?.problems ?? []).map(p => ({
-        id: p.id,
-        title: p.title,
-        difficulty: p.difficulty as Difficulty,
-        createdAt: p.createdAt ? (p.createdAt instanceof Date ? p.createdAt.toISOString() : String(p.createdAt)) : undefined,
-        updatedAt: p.updatedAt ? (p.updatedAt instanceof Date ? p.updatedAt.toISOString() : String(p.updatedAt)) : undefined,
-      })),
-      total: res?.total ?? 0,
-      page: res?.page ?? 1,
-      limit: res?.limit ?? 20,
-      totalPages: res?.totalPages ?? 0,
-    };
+  getProblems({ difficulty, search, page = 1, limit = 20 }: ProblemsQuery = {}): Promise<ProblemsListResponse> {
+    const params: Record<string, string | number> = { page, limit };
+    if (difficulty) params['difficulty'] = difficulty;
+    if (search) params['search'] = search;
+    return firstValueFrom(this.http.get<ProblemsListResponse>(this.url, { params }));
   }
 
   getProblem(id: number): Promise<ProblemDetailResponseDto> {
-    return firstValueFrom(this.problemsClient.getProblem(id));
+    return firstValueFrom(this.http.get<ProblemDetailResponseDto>(`${this.url}/${id}`));
   }
 }

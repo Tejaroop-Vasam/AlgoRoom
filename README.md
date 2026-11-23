@@ -1,34 +1,27 @@
 # AlgoRoom
 
-AlgoRoom is a desktop web app for practicing data structures and algorithms. Players can host Race or Co-op rooms as guests, sign in to join another player's room, and solve problems in a Monaco editor. Rooms support live presence and chat. The workspace runs and evaluates Python, C++, and Java solutions.
+AlgoRoom is a desktop web app for practicing data structures and algorithms. Guests can create a Race or Co-op room, join by code, and chat in the lobby. Once the host starts the room, players can run and submit Python, C++, and Java solutions in the Monaco editor.
 
 ## Project layout
 
 | Path | Purpose |
 | --- | --- |
-| `apps/web` | Angular frontend and NSwag-generated API client |
+| `apps/web` | Angular frontend |
 | `apps/server/app` | FastAPI application, Socket.IO gateway, and private sandbox runner |
-| `apps/server/alembic` | PostgreSQL migrations for users, problems, rooms, and participants |
 | `apps/scraper` | Python tool that seeds problems and uploads test cases to Cloudflare R2 |
 | `infrastructure/docker` | Docker images for the three execution languages |
 
 ## Run locally
 
-Install Docker with Compose and Node.js using the version in the CI workflow. Copy the example environment file and set a JWT secret. Keep an existing `apps/server/.env` if you already have one.
+Install Docker with Compose and Node.js using the version in the CI workflow. Copy the example environment file if you do not already have one.
 
 ```sh
 cp -n apps/server/.env.example apps/server/.env
-openssl rand -hex 32
-```
-
-Put the generated value in `JWT_SECRET` in `apps/server/.env`, then start the app.
-
-```sh
 npm ci --prefix apps/web
 npm run dev
 ```
 
-Docker Compose builds the API and the private runner, starts PostgreSQL, and applies Alembic migrations. Angular runs at `http://localhost:4200`. The API listens at `http://localhost:3000`, with Swagger UI at `/api/docs`.
+Docker Compose starts PostgreSQL and Redis and builds the API and the private runner. When FastAPI starts, SQLAlchemy creates any missing model tables. Angular runs at `http://localhost:4200`, and the API listens at `http://localhost:3000`.
 
 If another local PostgreSQL service uses port 5432, set `DB_PORT=55432` in `apps/server/.env` before starting the app.
 
@@ -42,17 +35,13 @@ npm run scraper:seed
 
 The seeder reads its database and R2 settings from the configured environment. Problems seeded without R2 use their sample cases stored in PostgreSQL.
 
-## Regenerate the Angular client
+## Walk through the demo
 
-Set up a Python 3.14 virtual environment for the backend and install .NET 8 for NSwag.
+1. Create a room, add a problem, and open the lobby.
+2. Open the invite link in a private browser window to join as a second guest. Send a chat message and start the room from the host window.
+3. Open the problem, run a sample, and submit a solution.
 
-```sh
-python3.14 -m venv apps/server/.venv
-apps/server/.venv/bin/pip install -r apps/server/requirements.txt
-npm run api:sync
-```
-
-Commit the generated OpenAPI document and client with changes to the HTTP contract.
+Start at [`main.py`](apps/server/app/main.py), then open the [route registry](apps/server/app/api/v1/router.py). To see what happens when someone creates a room, follow the [endpoint](apps/server/app/api/v1/endpoints/rooms.py) to the [room service](apps/server/app/services/room_service.py) and [Redis repository](apps/server/app/repositories/room_repository.py). The [Socket.IO gateway](apps/server/app/api/realtime.py) sends lobby updates.
 
 ## Deployment
 

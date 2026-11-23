@@ -2,9 +2,8 @@ import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
-import { AuthSessionService } from '../../services/auth-session.service';
 import { ProblemsApiService, Room } from '../../services/api';
-import { RoomHostSessionService } from '../../services/room-host-session.service';
+import { GuestSessionService } from '../../services/guest-session.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { ToastService } from '../../shared/components/toast/toast.service';
 
@@ -25,8 +24,8 @@ export class RoomLobbyComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   private readonly problems = inject(ProblemsApiService);
-  private readonly session = inject(AuthSessionService);
-  private readonly hostSessions = inject(RoomHostSessionService);
+  private readonly guest = inject(GuestSessionService);
+  private readonly participantId = signal<string | null>(null);
   private socket?: Socket;
 
   readonly code = (this.route.snapshot.paramMap.get('code') ?? '').toUpperCase();
@@ -37,14 +36,15 @@ export class RoomLobbyComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const socket = io(`${environment.apiUrl}/rooms`, {
-      auth: callback => {
-        const guest = this.hostSessions.get(this.code);
-        callback(guest ? { hostToken: guest.token } : { token: this.session.accessToken() });
-      },
+      auth: { guestToken: this.guest.token },
       transports: ['polling', 'websocket'],
     });
     this.socket = socket;
-    socket.on('connect', () => socket.emit('joinLobby', { code: this.code }));
+    socket.on('connect', () => {
+      socket.emit('joinLobby', { code: this.code }, (result: { participantId?: string }) => {
+        this.participantId.set(result.participantId ?? null);
+      });
+    });
     socket.on('disconnect', () => this.connected.set(false));
     socket.on('connect_error', (error: Error) => {
       this.connected.set(false);
@@ -78,8 +78,7 @@ export class RoomLobbyComponent implements OnInit, OnDestroy {
   }
 
   isHost(room: Room): boolean {
-    const participant = this.hostSessions.get(this.code)?.hostId ?? this.session.user()?.id;
-    return room.host.id === participant;
+    return room.host.id === this.participantId();
   }
 
   async leave(): Promise<void> {
@@ -87,7 +86,6 @@ export class RoomLobbyComponent implements OnInit, OnDestroy {
       try {
         const result = await this.socket.timeout(3000).emitWithAck('leaveRoom');
         if (!result?.left) return;
-        this.hostSessions.end(this.code);
       } catch {
         this.toast.error('Could not leave the room. Try again.');
         return;

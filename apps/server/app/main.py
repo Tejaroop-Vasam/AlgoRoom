@@ -2,66 +2,51 @@ from contextlib import asynccontextmanager
 
 import httpx
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from psycopg import Error as DatabaseError
-from psycopg_pool import PoolTimeout
+from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from . import problems, rooms, runner_api, users
-from .config import get_settings
-from .db import create_pool
-from .errors import ValidationErrorDto, install_error_handlers
-from .openapi import install_openapi
-from .realtime import create_socket_server
+from app.api.realtime import create_socket_server
+from app.api.v1.router import router
+from app.core.config import get_settings
+from app.db.database import create_engine
+from app.models import Base
+from app.repositories.room_repository import RoomRepository
+from app.services.room_service import RoomService
 
 settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if not settings.jwt_secret:
-        raise RuntimeError("JWT_SECRET must be configured")
-    async with create_pool(settings.conninfo) as pool, httpx.AsyncClient(
-        base_url=settings.runner_url, timeout=httpx.Timeout(95, connect=3),
-    ) as runner:
-        await pool.wait(timeout=15)
-        async with pool.connection() as conn:
-            await conn.execute("UPDATE room_participants SET socket_id = NULL WHERE socket_id IS NOT NULL")
-        app.state.db = pool
-        app.state.runner = runner
-        yield
+    engine = create_engine(settings.conninfo)
+    try:
+        async with engine.begin() as connection:
+            await connection.run_sync(Base.metadata.create_all)
+        async with (
+            httpx.AsyncClient(base_url=settings.runner_url, timeout=httpx.Timeout(95, connect=3)) as runner,
+            Redis.from_url(settings.redis_url, decode_responses=True, socket_connect_timeout=3, socket_timeout=3) as redis,
+        ):
+            app.state.db = async_sessionmaker(engine)
+            app.state.redis = redis
+            app.state.rooms = RoomService(RoomRepository(redis))
+            app.state.runner = runner
+            yield
+    finally:
+        await engine.dispose()
 
 
 api = FastAPI(
-    title="AlgoRoom API", version="1.0.0", docs_url="/api/docs",
-    openapi_url="/api/docs-json", lifespan=lifespan,
-    responses={422: {"model": ValidationErrorDto, "description": "Validation error"}},
+    lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None,
 )
 api.add_middleware(
     CORSMiddleware,
     allow_origins=settings.origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["X-Guest-Token", "Content-Type"],
 )
-install_error_handlers(api)
-for router in (users.router, problems.router, rooms.router, runner_api.router):
-    api.include_router(router)
-
-
-@api.get("/health/ready", include_in_schema=False)
-async def ready(request: Request):
-    try:
-        async with request.app.state.db.connection(timeout=2) as conn:
-            await conn.execute("SELECT 1")
-        response = await request.app.state.runner.get("/health/ready", timeout=3)
-        response.raise_for_status()
-    except (DatabaseError, PoolTimeout, httpx.HTTPError) as exc:
-        raise HTTPException(503, "A backend dependency is unavailable") from exc
-    return {"status": "ready"}
-
-
-install_openapi(api)
+api.include_router(router)
 app = create_socket_server(api, settings.origins)
 
 

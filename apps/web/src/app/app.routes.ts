@@ -1,7 +1,4 @@
-import { inject } from '@angular/core';
-import { Router, Routes } from '@angular/router';
-import { AuthSessionService } from './services/auth-session.service';
-import { RoomHostSessionService } from './services/room-host-session.service';
+import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   {
@@ -15,13 +12,6 @@ export const routes: Routes = [
   },
   {
     path: 'room/:code',
-    canActivate: [route => {
-      const code = route.paramMap.get('code') ?? '';
-      if (inject(RoomHostSessionService).get(code) || inject(AuthSessionService).accessToken()) {
-        return true;
-      }
-      return inject(Router).createUrlTree(['/'], { queryParams: { join: code } });
-    }],
     loadComponent: () => import('./features/room-lobby/room-lobby.component').then(m => m.RoomLobbyComponent),
   },
   {

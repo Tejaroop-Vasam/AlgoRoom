@@ -11,8 +11,6 @@ RUN pip install --no-cache-dir --requirement requirements.txt
 
 FROM base AS api
 COPY app app
-COPY alembic.ini .
-COPY alembic alembic
 RUN useradd --system --uid 10001 api
 USER api
 EXPOSE 3000
@@ -26,6 +24,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends clang-format \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/local/lib/node_modules/prettier/bin/prettier.cjs /usr/local/bin/prettier \
     && pip install --no-cache-dir ruff==0.15.20
-COPY app/__init__.py app/errors.py app/runner_contract.py app/runner_worker.py app/
+COPY app/__init__.py app/
+COPY app/api/__init__.py app/api/runner_worker.py app/api/
+COPY app/schemas/__init__.py app/schemas/runner.py app/schemas/
 EXPOSE 3001
-CMD ["uvicorn", "app.runner_worker:app", "--host", "0.0.0.0", "--port", "3001", "--workers", "1"]
+CMD ["uvicorn", "app.api.runner_worker:app", "--host", "0.0.0.0", "--port", "3001", "--workers", "1"]

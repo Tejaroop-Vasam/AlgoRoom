@@ -31,48 +31,21 @@
   </div>
 } @else {
   <div class="max-h-dialog overflow-y-auto flex flex-col gap-6 pr-2">
-    <div class="d-grid grid-cols-3 gap-4">
-      <div class="flex flex-col gap-2 min-w-0 col-span-2">
-        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Room Instance Name</span>
-        <div class="flex items-start gap-2">
-          <div class="flex-1 min-w-0">
-            <app-input
-              prefixIcon="tag"
-              placeholder="Name your room"
-              [required]="true"
-              [(value)]="roomName"
-              [errorMessage]="'A room needs a name'">
-            </app-input>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex flex-col gap-2 min-w-0">
-        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Session Host</span>
-        <div class="h-14 flex items-center gap-2 px-3 rounded-md bg-surface-container-low border border-surface-high">
-          <app-avatar [name]="hostName()" size="sm"></app-avatar>
-          <span class="text-sm font-semibold text-white truncate">{{ hostName() }}</span>
-        </div>
-      </div>
-    </div>
+    <app-input label="Room name" placeholder="Name your room" [required]="true" [(value)]="roomName"></app-input>
 
     <div class="flex flex-col gap-2">
-      <div class="flex items-center justify-between gap-2">
-      </div>
       <div role="radiogroup" aria-label="Room mode" class="d-grid grid-cols-2 gap-3">
         <app-option-card
           icon="sports_score"
           title="Race Mode"
-          subtitle="Competitive Arena"
-          description="Isolated sandboxes, live progress telemetry, obscured buffers until round finish. Real-time test-pass benchmark leaderboard."
+          description="Start the same problem set together and race to solve it."
           [selected]="mode() === 'RACE'"
           (selectedChange)="mode.set('RACE')">
         </app-option-card>
         <app-option-card
           icon="handshake"
           title="Co-op Mode"
-          subtitle="Collaborative Pair"
-          description="Shared CRDT operational buffer, synchronized multi-cursor editing, voice telemetry strip, and co-executed unit tests."
+          description="Work through the same problems and discuss them in room chat."
           [selected]="mode() === 'COOP'"
           (selectedChange)="mode.set('COOP')">
         </app-option-card>
@@ -190,43 +163,20 @@
       }
     </div>
 
-    <div class="d-grid grid-cols-3 gap-4 p-3 rounded-lg bg-surface-container-low border border-surface-high">
-      <div class="flex flex-col gap-2">
-        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Lobby Headcount</span>
-        <app-input
-          type="number"
-          prefixIcon="group"
-          [min]="minParticipants"
-          [max]="maxParticipants"
-          [step]="1"
-          [hint]="headcountError() ? '' : 'Max players, ' + minParticipants + '–' + maxParticipants"
-          [(value)]="headcount">
-        </app-input>
-        @if (headcountError()) {
-          <p class="-mt-4 pl-4 text-xs text-error m-0">{{ headcountError() }}</p>
-        }
-      </div>
-
-      <div class="flex flex-col gap-2">
-        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Test Suite Engine</span>
-        <div class="h-14 flex items-center justify-between gap-3 px-3 rounded-md bg-surface-container-lowest border border-surface-high">
-          <div class="flex flex-col min-w-0">
-            <span class="text-sm text-on-surface">Hidden test cases</span>
-            <span class="text-xs text-muted truncate">{{ hiddenTestCases() ? 'Graded on full suite' : 'Samples only' }}</span>
-          </div>
-          <app-toggle-switch ariaLabel="Hidden test cases" [(checked)]="hiddenTestCases"></app-toggle-switch>
-        </div>
-      </div>
-
-      <div class="flex flex-col gap-2">
-        <span class="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Buffer Security</span>
-        <app-select
-          [options]="bufferOptions"
-          [disabled]="mode() === 'COOP'"
-          [hint]="mode() === 'COOP' ? 'Co-op rooms share one buffer' : ''"
-          [(value)]="bufferVisibility">
-        </app-select>
-      </div>
+    <div class="w-fit flex flex-col gap-2">
+      <app-input
+        label="Max players"
+        type="number"
+        prefixIcon="group"
+        [min]="minParticipants"
+        [max]="maxParticipants"
+        [step]="1"
+        [hint]="headcountError() ? '' : minParticipants + '–' + maxParticipants + ' players'"
+        [(value)]="headcount">
+      </app-input>
+      @if (headcountError()) {
+        <p class="text-xs text-error m-0">{{ headcountError() }}</p>
+      }
     </div>
   </div>
 

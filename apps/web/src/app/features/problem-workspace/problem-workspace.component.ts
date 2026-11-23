@@ -14,7 +14,7 @@ import { ProblemPanelComponent } from '../problem-panel/problem-panel.component'
 import { ProblemsApiService } from '../../services/api/problems-api.service';
 import { LoadingService } from '../../services/loading.service';
 import { RunnerApiService } from '../../services/api/runner-api.service';
-import { Language, ProblemDetailResponseDto } from '../../services/api/api-client';
+import { Language, ProblemDetailResponseDto } from '../../services/api/api.types';
 import {
   buildRunResult,
   buildSubmitResult,

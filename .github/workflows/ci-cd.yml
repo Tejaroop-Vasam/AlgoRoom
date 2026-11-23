@@ -33,11 +33,7 @@ jobs:
         run: |
           python -m pip install -r apps/server/requirements.txt
           python -m pip check
-          python -m compileall -q apps/server/app apps/server/alembic
-
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
+          python -m compileall -q apps/server/app
 
       - uses: actions/setup-node@v4
         with:
@@ -48,22 +44,16 @@ jobs:
       - name: Install Angular dependencies
         run: npm ci --prefix apps/web
 
-      - name: Verify the generated API contract
-        run: |
-          (cd apps/server && python -m app.export_openapi)
-          npm run api:generate --prefix apps/web
-          git diff --exit-code -- apps/web/swagger.json apps/web/src/app/services/api/api-client.ts
-
       - name: Build the production Angular bundle
         run: npm run build:pages --prefix apps/web
 
-      - name: Verify Compose startup and migrations
+      - name: Verify Compose startup
         run: |
           cp apps/server/.env.example apps/server/.env
-          printf '\nJWT_SECRET=%s\n' "$(openssl rand -hex 32)" >> apps/server/.env
           docker compose -f infrastructure/docker/docker-compose.runners.yml build
           docker compose -f apps/server/docker-compose.prod.yml up -d --build --wait server
           curl --fail --silent --show-error http://127.0.0.1:3000/health/ready
+          curl --fail --silent --show-error http://127.0.0.1:3000/problems
 
       - name: Show service logs on failure
         if: failure()
@@ -112,14 +102,13 @@ jobs:
 
             docker compose -f ../../infrastructure/docker/docker-compose.runners.yml build
             compose build server runner
-            compose up -d --wait --wait-timeout 90 postgres runner
+            compose up -d --wait --wait-timeout 90 postgres redis runner
 
             backup_dir="$HOME/algoroom-db-backups"
             mkdir -p "$backup_dir"
             backup_file="$(mktemp "$backup_dir/algoroom-${DEPLOY_SHA}-XXXXXXXX")"
             compose exec -T postgres sh -c 'pg_dump -Fc -U "$POSTGRES_USER" "$POSTGRES_DB"' > "$backup_file"
 
-            compose run --rm --no-deps migrate
             compose up -d --no-deps --wait --wait-timeout 90 server
             compose up -d --no-deps caddy
             curl --fail --silent --show-error https://algoroom-api.duckdns.org/health/ready

@@ -1,6 +1,6 @@
 import { TestCaseItem, TestCaseParam, TestResultData, TestResultStatus } from '../../shared';
 import { ProblemData } from '../problem-panel/problem-panel.component';
-import { ExecutionResultDto, ProblemDetailResponseDto, SubmissionEvaluationResultDto } from '../../services/api/api-client';
+import { ExecutionResultDto, ProblemDetailResponseDto, SubmissionEvaluationResultDto } from '../../services/api/api.types';
 
 export interface RunOutcome {
   result: TestResultData;
