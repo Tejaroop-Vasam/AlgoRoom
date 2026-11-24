@@ -1,12 +1,15 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
 import {
+  BadgeComponent,
   ButtonComponent,
   CodeEditorComponent,
+  CollabDocument,
+  IconComponent,
   LiveGridComponent,
   RunShortcutsDirective,
   SplitPaneComponent,
@@ -41,7 +44,9 @@ import { formatDuration, newSolves, raceStandings } from '../race/race.utils';
   imports: [
     CommonModule,
     RouterLink,
+    BadgeComponent,
     ButtonComponent,
+    IconComponent,
     SplitPaneComponent,
     ProblemPanelComponent,
     CodeEditorComponent,
@@ -97,6 +102,7 @@ export class ProblemWorkspaceComponent implements OnInit, OnDestroy {
   readonly activityOpen = signal(false);
   readonly roomConnected = computed(() => !!this.room() && !!this.participantId());
   readonly messages = signal<RoomChatMessage[]>([]);
+  readonly onlineCount = computed(() => this.room()?.participants.filter(player => player.online).length ?? 0);
 
   readonly clock = new RaceClock();
   readonly problemTitles = signal<Partial<Record<number, string>>>({});
@@ -114,6 +120,13 @@ export class ProblemWorkspaceComponent implements OnInit, OnDestroy {
     if (room.status !== 'IN_PROGRESS') return room.mode === 'RACE';
     return !!room.startedAt && this.clock.now() < Date.parse(room.startedAt);
   });
+  readonly collab = signal<CollabDocument | null>(null);
+  readonly collabDocId = computed(() => {
+    const room = this.room();
+    if (!room || room.mode !== 'COOP' || !this.participantId()) return null;
+    if (this.problemDetail()?.id !== this.problemId() || !room.problemIds.includes(this.problemId())) return null;
+    return `${this.problemId()}:${this.language()}`;
+  });
   readonly standings = computed(() => {
     const room = this.room();
     return room && room.mode === 'RACE' ? raceStandings(room) : [];
@@ -127,6 +140,28 @@ export class ProblemWorkspaceComponent implements OnInit, OnDestroy {
       this.problemId.set(id);
       void this.fetchProblem(id);
     });
+
+    effect(() => {
+      const docId = this.collabDocId();
+      untracked(() => this.openSharedDoc(docId));
+    });
+  }
+
+  private openSharedDoc(docId: string | null): void {
+    const current = this.collab();
+    if (current?.id === docId && docId) return;
+    current?.destroy();
+    this.collab.set(null);
+    if (!docId || !this.socket) return;
+    const [problemId, language] = docId.split(':');
+    const doc = new CollabDocument(this.socket, docId, () => this.codeFor(Number(problemId), language));
+    this.collab.set(doc);
+    doc.connect().catch(() => {
+      if (this.collab() !== doc) return;
+      doc.destroy();
+      this.collab.set(null);
+      this.toast.error('Shared editor is unavailable. Your edits stay on this device.');
+    });
   }
 
   ngOnInit(): void {
@@ -134,6 +169,7 @@ export class ProblemWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.collab()?.destroy();
     this.socket?.disconnect();
   }
 
@@ -294,7 +330,7 @@ export class ProblemWorkspaceComponent implements OnInit, OnDestroy {
       if (!starters[this.language()]) {
         this.language.set(this.languages.find(language => starters[language]) ?? 'python');
       }
-      this.code.set(this.codeFor(id, this.language()));
+      if (!this.collabDocId()) this.code.set(this.codeFor(id, this.language()));
 
       const parsedCases: TestCaseItem[] = (res.sampleTestCases ?? []).map((stc, idx) => ({
         id: stc.id ?? idx + 1,
@@ -316,7 +352,7 @@ export class ProblemWorkspaceComponent implements OnInit, OnDestroy {
   onLanguageChange(newLang: string): void {
     this.language.set(newLang);
     const code = this.codeFor(this.problemId(), newLang);
-    if (code) {
+    if (code && !this.collabDocId()) {
       this.code.set(code);
     }
   }

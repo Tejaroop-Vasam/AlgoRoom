@@ -13,6 +13,7 @@ from app.core.config import get_settings
 from app.db.database import create_engine
 from app.models import Base
 from app.repositories.room_repository import RoomRepository
+from app.services.collab_service import CollabService
 from app.services.room_service import RoomService
 
 settings = get_settings()
@@ -31,6 +32,7 @@ async def lifespan(app: FastAPI):
             app.state.db = async_sessionmaker(engine)
             app.state.redis = redis
             app.state.rooms = RoomService(RoomRepository(redis))
+            app.state.collab = CollabService(redis)
             app.state.runner = runner
             yield
     finally:

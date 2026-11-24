@@ -1,6 +1,9 @@
 import { DatePipe } from '@angular/common';
-import { afterRenderEffect, Component, ElementRef, input, output, viewChild } from '@angular/core';
+import { afterRenderEffect, Component, ElementRef, input, output, signal, viewChild } from '@angular/core';
 import { ButtonComponent } from '../button/button.component';
+import { AvatarComponent } from '../avatar/avatar.component';
+import { IconComponent } from '../icon/icon.component';
+import { InputComponent } from '../input/input.component';
 
 export interface RoomChatMessage {
   user: { id: string; username: string };
@@ -11,15 +14,17 @@ export interface RoomChatMessage {
 @Component({
   selector: 'app-room-chat',
   standalone: true,
-  imports: [DatePipe, ButtonComponent],
+  imports: [DatePipe, ButtonComponent, AvatarComponent, IconComponent, InputComponent],
   templateUrl: './room-chat.component.html',
   styleUrl: './room-chat.component.css',
-  host: { class: 'flex flex-col gap-3 min-w-0' },
+  host: { class: 'flex flex-col min-w-0 min-h-0' },
 })
 export class RoomChatComponent {
   private readonly chatLog = viewChild<ElementRef<HTMLDivElement>>('chatLog');
   readonly messages = input<RoomChatMessage[]>([]);
   readonly connected = input(false);
+  readonly selfId = input<string | null>(null);
+  readonly draft = signal('');
   readonly sent = output<string>();
 
   constructor() {
@@ -30,11 +35,12 @@ export class RoomChatComponent {
     });
   }
 
-  send(event: SubmitEvent, input: HTMLInputElement): void {
+  send(event: SubmitEvent): void {
     event.preventDefault();
-    const message = input.value.trim();
+    event.stopPropagation();
+    const message = this.draft().trim();
     if (!message || !this.connected()) return;
     this.sent.emit(message);
-    input.value = '';
+    this.draft.set('');
   }
 }

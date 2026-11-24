@@ -1,3 +1,57 @@
+@if (variant() === 'compact') {
+  <ul class="m-0 p-0 list-none flex flex-col gap-2" [attr.aria-label]="title() || 'Live progress'">
+    @for (competitor of sortedCompetitors(); track competitor.id ?? competitor.name) {
+      <li class="flex flex-col gap-2 px-3 py-2 rounded-lg border bg-surface-container-low"
+        [class.border-primary]="competitor.isCurrentUser"
+        [class.border-surface-high]="!competitor.isCurrentUser">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="w-6 shrink-0 font-mono text-xs font-bold"
+            [class.text-primary]="competitor.isCurrentUser"
+            [class.text-on-surface-variant]="!competitor.isCurrentUser">#{{ competitor.rank }}</span>
+          <app-avatar size="sm" [name]="competitor.name" [variant]="competitor.isCurrentUser ? 'primary' : 'surface'"></app-avatar>
+          <span class="flex-1 min-w-0 text-sm font-semibold text-on-surface truncate" [title]="competitor.name">{{ competitor.name }}</span>
+          @if (competitor.isCurrentUser) {
+            <app-badge label="You" variant="primary" shape="square" size="sm"></app-badge>
+          }
+          @if (competitor.time) {
+            <span class="shrink-0 font-mono text-xs text-on-surface-variant cursor-help" matTooltip="Runtime of the latest run or submission">{{ competitor.time }}</span>
+          }
+        </div>
+
+        <div class="flex items-center justify-between gap-3 text-xs">
+          <span class="flex items-center gap-1 min-w-0"
+            [class.text-success]="competitor.hasPassedTests"
+            [class.text-on-surface-variant]="!competitor.hasPassedTests">
+            <app-icon [name]="competitor.hasPassedTests ? 'check_circle' : 'radio_button_unchecked'" size="xs"
+              [matTooltip]="competitor.hasPassedTests ? 'All tests passed' : 'Not solved yet'"></app-icon>
+            <span class="truncate" [matTooltip]="'Latest result: ' + competitor.status">{{ competitor.status }}</span>
+          </span>
+          <span class="flex items-center gap-2 shrink-0 font-mono text-on-surface-variant">
+            <span class="flex items-center gap-1 cursor-help" tabindex="0" [matTooltip]="plural(competitor.runs, 'run') + ' with sample tests'" [attr.aria-label]="plural(competitor.runs, 'run')">
+              <app-icon name="play_arrow" size="xs"></app-icon>{{ competitor.runs ?? 0 }}
+            </span>
+            <span class="flex items-center gap-1 cursor-help" tabindex="0" [matTooltip]="plural(competitor.submissions, 'submission') + ' against all tests'" [attr.aria-label]="plural(competitor.submissions, 'submission')">
+              <app-icon name="send" size="xs"></app-icon>{{ competitor.submissions ?? 0 }}
+            </span>
+            <span class="flex items-center gap-1 cursor-help" tabindex="0" [matTooltip]="plural(competitor.compileErrors, 'compile error')" [attr.aria-label]="plural(competitor.compileErrors, 'compile error')" [class.text-error]="(competitor.compileErrors ?? 0) > 0">
+              <app-icon name="error_outline" size="xs"></app-icon>{{ competitor.compileErrors ?? 0 }}
+            </span>
+            <span class="flex items-center gap-1 cursor-help" tabindex="0" [matTooltip]="plural(competitor.runtimeErrors, 'runtime error')" [attr.aria-label]="plural(competitor.runtimeErrors, 'runtime error')" [class.text-error]="(competitor.runtimeErrors ?? 0) > 0">
+              <app-icon name="warning" size="xs"></app-icon>{{ competitor.runtimeErrors ?? 0 }}
+            </span>
+          </span>
+        </div>
+
+        <div class="w-full h-1 bg-surface-container-high rounded-full overflow-hidden">
+          <div class="h-full"
+            [class.bg-secondary]="competitor.hasPassedTests"
+            [class.bg-primary]="!competitor.hasPassedTests"
+            [style.width.%]="competitor.progressPercent"></div>
+        </div>
+      </li>
+    }
+  </ul>
+} @else {
 <div class="bg-surface-container-low border border-surface-high rounded-xl p-4 flex flex-col gap-3 font-mono text-xs w-full">
   @if (title() || remainingTime()) {
     <div class="flex items-center justify-between pb-2 border-b border-surface-high">
@@ -97,3 +151,4 @@
     }
   </div>
 </div>
+}

@@ -167,8 +167,11 @@
           </ul>
         </section>
 
-        <app-room-chat class="p-4 rounded-lg border border-surface-high bg-surface-container-lowest"
-          [messages]="messages()" [connected]="connected()" (sent)="sendChat($event)"></app-room-chat>
+        <section class="flex flex-col rounded-lg border border-surface-high bg-surface-container-lowest overflow-hidden" aria-label="Room chat">
+          <h2 class="m-0 px-4 pt-4 text-lg font-semibold">Room chat</h2>
+          <app-room-chat class="h-80" [messages]="messages()" [connected]="connected()" [selfId]="participantId()"
+            (sent)="sendChat($event)"></app-room-chat>
+        </section>
       </div>
     </div>
   } @else if (joinFailed()) {
