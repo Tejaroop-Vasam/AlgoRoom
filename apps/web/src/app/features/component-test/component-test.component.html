@@ -756,8 +756,8 @@
         class="w-full rounded-2xl border border-surface-highest overflow-hidden bg-surface-container-lowest"
         style="height: 48rem;"
         [appRunShortcuts]="activeSection() === 'workspace'"
-        (run)="onShortcutRunWorkspace()"
-        (submit)="onSubmitWorkspace()">
+        (shortcutRun)="onShortcutRunWorkspace()"
+        (shortcutSubmit)="onSubmitWorkspace()">
         <app-split-pane direction="horizontal" [split]="46">
           <div pane-1 class="w-full h-full p-2">
             <app-problem-panel [problem]="sampleProblem"></app-problem-panel>

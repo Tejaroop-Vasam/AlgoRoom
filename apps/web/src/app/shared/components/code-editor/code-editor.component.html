@@ -14,6 +14,20 @@
             (valueChange)="onLanguageChange($event)">
           </app-select>
         </div>
+
+        @if (collab()) {
+          <div class="flex items-center gap-2 ml-1">
+            <span class="flex items-center gap-1 font-mono text-xs" [class.text-secondary]="!collabPending()" [class.text-outline]="collabPending()">
+              <app-icon [name]="collabPending() ? 'progress_activity' : 'group'" size="sm" [spin]="collabPending()"></app-icon>
+              {{ collabPending() ? 'Connecting…' : 'Shared' }}
+            </span>
+            @for (peer of collabPeers(); track peer.id) {
+              <span class="collab-avatar collab-peer-{{ peer.color }}" [title]="peer.username + ' is editing'">
+                <app-avatar size="xs" variant="surface" [name]="peer.username"></app-avatar>
+              </span>
+            }
+          </div>
+        }
       </div>
 
       <div class="flex items-center gap-1 text-outline">

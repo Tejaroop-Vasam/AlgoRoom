@@ -24,7 +24,8 @@
     "ngx-monaco-editor-v2": "^22.0.5",
     "rxjs": "~7.8.0",
     "socket.io-client": "^4.8.4",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "yjs": "^13.6.33"
   },
   "devDependencies": {
     "@angular/build": "^22.1.8",

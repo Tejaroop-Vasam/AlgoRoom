@@ -5,11 +5,11 @@ from typing import Annotated
 
 import socketio
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, StringConstraints, ValidationError
+from pydantic import BaseModel, Field, StringConstraints, ValidationError
 from redis.exceptions import RedisError
 
 from app.core.security import GUEST_TOKEN_PATTERN, guest_id
-from app.schemas.room import ProblemIds, RoomStatus, StoredRoom, UpdateRoomSettingsDto
+from app.schemas.room import ProblemIds, RoomMode, RoomStatus, StoredRoom, UpdateRoomSettingsDto
 from app.services.room_service import normalize_code
 
 NAMESPACE = "/rooms"
@@ -25,6 +25,31 @@ class ChatEvent(BaseModel):
 
 class ReorderProblemsEvent(BaseModel):
     problemIds: ProblemIds
+
+
+DocId = Annotated[str, StringConstraints(pattern=r"^[1-9][0-9]{0,8}:(python|cpp|java)$")]
+CollabPayload = Annotated[str, StringConstraints(min_length=1, max_length=200_000)]
+
+
+class CollabJoinEvent(BaseModel):
+    doc: DocId
+
+
+class CollabUpdateEvent(BaseModel):
+    doc: DocId
+    update: CollabPayload
+
+
+class CollabCompactEvent(BaseModel):
+    doc: DocId
+    upto: Annotated[int, Field(ge=1)]
+    snapshot: CollabPayload
+
+
+class CollabCursorEvent(BaseModel):
+    doc: DocId
+    anchor: dict | None = None
+    head: dict | None = None
 
 
 def create_socket_server(app: FastAPI, origins: list[str]) -> socketio.ASGIApp:
@@ -65,6 +90,25 @@ def create_socket_server(app: FastAPI, origins: list[str]) -> socketio.ASGIApp:
             raise HTTPException(403, "Join the room first.")
         return session
 
+    def doc_room(code: str, doc: str) -> str:
+        return f"{code}/doc/{doc}"
+
+    async def collab_session(sid: str, doc: str) -> dict:
+        session = await joined_session(sid)
+        if session.get("collab", {}).get("doc") != doc:
+            raise HTTPException(409, "Open the shared editor first.")
+        return session
+
+    async def leave_doc(sid: str, session: dict):
+        current = session.pop("collab", None)
+        if not current:
+            return
+        await sio.leave_room(sid, doc_room(session["code"], current["doc"]), namespace=NAMESPACE)
+        await sio.emit(
+            "collabCursor", {"doc": current["doc"], "user": current["user"], "left": True},
+            to=doc_room(session["code"], current["doc"]), namespace=NAMESPACE,
+        )
+
     @sio.on("connect", namespace=NAMESPACE)
     async def connect(sid, environ, auth):
         token = auth.get("guestToken") if isinstance(auth, dict) else None
@@ -81,6 +125,7 @@ def create_socket_server(app: FastAPI, origins: list[str]) -> socketio.ASGIApp:
             store = app.state.rooms
             room = await store.join(code, session["token"], sid=sid)
             if previous_code and previous_code != code:
+                await leave_doc(sid, session)
                 await sio.leave_room(sid, previous_code, namespace=NAMESPACE)
                 previous_room = await store.disconnect(previous_code, sid)
                 if previous_room:
@@ -105,6 +150,7 @@ def create_socket_server(app: FastAPI, origins: list[str]) -> socketio.ASGIApp:
         try:
             session = await joined_session(sid)
             code = session["code"]
+            await leave_doc(sid, session)
             room = await app.state.rooms.leave(code, sid)
             await sio.leave_room(sid, code, namespace=NAMESPACE)
             session.pop("code", None)
@@ -122,6 +168,7 @@ def create_socket_server(app: FastAPI, origins: list[str]) -> socketio.ASGIApp:
         session = await sio.get_session(sid, namespace=NAMESPACE)
         if code := session.get("code"):
             try:
+                await leave_doc(sid, session)
                 room = await app.state.rooms.disconnect(code, sid)
                 if room:
                     await broadcast(room)
@@ -215,5 +262,80 @@ def create_socket_server(app: FastAPI, origins: list[str]) -> socketio.ASGIApp:
             return await event_error(sid, exc.detail)
         except RedisError:
             return await event_error(sid, "Room storage is unavailable.")
+
+    @sio.on("collabJoin", namespace=NAMESPACE)
+    async def collab_join(sid, payload):
+        try:
+            doc = CollabJoinEvent.model_validate(payload).doc
+            session = await joined_session(sid)
+            code = session["code"]
+            member = await app.state.rooms.active_member(code, sid)
+            room = await app.state.rooms.get(code)
+            if room.mode != RoomMode.COOP:
+                raise HTTPException(409, "Shared editing is only available in co-op rooms.")
+            if int(doc.split(":")[0]) not in room.problem_ids:
+                raise HTTPException(404, "That problem is not part of this room.")
+            if session.get("collab", {}).get("doc") != doc:
+                await leave_doc(sid, session)
+                session["collab"] = {"doc": doc, "user": {"id": member.id, "username": member.username}}
+                await sio.save_session(sid, session, namespace=NAMESPACE)
+                await sio.enter_room(sid, doc_room(code, doc), namespace=NAMESPACE)
+            updates, seed = await app.state.collab.load(code, doc)
+            return {"updates": updates, "seed": seed, "userId": member.id, "username": member.username}
+        except ValidationError:
+            return await event_error(sid, "Choose a valid problem and language.")
+        except HTTPException as exc:
+            return await event_error(sid, exc.detail)
+        except RedisError:
+            return await event_error(sid, "Room storage is unavailable.")
+
+    @sio.on("collabLeave", namespace=NAMESPACE)
+    async def collab_leave(sid):
+        session = await sio.get_session(sid, namespace=NAMESPACE)
+        if session.get("code"):
+            await leave_doc(sid, session)
+            await sio.save_session(sid, session, namespace=NAMESPACE)
+        return {"left": True}
+
+    @sio.on("collabUpdate", namespace=NAMESPACE)
+    async def collab_update(sid, payload):
+        try:
+            event = CollabUpdateEvent.model_validate(payload)
+            code = (await collab_session(sid, event.doc))["code"]
+            await app.state.collab.append(code, event.doc, event.update)
+            await sio.emit(
+                "collabUpdate", {"doc": event.doc, "update": event.update},
+                to=doc_room(code, event.doc), skip_sid=sid, namespace=NAMESPACE,
+            )
+            return {"stored": True}
+        except ValidationError:
+            return await event_error(sid, "That edit could not be shared.")
+        except HTTPException as exc:
+            return await event_error(sid, exc.detail)
+        except RedisError:
+            return await event_error(sid, "Room storage is unavailable.")
+
+    @sio.on("collabCompact", namespace=NAMESPACE)
+    async def collab_compact(sid, payload):
+        try:
+            event = CollabCompactEvent.model_validate(payload)
+            code = (await collab_session(sid, event.doc))["code"]
+            await app.state.collab.compact(code, event.doc, event.upto, event.snapshot)
+            return {"compacted": True}
+        except (ValidationError, HTTPException, RedisError):
+            return {"compacted": False}
+
+    @sio.on("collabCursor", namespace=NAMESPACE)
+    async def collab_cursor(sid, payload):
+        try:
+            event = CollabCursorEvent.model_validate(payload)
+            session = await collab_session(sid, event.doc)
+        except (ValidationError, HTTPException):
+            return
+        await sio.emit(
+            "collabCursor",
+            {"doc": event.doc, "user": session["collab"]["user"], "anchor": event.anchor, "head": event.head},
+            to=doc_room(session["code"], event.doc), skip_sid=sid, namespace=NAMESPACE,
+        )
 
     return socketio.ASGIApp(sio, other_asgi_app=app)

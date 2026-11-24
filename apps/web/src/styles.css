@@ -42,6 +42,25 @@ html {
   font-size: 0.6875rem;
 }
 
+.input-compact .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.input-compact .mat-mdc-form-field-infix {
+  min-height: 2.5rem;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.chat-bubble {
+  border-radius: 0.75rem 0.75rem 0.75rem 0.25rem;
+  white-space: pre-wrap;
+}
+
+.chat-bubble-mine {
+  border-radius: 0.75rem 0.75rem 0.25rem 0.75rem;
+}
+
 * {
   margin: 0;
   box-sizing: border-box;
@@ -70,4 +89,85 @@ html, body {
 
 .cdk-drag-placeholder {
   opacity: 0.3;
+}
+
+.collab-peer-0 { --collab-peer: #f97316; }
+.collab-peer-1 { --collab-peer: #22c55e; }
+.collab-peer-2 { --collab-peer: #3b82f6; }
+.collab-peer-3 { --collab-peer: #e879f9; }
+.collab-peer-4 { --collab-peer: #eab308; }
+.collab-peer-5 { --collab-peer: #14b8a6; }
+
+.collab-selection {
+  background-color: color-mix(in srgb, var(--collab-peer) 28%, transparent);
+}
+
+.collab-caret {
+  position: relative;
+  width: 2px;
+  margin-left: -1px;
+  background-color: var(--collab-peer);
+  cursor: default;
+}
+
+.collab-caret::before {
+  content: "";
+  position: absolute;
+  inset: 0 -4px;
+}
+
+.collab-caret-label {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: -1px;
+  padding: 1px 6px;
+  border-radius: 4px 4px 4px 0;
+  background-color: var(--collab-peer);
+  color: #0b0f19;
+  font-family: var(--font-sans, sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.collab-caret-first-line .collab-caret-label {
+  bottom: auto;
+  top: 100%;
+  border-radius: 0 4px 4px 4px;
+}
+
+.collab-caret:hover .collab-caret-label {
+  display: block;
+}
+
+.collab-line-author {
+  width: 3px !important;
+  margin-left: 3px;
+  border-radius: 2px;
+  background-color: var(--collab-peer);
+}
+
+.collab-line-blame {
+  padding-left: 2rem;
+  color: var(--color-outline);
+  font-size: 12px;
+  font-style: italic;
+  white-space: nowrap;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.collab-avatar {
+  display: inline-flex;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 2px var(--collab-peer);
+}
+
+.activity-feed {
+  flex-shrink: 0;
+  max-height: 55%;
 }

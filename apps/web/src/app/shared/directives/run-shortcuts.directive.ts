@@ -13,8 +13,8 @@ export class RunShortcutsDirective {
   readonly listenGlobal = input(true, { transform: booleanAttribute });
   readonly allowInInputs = input(false, { transform: booleanAttribute });
 
-  readonly run = output<void>();
-  readonly submit = output<void>();
+  readonly shortcutRun = output<void>();
+  readonly shortcutSubmit = output<void>();
 
   @HostListener('document:keydown', ['$event'])
   onDocumentKeyDown(event: KeyboardEvent): void {
@@ -45,9 +45,9 @@ export class RunShortcutsDirective {
     event.stopPropagation();
 
     if (event.shiftKey) {
-      this.submit.emit();
+      this.shortcutSubmit.emit();
     } else {
-      this.run.emit();
+      this.shortcutRun.emit();
     }
   }
 }
