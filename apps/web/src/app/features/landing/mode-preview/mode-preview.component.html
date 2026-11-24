@@ -1,0 +1,44 @@
+<div class="d-grid grid-cols-1 lg-grid-cols-2 gap-4 w-full text-left font-sans text-on-surface">
+  <article class="mode-card flex flex-col gap-4 p-4 rounded-xl border border-surface-high bg-surface-container-lowest min-w-0"
+    aria-labelledby="race-mode-heading">
+    <header class="flex flex-col gap-1">
+      <h2 id="race-mode-heading" class="flex items-center gap-2 text-lg font-semibold m-0">
+        <app-icon name="sports_score" size="md" class="text-primary"></app-icon>
+        Race Mode
+      </h2>
+      <p class="text-sm text-on-surface-variant m-0">
+        Everyone solves the same problems on their own, against the clock. The live grid shows how each player is doing on your problem.
+      </p>
+    </header>
+
+    <div class="flex flex-col gap-2 p-3 rounded-lg border border-surface-high bg-surface-container-low" aria-label="Example live grid">
+      <span class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-on-surface-variant">
+        <span class="w-2 h-2 rounded-full bg-secondary"></span>
+        Live progress
+      </span>
+      <app-live-grid variant="compact" title="Example live progress" [competitors]="competitors"></app-live-grid>
+    </div>
+  </article>
+
+  <article class="mode-card flex flex-col gap-4 p-4 rounded-xl border border-surface-high bg-surface-container-lowest min-w-0"
+    aria-labelledby="coop-mode-heading">
+    <header class="flex flex-col gap-1">
+      <h2 id="coop-mode-heading" class="flex items-center gap-2 text-lg font-semibold m-0">
+        <app-icon name="handshake" size="md" class="text-primary"></app-icon>
+        Co-op Mode
+      </h2>
+      <p class="text-sm text-on-surface-variant m-0">
+        Solve the problems together in one shared editor.
+      </p>
+    </header>
+
+    <app-code-editor
+      [collab]="collab"
+      [availableLanguages]="['python']"
+      language="python"
+      [copyable]="false"
+      minHeight="17rem"
+      class="block">
+    </app-code-editor>
+  </article>
+</div>
