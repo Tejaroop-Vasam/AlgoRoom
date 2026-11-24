@@ -5,6 +5,7 @@ export * from './components/button/button.component';
 export * from './components/divider/divider.component';
 export * from './components/badge/badge.component';
 export * from './components/code-editor/code-editor.component';
+export * from './collab/collab-document';
 export * from './components/icon/icon.component';
 export * from './components/header/header.component';
 export * from './components/footer/footer.component';

@@ -1,9 +1,12 @@
-import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EditorComponent } from 'ngx-monaco-editor-v2';
 import type * as Monaco from 'monaco-editor';
 import { IconComponent } from '../icon/icon.component';
+import { AvatarComponent } from '../avatar/avatar.component';
+import { CollabDocument } from '../../collab/collab-document';
+import { MonacoCollabBinding } from '../../collab/monaco-collab-binding';
 import { SelectComponent, SelectOption } from '../select/select.component';
 import { ThemeService } from '../../../services/theme.service';
 import { FormatLanguage, RunnerApiService } from '../../../services/api';
@@ -11,14 +14,14 @@ import { FormatLanguage, RunnerApiService } from '../../../services/api';
 @Component({
   selector: 'app-code-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, EditorComponent, IconComponent, SelectComponent],
+  imports: [CommonModule, FormsModule, EditorComponent, IconComponent, SelectComponent, AvatarComponent],
   templateUrl: './code-editor.component.html',
   styleUrl: './code-editor.component.css',
   host: {
     class: 'd-block w-full',
   },
 })
-export class CodeEditorComponent {
+export class CodeEditorComponent implements OnDestroy {
   private readonly runnerApi = inject(RunnerApiService, { optional: true });
   private readonly themeService = inject(ThemeService, { optional: true });
 
@@ -57,6 +60,7 @@ export class CodeEditorComponent {
   readonly tabSize = input<number>(4);
   readonly showReset = input<boolean>(false);
   readonly showFullscreen = input<boolean>(false);
+  readonly collab = input<CollabDocument | null>(null);
 
   readonly saved = output<string>();
   readonly reset = output<void>();
@@ -66,6 +70,11 @@ export class CodeEditorComponent {
   readonly submit = output<void>();
 
   private editor?: Monaco.editor.IStandaloneCodeEditor;
+  private readonly editorInstance = signal<Monaco.editor.IStandaloneCodeEditor | null>(null);
+  private readonly binding = signal<MonacoCollabBinding | null>(null);
+
+  readonly collabPeers = computed(() => this.collab()?.peers() ?? []);
+  readonly collabPending = computed(() => !!this.collab() && !this.collab()!.synced());
 
   readonly isLoading = signal<boolean>(true);
   readonly currentLine = signal<number>(1);
@@ -75,6 +84,10 @@ export class CodeEditorComponent {
   readonly isCopied = signal<boolean>(false);
   readonly isFormatted = signal<boolean>(false);
   readonly statusMessage = signal<string>('READY');
+
+  ngOnDestroy(): void {
+    this.binding()?.dispose();
+  }
 
   onReset(): void {
     this.reset.emit();
@@ -98,6 +111,28 @@ export class CodeEditorComponent {
           monaco.editor.setModelLanguage(model, lang);
         }
       }
+    });
+
+    effect(() => {
+      const collab = this.collab();
+      const synced = collab?.synced() ?? false;
+      const editor = this.editorInstance();
+      const monaco = (window as any).monaco;
+      untracked(() => {
+        this.binding()?.dispose();
+        this.binding.set(collab && synced && editor && monaco ? new MonacoCollabBinding(editor, collab, monaco) : null);
+      });
+    });
+
+    effect(() => {
+      const binding = this.binding();
+      const peers = this.collabPeers();
+      binding?.renderPeers(peers);
+    });
+
+    effect(() => {
+      const readOnly = this.readonly() || this.collabPending();
+      this.editorInstance()?.updateOptions({ readOnly, domReadOnly: readOnly });
     });
 
     effect(() => {
@@ -149,6 +184,7 @@ export class CodeEditorComponent {
 
   onEditorInit(editor: Monaco.editor.IStandaloneCodeEditor): void {
     this.editor = editor;
+    this.editorInstance.set(editor);
     this.isLoading.set(false);
     this.updateCounts();
 
@@ -193,6 +229,20 @@ export class CodeEditorComponent {
           this.submit.emit();
         }
       );
+
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyZ, () => {
+        const binding = this.binding();
+        if (binding) binding.undo();
+        else editor.trigger('keyboard', 'undo', null);
+      });
+
+      const redo = () => {
+        const binding = this.binding();
+        if (binding) binding.redo();
+        else editor.trigger('keyboard', 'redo', null);
+      };
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyZ, redo);
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyY, redo);
 
       editor.addCommand(
         monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyF,
